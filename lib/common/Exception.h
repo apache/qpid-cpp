@@ -21,11 +21,13 @@
  * under the License.
  *
  */
-
 #include <exception>
 #include <string>
 #include <memory>
 #include <boost/shared_ptr.hpp>
+#include <boost/lexical_cast.hpp>
+
+#include "amqp_types.h"
 
 namespace qpid
 {
@@ -43,6 +45,11 @@ class Exception : public std::exception
     Exception(const char* str) throw();
     Exception(const std::exception&) throw();
 
+    /** Allow any type that has ostream operator<< to act as message */
+    template <class T>
+    Exception(const T& message)
+        : whatStr(boost::lexical_cast<std::string>(message)) {}
+
     virtual ~Exception() throw();
 
     virtual const char* what() const throw();
@@ -54,7 +61,36 @@ class Exception : public std::exception
     typedef boost::shared_ptr<Exception> shared_ptr;
 };
 
+struct ChannelException : public Exception {
+    framing::ReplyCode code;
+    template <class T>
+    ChannelException(framing::ReplyCode code_, const T& message)
+        : Exception(message), code(code_) {}
+    void throwSelf() const { throw *this; }
+};
 
+struct ConnectionException : public Exception {
+    framing::ReplyCode code;
+    template <class T>
+    ConnectionException(framing::ReplyCode code_, const T& message)
+        : Exception(message), code(code_) {}
+    void throwSelf() const { throw *this; }
+};
+
+/**
+ * Exception used to indicate that a thread should shut down.
+ * Does not indicate an error that should be signalled to the user.
+ */
+struct ShutdownException : public Exception {
+    ShutdownException();
+    void throwSelf() const { throw *this; }
+};
+
+/** Exception to indicate empty queue or other empty state */
+struct EmptyException : public Exception {
+    EmptyException();
+    void throwSelf() const { throw *this; }
+};
 
 }
 

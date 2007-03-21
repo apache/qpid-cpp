@@ -66,6 +66,7 @@ if test "${enableval}" = yes; then
   gl_COMPILER_FLAGS(-Wvolatile-register-var)
   gl_COMPILER_FLAGS(-Winvalid-pch)
   gl_COMPILER_FLAGS(-Wno-system-headers)
+  gl_COMPILER_FLAGS(-Woverloaded-virtual)	
   AC_SUBST([WARNING_CFLAGS], [$COMPILER_FLAGS])
   AC_DEFINE([lint], 1, [Define to 1 if the compiler is checking for lint.])
   COMPILER_FLAGS=
@@ -126,7 +127,7 @@ AC_ARG_ENABLE(valgrind,
      yes|no) enable_VALGRIND=$enableval;;
      *) AC_MSG_ERROR([invalid valgrind enable/disable value: $enableval]);;
     esac],
-  [enable_VALGRIND=no]  # no option given, default
+  [enable_VALGRIND=yes]  # no option given, default
   )
 
 # We use valgrind for the tests.  See if it's available.

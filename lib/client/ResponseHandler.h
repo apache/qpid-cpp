@@ -19,33 +19,49 @@
  *
  */
 #include <string>
-#include <framing/amqp_framing.h>
+
+#include <framing/amqp_framing.h> // FIXME aconway 2007-02-01: #include cleanup.
 #include <sys/Monitor.h>
 
 #ifndef _ResponseHandler_
 #define _ResponseHandler_
 
 namespace qpid {
-    namespace client {
+namespace client {
 
-        class ResponseHandler{
-            bool waiting;
-            qpid::framing::AMQMethodBody::shared_ptr response;
-            qpid::sys::Monitor monitor;
+/**
+ * Holds a response from the broker peer for the client.
+ */ 
+class ResponseHandler{
+    bool waiting;
+    qpid::framing::AMQMethodBody::shared_ptr response;
+    qpid::sys::Monitor monitor;
 
-        public:
-            ResponseHandler();
-            ~ResponseHandler();
-            inline bool isWaiting(){ return waiting; }
-            inline qpid::framing::AMQMethodBody::shared_ptr getResponse(){ return response; }
-            bool validate(const qpid::framing::AMQMethodBody& expected);
-            void waitForResponse();
-            void signalResponse(qpid::framing::AMQMethodBody::shared_ptr response);
-            void receive(const qpid::framing::AMQMethodBody& expected);
-            void expect();//must be called before calling receive
-        };
+  public:
+    ResponseHandler();
+    ~ResponseHandler();
+    
+    bool isWaiting(){ return waiting; }
+    framing::AMQMethodBody::shared_ptr getResponse();
+    void waitForResponse();
+    
+    void signalResponse(framing::AMQMethodBody::shared_ptr response);
 
+    void expect();//must be called before calling receive
+    bool validate(framing::ClassId, framing::MethodId);
+    void receive(framing::ClassId, framing::MethodId);
+
+    framing::RequestId getRequestId();
+
+    template <class BodyType> bool validate() {
+        return validate(BodyType::CLASS_ID, BodyType::METHOD_ID);
     }
+    template <class BodyType> void receive() {
+        receive(BodyType::CLASS_ID, BodyType::METHOD_ID);
+    }
+};
+
+}
 }
 
 

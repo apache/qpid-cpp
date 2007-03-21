@@ -18,6 +18,9 @@
  * under the License.
  *
  */
+
+#include <boost/format.hpp>
+
 #include <BrokerQueue.h>
 #include <MessageStore.h>
 #include <sys/Monitor.h>
@@ -27,8 +30,9 @@
 using namespace qpid::broker;
 using namespace qpid::sys;
 using namespace qpid::framing;
+using boost::format;
 
-Queue::Queue(const string& _name, u_int32_t _autodelete, 
+Queue::Queue(const string& _name, uint32_t _autodelete, 
              MessageStore* const _store,
              const ConnectionToken* const _owner) :
 
@@ -128,19 +132,26 @@ void Queue::dispatch(){
 
 void Queue::consume(Consumer* c, bool requestExclusive){
     Mutex::ScopedLock locker(lock);
-    if(exclusive) throw ExclusiveAccessException();
-    if(requestExclusive){
-        if(!consumers.empty()) throw ExclusiveAccessException();
+    if(exclusive) 
+        throw ChannelException(
+            403, format("Queue '%s' has an exclusive consumer."
+                        " No more consumers allowed.") % getName());
+    if(requestExclusive) {
+        if(!consumers.empty())
+            throw ChannelException(
+                403, format("Queue '%s' already has conumers."
+                            "Exclusive access denied.") %getName());
         exclusive = c;
     }
-
     if(autodelete && consumers.empty()) lastUsed = 0;
     consumers.push_back(c);
 }
 
 void Queue::cancel(Consumer* c){
     Mutex::ScopedLock locker(lock);
-    consumers.erase(find(consumers.begin(), consumers.end(), c));
+    Consumers::iterator i = std::find(consumers.begin(), consumers.end(), c);
+    if (i != consumers.end()) 
+        consumers.erase(i);
     if(autodelete && consumers.empty()) lastUsed = now()*TIME_MSEC;
     if(exclusive == c) exclusive = 0;
 }
@@ -155,7 +166,7 @@ Message::shared_ptr Queue::dequeue(){
     return msg;
 }
 
-u_int32_t Queue::purge(){
+uint32_t Queue::purge(){
     Mutex::ScopedLock locker(lock);
     int count = messages.size();
     while(!messages.empty()) pop();
@@ -178,12 +189,12 @@ void Queue::push(Message::shared_ptr& msg){
     }
 }
 
-u_int32_t Queue::getMessageCount() const{
+uint32_t Queue::getMessageCount() const{
     Mutex::ScopedLock locker(lock);
     return messages.size();
 }
 
-u_int32_t Queue::getConsumerCount() const{
+uint32_t Queue::getConsumerCount() const{
     Mutex::ScopedLock locker(lock);
     return consumers.size();
 }

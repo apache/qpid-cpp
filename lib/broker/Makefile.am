@@ -17,11 +17,15 @@ libqpidbroker_la_SOURCES =			\
   Binding.h					\
   Broker.cpp					\
   Broker.h					\
+  BrokerSingleton.cpp				\
+  BrokerSingleton.h				\
   BrokerChannel.cpp				\
   BrokerChannel.h				\
   BrokerExchange.h				\
   BrokerMessage.cpp				\
   BrokerMessage.h				\
+  BrokerMessageMessage.cpp				\
+  BrokerMessageMessage.h				\
   BrokerQueue.cpp				\
   BrokerQueue.h					\
   Configuration.cpp				\
@@ -66,10 +70,16 @@ libqpidbroker_la_SOURCES =			\
   QueueRegistry.h				\
   RecoveryManager.cpp				\
   RecoveryManager.h				\
-  SessionHandlerFactoryImpl.cpp			\
-  SessionHandlerFactoryImpl.h			\
-  SessionHandlerImpl.cpp			\
-  SessionHandlerImpl.h				\
+  Reference.cpp					\
+  Reference.h					\
+  ConnectionFactory.cpp				\
+  ConnectionFactory.h				\
+  Connection.cpp				\
+  Connection.h					\
+  BrokerAdapter.cpp				\
+  BrokerAdapter.h				\
+  MessageHandlerImpl.cpp			\
+  MessageHandlerImpl.h				\
   TopicExchange.cpp				\
   TopicExchange.h				\
   TransactionalStore.h				\

@@ -18,24 +18,58 @@
  * under the License.
  *
  */
-#include <Buffer.h>
-#include <FramingContent.h> 
+#include <assert.h>
 
-namespace qpid
-{
-namespace framing
-{
+#include "Buffer.h"
+#include "FramingContent.h"
+#include <QpidError.h>
+#include <sstream>
+
+namespace qpid {
+namespace framing {
+
+Content::Content() : discriminator(0) {}
+
+Content::Content(uint8_t _discriminator, const string& _value): discriminator(_discriminator), value(_value) {
+    validate();
+}
+
+void Content::validate() {
+    if (discriminator == REFERENCE) {
+        if(value.empty()) {
+            THROW_QPID_ERROR(FRAMING_ERROR, "Reference cannot be empty");
+        }
+    }else if (discriminator != INLINE) {
+        std::stringstream out;
+        out << "Invalid discriminator: " << (int) discriminator;
+	THROW_QPID_ERROR(FRAMING_ERROR, out.str());
+    }
+}
 
 Content::~Content() {}
   
-void Content::encode(Buffer&) const
-{
+void Content::encode(Buffer& buffer) const {
+    buffer.putOctet(discriminator);
+    buffer.putLongString(value);
 }
 
-void Content::decode(Buffer&)
-{
+void Content::decode(Buffer& buffer) {
+    discriminator = buffer.getOctet();
+    buffer.getLongString(value);
+    validate();
 }
 
+size_t Content::size() const {
+    return 1/*discriminator*/ + 4/*for recording size of long string*/ + value.size();
+}
 
-} // namespace framing
-} // namespace qpid
+std::ostream& operator<<(std::ostream& out, const Content& content) {
+    if (content.discriminator == REFERENCE) {
+        out << "{REF:" << content.value << "}";
+    } else if (content.discriminator == INLINE) {
+        out << "{INLINE:" << content.value.size() << " bytes}";
+    }
+    return out;
+}
+
+}} // namespace framing::qpid

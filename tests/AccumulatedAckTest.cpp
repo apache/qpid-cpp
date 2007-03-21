@@ -29,11 +29,38 @@ using namespace qpid::broker;
 class AccumulatedAckTest : public CppUnit::TestCase  
 {
         CPPUNIT_TEST_SUITE(AccumulatedAckTest);
+        CPPUNIT_TEST(testGeneral);
         CPPUNIT_TEST(testCovers);
         CPPUNIT_TEST(testUpdateAndConsolidate);
         CPPUNIT_TEST_SUITE_END();
 
     public:
+        void testGeneral()
+        {
+            AccumulatedAck ack(0);
+            ack.clear();
+            ack.update(3,3);
+            ack.update(7,7);
+            ack.update(9,9);
+            ack.update(1,2);
+            ack.update(4,5);
+            ack.update(6,6);
+
+            for(int i = 1; i <= 7; i++) CPPUNIT_ASSERT(ack.covers(i));
+            CPPUNIT_ASSERT(ack.covers(9));
+
+            CPPUNIT_ASSERT(!ack.covers(8));
+            CPPUNIT_ASSERT(!ack.covers(10));
+
+            ack.consolidate();
+
+            for(int i = 1; i <= 7; i++) CPPUNIT_ASSERT(ack.covers(i));
+            CPPUNIT_ASSERT(ack.covers(9));
+
+            CPPUNIT_ASSERT(!ack.covers(8));
+            CPPUNIT_ASSERT(!ack.covers(10));
+        }
+
         void testCovers()
         {
             AccumulatedAck ack(5);
@@ -56,24 +83,21 @@ class AccumulatedAckTest : public CppUnit::TestCase
         void testUpdateAndConsolidate()
         {
             AccumulatedAck ack(0);
-            ack.update(1, false);
-            ack.update(3, false);
-            ack.update(10, false);
-            ack.update(8, false);
-            ack.update(6, false);
-            ack.update(3, true);
-            ack.update(2, true);
-            ack.update(5, true);
+            ack.update(1, 1);
+            ack.update(3, 3);
+            ack.update(10, 10);
+            ack.update(8, 8);
+            ack.update(6, 6);
+            ack.update(3, 3);
+            ack.update(2, 2);
+            ack.update(0, 5);
             ack.consolidate();
-            CPPUNIT_ASSERT_EQUAL((u_int64_t) 5, ack.range);
-            CPPUNIT_ASSERT_EQUAL((size_t) 3, ack.individual.size());
-            list<u_int64_t>::iterator i = ack.individual.begin();
-            CPPUNIT_ASSERT_EQUAL((u_int64_t) 6, *i);
+            CPPUNIT_ASSERT_EQUAL((uint64_t) 6, ack.range);
+            CPPUNIT_ASSERT_EQUAL((size_t) 2, ack.individual.size());
+            list<uint64_t>::iterator i = ack.individual.begin();
+            CPPUNIT_ASSERT_EQUAL((uint64_t) 8, *i);
             i++;
-            CPPUNIT_ASSERT_EQUAL((u_int64_t) 8, *i);
-            i++;
-            CPPUNIT_ASSERT_EQUAL((u_int64_t) 10, *i);
-
+            CPPUNIT_ASSERT_EQUAL((uint64_t) 10, *i);
         }
 };
 

@@ -27,29 +27,30 @@
 #include <string>
 #include <vector>
 
-namespace qpid
-{
-namespace framing
-{
+namespace qpid {
+namespace framing {
 
-class ProtocolVersionException : virtual public qpid::Exception
+class ProtocolVersionException : public qpid::Exception
 {
 protected:
     ProtocolVersion versionFound;
      
 public:
-    ProtocolVersionException() throw ();
-    ProtocolVersionException(const std::string& str) throw ();
-    ProtocolVersionException(const char* str) throw ();
-	ProtocolVersionException(const ProtocolVersion& versionFound_, const std::string& str) throw ();
-	ProtocolVersionException(const ProtocolVersion& versionFound_, const char* str) throw ();
-    virtual ~ProtocolVersionException() throw ();
-      
-    virtual const char* what() const throw();
-    virtual std::string toString() const throw();
-}; // class ProtocolVersionException
+    ~ProtocolVersionException() throw() {}
 
-} // namespace framing
-} // namespace qpid
+    template <class T>
+    ProtocolVersionException(
+        ProtocolVersion ver, const T& msg) throw () : versionFound(ver)
+    { init(boost::lexical_cast<std::string>(msg)); }
+
+    template <class T>
+    ProtocolVersionException(const T& msg) throw () 
+    { init(boost::lexical_cast<std::string>(msg)); }
+
+  private:
+    void init(const std::string& msg);
+};
+
+}} // namespace qpid::framing
 
 #endif //ifndef _ProtocolVersionException_

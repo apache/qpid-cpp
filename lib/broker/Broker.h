@@ -23,18 +23,26 @@
  */
 
 #include <Configuration.h>
-#include <SessionHandlerFactoryImpl.h>
+#include <ConnectionFactory.h>
 #include <sys/Runnable.h>
 #include <sys/Acceptor.h>
 #include <SharedObject.h>
+#include <MessageStore.h>
+#include <AutoDelete.h>
+#include <ExchangeRegistry.h>
+#include <ConnectionToken.h>
+#include <DirectExchange.h>
+#include <OutputHandler.h>
+#include <ProtocolInitiation.h>
+#include <QueueRegistry.h>
 
 namespace qpid {
 namespace broker {
 /**
  * A broker instance. 
  */
-class Broker : public qpid::sys::Runnable,
-               public qpid::SharedObject<Broker>
+class Broker : public sys::Runnable,
+               public SharedObject<Broker>
 {
   public:
     static const int16_t DEFAULT_PORT;
@@ -58,7 +66,7 @@ class Broker : public qpid::sys::Runnable,
      * port, which will be different if the configured port is
      * 0.
      */
-    virtual int16_t getPort() const { return acceptor->getPort(); }
+    virtual int16_t getPort() const;
             
     /**
      * Run the broker. Implements Runnable::run() so the broker
@@ -69,13 +77,29 @@ class Broker : public qpid::sys::Runnable,
     /** Shut down the broker */
     virtual void shutdown();
 
+    MessageStore& getStore() { return *store; }
+    QueueRegistry& getQueues() { return queues; }
+    ExchangeRegistry& getExchanges() { return exchanges; }
+    uint32_t getTimeout() { return timeout; }
+    uint64_t getStagingThreshold() { return stagingThreshold; }
+    AutoDelete& getCleaner() { return cleaner; }
+    
   private:
-    Broker(const Configuration& config); 
-    qpid::sys::Acceptor::shared_ptr acceptor;
-    SessionHandlerFactoryImpl factory;
+    Broker(const Configuration& config);
+    sys::Acceptor& getAcceptor() const;
+
+    Configuration config;
+    sys::Acceptor::shared_ptr acceptor;
+    std::auto_ptr<MessageStore> store;
+    QueueRegistry queues;
+    ExchangeRegistry exchanges;
+    uint32_t timeout;
+    uint64_t stagingThreshold;
+    AutoDelete cleaner;
+    ConnectionFactory factory;
 };
-}
-}
+
+}}
             
 
 

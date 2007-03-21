@@ -19,12 +19,18 @@
  *
  */
 #include <ClientMessage.h>
-
 using namespace qpid::client;
 using namespace qpid::framing;
 
-Message::Message(){
-    header = AMQHeaderBody::shared_ptr(new AMQHeaderBody(BASIC));
+Message::Message(const std::string& d)
+    : header(new AMQHeaderBody(BASIC))
+{
+    setData(d);
+}
+
+void Message::setData(const std::string& d) {
+    data = d;
+    header->setContentSize(d.size());
 }
 
 Message::Message(AMQHeaderBody::shared_ptr& _header) : header(_header){
@@ -33,63 +39,63 @@ Message::Message(AMQHeaderBody::shared_ptr& _header) : header(_header){
 Message::~Message(){
 }
 	
-BasicHeaderProperties* Message::getHeaderProperties(){
+BasicHeaderProperties* Message::getHeaderProperties() const {
     return dynamic_cast<BasicHeaderProperties*>(header->getProperties());
 }
 
-const std::string& Message::getContentType(){ 
+const std::string& Message::getContentType() const { 
     return getHeaderProperties()->getContentType(); 
 }
 
-const std::string& Message::getContentEncoding(){ 
+const std::string& Message::getContentEncoding() const { 
     return getHeaderProperties()->getContentEncoding(); 
 }
 
-FieldTable& Message::getHeaders(){ 
+FieldTable& Message::getHeaders() const { 
     return getHeaderProperties()->getHeaders(); 
 }
 
-u_int8_t Message::getDeliveryMode(){ 
+uint8_t Message::getDeliveryMode() const { 
     return getHeaderProperties()->getDeliveryMode(); 
 }
 
-u_int8_t Message::getPriority(){ 
+uint8_t Message::getPriority() const { 
     return getHeaderProperties()->getPriority(); 
 }
 
-const std::string& Message::getCorrelationId(){
+const std::string& Message::getCorrelationId() const {
     return getHeaderProperties()->getCorrelationId(); 
 }
 
-const std::string& Message::getReplyTo(){ 
+const std::string& Message::getReplyTo() const { 
     return getHeaderProperties()->getReplyTo(); 
 }
 
-const std::string& Message::getExpiration(){ 
+const std::string& Message::getExpiration() const { 
     return getHeaderProperties()->getExpiration(); 
 }
 
-const std::string& Message::getMessageId(){
+const std::string& Message::getMessageId() const {
     return getHeaderProperties()->getMessageId(); 
 }
 
-u_int64_t Message::getTimestamp(){ 
+uint64_t Message::getTimestamp() const { 
     return getHeaderProperties()->getTimestamp(); 
 }
 
-const std::string& Message::getType(){ 
+const std::string& Message::getType() const { 
     return getHeaderProperties()->getType(); 
 }
 
-const std::string& Message::getUserId(){ 
+const std::string& Message::getUserId() const { 
     return getHeaderProperties()->getUserId(); 
 }
 
-const std::string& Message::getAppId(){ 
+const std::string& Message::getAppId() const { 
     return getHeaderProperties()->getAppId(); 
 }
 
-const std::string& Message::getClusterId(){ 
+const std::string& Message::getClusterId() const { 
     return getHeaderProperties()->getClusterId(); 
 }
 
@@ -105,11 +111,11 @@ void Message::setHeaders(const FieldTable& headers){
     getHeaderProperties()->setHeaders(headers); 
 }
 
-void Message::setDeliveryMode(u_int8_t mode){ 
+void Message::setDeliveryMode(uint8_t mode){ 
     getHeaderProperties()->setDeliveryMode(mode); 
 }
 
-void Message::setPriority(u_int8_t priority){ 
+void Message::setPriority(uint8_t priority){ 
     getHeaderProperties()->setPriority(priority); 
 }
 
@@ -129,7 +135,7 @@ void Message::setMessageId(const std::string& messageId){
     getHeaderProperties()->setMessageId(messageId); 
 }
 
-void Message::setTimestamp(u_int64_t timestamp){ 
+void Message::setTimestamp(uint64_t timestamp){ 
     getHeaderProperties()->setTimestamp(timestamp); 
 }
 
@@ -147,4 +153,10 @@ void Message::setAppId(const std::string& appId){
 
 void Message::setClusterId(const std::string& clusterId){ 
     getHeaderProperties()->setClusterId(clusterId); 
+}
+
+
+uint64_t Message::getDeliveryTag() const {
+    BasicDeliverBody* deliver=dynamic_cast<BasicDeliverBody*>(method.get());
+    return deliver ? deliver->getDeliveryTag() : 0;
 }

@@ -18,6 +18,8 @@
  * under the License.
  *
  */
+#include <boost/cast.hpp>
+
 #include <BrokerMessage.h>
 #include <iostream>
 
@@ -26,40 +28,46 @@
 #include <MessageStore.h>
 #include <BasicDeliverBody.h>
 #include <BasicGetOkBody.h>
+#include <AMQContentBody.h>
+#include <AMQHeaderBody.h>
+#include "AMQMethodBody.h"
+#include "AMQFrame.h"
+#include "framing/ChannelAdapter.h"
 
 using namespace boost;
 using namespace qpid::broker;
 using namespace qpid::framing;
 using namespace qpid::sys;
 
-Message::Message(const ConnectionToken* const _publisher, 
-                 const string& _exchange, const string& _routingKey, 
-                 bool _mandatory, bool _immediate) : publisher(_publisher),
-                                                     exchange(_exchange),
-                                                     routingKey(_routingKey), 
-                                                     mandatory(_mandatory),
-                                                     immediate(_immediate),
-                                                     redelivered(false),
-                                                     size(0),
-                                                     persistenceId(0) {}
+BasicMessage::BasicMessage(
+    const ConnectionToken* const _publisher, 
+    const string& _exchange, const string& _routingKey, 
+    bool _mandatory, bool _immediate, framing::AMQMethodBody::shared_ptr respondTo
+) :
+    Message(_publisher, _exchange, _routingKey, _mandatory,
+            _immediate, respondTo),
+    size(0)
+{}
 
-Message::Message(Buffer& buffer, bool headersOnly, u_int32_t contentChunkSize) : 
-    publisher(0), mandatory(false), immediate(false), redelivered(false), size(0), persistenceId(0){
+// FIXME aconway 2007-02-01: remove.
+// BasicMessage::BasicMessage(Buffer& buffer, bool headersOnly, uint32_t contentChunkSize) : 
+//     publisher(0), size(0)
+// {
 
-    decode(buffer, headersOnly, contentChunkSize);
-}
+//     decode(buffer, headersOnly, contentChunkSize);
+// }
 
-Message::Message() : publisher(0), mandatory(false), immediate(false), redelivered(false), size(0), persistenceId(0){}
+// For tests only.
+BasicMessage::BasicMessage() : size(0)
+{}
 
-Message::~Message(){
-    if (content.get()) content->destroy();
-}
+BasicMessage::~BasicMessage(){}
 
-void Message::setHeader(AMQHeaderBody::shared_ptr _header){
+void BasicMessage::setHeader(AMQHeaderBody::shared_ptr _header){
     this->header = _header;
 }
 
-void Message::addContent(AMQContentBody::shared_ptr data){
+void BasicMessage::addContent(AMQContentBody::shared_ptr data){
     if (!content.get()) {
         content = std::auto_ptr<Content>(new InMemoryContent());
     }
@@ -67,77 +75,89 @@ void Message::addContent(AMQContentBody::shared_ptr data){
     size += data->size();    
 }
 
-bool Message::isComplete(){
+bool BasicMessage::isComplete(){
     return header.get() && (header->getContentSize() == contentSize());
 }
 
-void Message::redeliver(){
-    redelivered = true;
+void BasicMessage::deliver(ChannelAdapter& channel, 
+                           const string& consumerTag, uint64_t deliveryTag, 
+                           uint32_t framesize)
+{
+    // CCT -- TODO - Update code generator to take pointer/ not
+    // instance to avoid extra contruction
+    channel.send(
+    	new BasicDeliverBody(
+            channel.getVersion(), consumerTag, deliveryTag,
+            getRedelivered(), getExchange(), getRoutingKey()));
+    sendContent(channel, framesize);
 }
 
-void Message::deliver(OutputHandler* out, int channel, 
-                      const string& consumerTag, u_int64_t deliveryTag, 
-                      u_int32_t framesize,
-		      ProtocolVersion* version){
-    // CCT -- TODO - Update code generator to take pointer/ not instance to avoid extra contruction
-    out->send(new AMQFrame(*version, channel, new BasicDeliverBody(*version, consumerTag, deliveryTag, redelivered, exchange, routingKey)));
-    sendContent(out, channel, framesize, version);
+void BasicMessage::sendGetOk(const MethodContext& context,
+    					     const std::string& /*destination*/,
+                             uint32_t messageCount,
+                             uint64_t deliveryTag, 
+                             uint32_t framesize)
+{
+    // CCT -- TODO - Update code generator to take pointer/ not
+    // instance to avoid extra contruction
+    context.channel->send(
+        new BasicGetOkBody(
+            context.channel->getVersion(),
+            context.methodBody->getRequestId(),
+            deliveryTag, getRedelivered(), getExchange(),
+            getRoutingKey(), messageCount)); 
+    sendContent(*context.channel, framesize);
 }
 
-void Message::sendGetOk(OutputHandler* out, 
-         int channel, 
-         u_int32_t messageCount,
-         u_int64_t deliveryTag, 
-         u_int32_t framesize,
-	 ProtocolVersion* version){
-     // CCT -- TODO - Update code generator to take pointer/ not instance to avoid extra contruction
-     out->send(new AMQFrame(*version, channel, new BasicGetOkBody(*version, deliveryTag, redelivered, exchange, routingKey, messageCount)));
-    sendContent(out, channel, framesize, version);
-}
-
-void Message::sendContent(OutputHandler* out, int channel, u_int32_t framesize, ProtocolVersion* version){
-    AMQBody::shared_ptr headerBody = static_pointer_cast<AMQBody, AMQHeaderBody>(header);
-    out->send(new AMQFrame(*version, channel, headerBody));
-
+void BasicMessage::sendContent(
+    ChannelAdapter& channel, uint32_t framesize)
+{
+    channel.send(header);
     Mutex::ScopedLock locker(contentLock);
-    if (content.get()) content->send(*version, out, channel, framesize);
+    if (content.get())
+        content->send(channel,  framesize);
 }
 
-BasicHeaderProperties* Message::getHeaderProperties(){
-    return dynamic_cast<BasicHeaderProperties*>(header->getProperties());
+BasicHeaderProperties* BasicMessage::getHeaderProperties(){
+    return boost::polymorphic_downcast<BasicHeaderProperties*>(
+        header->getProperties());
 }
 
-const ConnectionToken* const Message::getPublisher(){
-    return publisher;
+const FieldTable& BasicMessage::getApplicationHeaders(){
+    return getHeaderProperties()->getHeaders();
 }
 
-bool Message::isPersistent()
+bool BasicMessage::isPersistent()
 {
     if(!header) return false;
     BasicHeaderProperties* props = getHeaderProperties();
     return props && props->getDeliveryMode() == PERSISTENT;
 }
 
-void Message::decode(Buffer& buffer, bool headersOnly, u_int32_t contentChunkSize)
+void BasicMessage::decode(Buffer& buffer, bool headersOnly, uint32_t contentChunkSize)
 {
     decodeHeader(buffer);
     if (!headersOnly) decodeContent(buffer, contentChunkSize);
 }
 
-void Message::decodeHeader(Buffer& buffer)
+void BasicMessage::decodeHeader(Buffer& buffer)
 {
+    string exchange;
+    string routingKey;
+
     buffer.getShortString(exchange);
     buffer.getShortString(routingKey);
+    setRouting(exchange, routingKey);
     
-    u_int32_t headerSize = buffer.getLong();
+    uint32_t headerSize = buffer.getLong();
     AMQHeaderBody::shared_ptr headerBody(new AMQHeaderBody());
     headerBody->decode(buffer, headerSize);
     setHeader(headerBody);
 }
 
-void Message::decodeContent(Buffer& buffer, u_int32_t chunkSize)
+void BasicMessage::decodeContent(Buffer& buffer, uint32_t chunkSize)
 {    
-    u_int64_t expected = expectedContentSize();
+    uint64_t expected = expectedContentSize();
     if (expected != buffer.available()) {
         std::cout << "WARN: Expected " << expectedContentSize() << " bytes, got " << buffer.available() << std::endl;
         throw Exception("Cannot decode content, buffer not large enough.");
@@ -147,9 +167,9 @@ void Message::decodeContent(Buffer& buffer, u_int32_t chunkSize)
         chunkSize = expected;
     }
 
-    u_int64_t total = 0;
+    uint64_t total = 0;
     while (total < expectedContentSize()) {
-        u_int64_t remaining =  expected - total;
+        uint64_t remaining =  expected - total;
         AMQContentBody::shared_ptr contentBody(new AMQContentBody());        
         contentBody->decode(buffer, remaining < chunkSize ? remaining : chunkSize);
         addContent(contentBody);
@@ -157,66 +177,68 @@ void Message::decodeContent(Buffer& buffer, u_int32_t chunkSize)
     }
 }
 
-void Message::encode(Buffer& buffer)
+void BasicMessage::encode(Buffer& buffer)
 {
     encodeHeader(buffer);
     encodeContent(buffer);
 }
 
-void Message::encodeHeader(Buffer& buffer)
+void BasicMessage::encodeHeader(Buffer& buffer)
 {
-    buffer.putShortString(exchange);
-    buffer.putShortString(routingKey);    
+    buffer.putShortString(getExchange());
+    buffer.putShortString(getRoutingKey());    
     buffer.putLong(header->size());
     header->encode(buffer);
 }
 
-void Message::encodeContent(Buffer& buffer)
+void BasicMessage::encodeContent(Buffer& buffer)
 {
     Mutex::ScopedLock locker(contentLock);
     if (content.get()) content->encode(buffer);
 }
 
-u_int32_t Message::encodedSize()
+uint32_t BasicMessage::encodedSize()
 {
     return  encodedHeaderSize() + encodedContentSize();
 }
 
-u_int32_t Message::encodedContentSize()
+uint32_t BasicMessage::encodedContentSize()
 {
     Mutex::ScopedLock locker(contentLock);
     return content.get() ? content->size() : 0;
 }
 
-u_int32_t Message::encodedHeaderSize()
+uint32_t BasicMessage::encodedHeaderSize()
 {
-    return exchange.size() + 1
-        + routingKey.size() + 1
+    return getExchange().size() + 1
+        + getRoutingKey().size() + 1
         + header->size() + 4;//4 extra bytes for size
 }
 
-u_int64_t Message::expectedContentSize()
+uint64_t BasicMessage::expectedContentSize()
 {
     return header.get() ? header->getContentSize() : 0;
 }
 
-void Message::releaseContent(MessageStore* store)
+void BasicMessage::releaseContent(MessageStore* store)
 {
     Mutex::ScopedLock locker(contentLock);
-    if (!isPersistent() && persistenceId == 0) {
+    if (!isPersistent() && getPersistenceId() == 0) {
         store->stage(this);
     }
     if (!content.get() || content->size() > 0) {
+        // FIXME aconway 2007-02-07: handle MessageMessage.
         //set content to lazy loading mode (but only if there is stored content):
 
         //Note: the LazyLoadedContent instance contains a raw pointer to the message, however it is
         //      then set as a member of that message so its lifetime is guaranteed to be no longer than
         //      that of the message itself
-        content = std::auto_ptr<Content>(new LazyLoadedContent(store, this, expectedContentSize()));
+        content = std::auto_ptr<Content>(
+            new LazyLoadedContent(store, this, expectedContentSize()));
     }
 }
 
-void Message::setContent(std::auto_ptr<Content>& _content)
+void BasicMessage::setContent(std::auto_ptr<Content>& _content)
 {
     Mutex::ScopedLock locker(contentLock);
     content = _content;

@@ -18,37 +18,43 @@
  * under the License.
  *
  */
-#include <boost/shared_ptr.hpp>
-#include <BodyHandler.h>
+#include "QpidError.h"
+#include "BodyHandler.h"
+#include <AMQRequestBody.h>
+#include <AMQResponseBody.h>
+#include <AMQMethodBody.h>
+#include <AMQHeaderBody.h>
+#include <AMQContentBody.h>
+#include <AMQHeartbeatBody.h>
 
 using namespace qpid::framing;
 using namespace boost;
 
 BodyHandler::~BodyHandler() {}
 
-void BodyHandler::handleBody(AMQBody::shared_ptr& body){
-
+void BodyHandler::handleBody(shared_ptr<AMQBody> body) {
     switch(body->type())
     {
-
-    case METHOD_BODY:
-	handleMethod(dynamic_pointer_cast<AMQMethodBody, AMQBody>(body));
+      case REQUEST_BODY:
+        handleRequest(shared_polymorphic_cast<AMQRequestBody>(body));
+        break; 
+      case RESPONSE_BODY:
+        handleResponse(shared_polymorphic_cast<AMQResponseBody>(body));
+        break;
+      case METHOD_BODY:
+	handleMethod(shared_polymorphic_cast<AMQMethodBody>(body));
 	break;
- 
-   case HEADER_BODY:
-	handleHeader(dynamic_pointer_cast<AMQHeaderBody, AMQBody>(body));
+      case HEADER_BODY:
+	handleHeader(shared_polymorphic_cast<AMQHeaderBody>(body));
 	break;
-
-    case CONTENT_BODY:
-	handleContent(dynamic_pointer_cast<AMQContentBody, AMQBody>(body));
+      case CONTENT_BODY:
+	handleContent(shared_polymorphic_cast<AMQContentBody>(body));
 	break;
-
-    case HEARTBEAT_BODY:
-	handleHeartbeat(dynamic_pointer_cast<AMQHeartbeatBody, AMQBody>(body));
+      case HEARTBEAT_BODY:
+	handleHeartbeat(shared_polymorphic_cast<AMQHeartbeatBody>(body));
 	break;
-
-    default:
-	throw UnknownBodyType(body->type());
+      default:
+        QPID_ERROR(PROTOCOL_ERROR, "Unknown frame type "+body->type());
     }
-
 }
+

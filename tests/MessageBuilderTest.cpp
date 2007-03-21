@@ -26,6 +26,7 @@
 #include <qpid_test_plugin.h>
 #include <iostream>
 #include <memory>
+#include "MockChannel.h"
 
 using namespace boost;
 using namespace qpid::broker;
@@ -34,10 +35,10 @@ using namespace qpid::sys;
 
 class MessageBuilderTest : public CppUnit::TestCase  
 {
-    struct DummyHandler : MessageBuilder::CompletionHandler{
+    struct MockHandler : CompletionHandler {
         Message::shared_ptr msg;
-        
-        virtual void complete(Message::shared_ptr& _msg){
+
+        virtual void complete(Message::shared_ptr _msg){
             msg = _msg;
         }
     };
@@ -46,9 +47,9 @@ class MessageBuilderTest : public CppUnit::TestCase
     {
         Buffer* header;
         Buffer* content;
-        const u_int32_t contentBufferSize;
+        const uint32_t contentBufferSize;
         
-    public:
+      public:
 
         void stage(Message* const msg)
         {
@@ -71,14 +72,17 @@ class MessageBuilderTest : public CppUnit::TestCase
             }
         }
 
-        void destroy(Message* msg)
+        // Don't hide overloads.
+        using NullMessageStore::destroy;
+
+        void destroy(BasicMessage* msg)
         {
             CPPUNIT_ASSERT(msg->getPersistenceId());
         }
 
-        Message::shared_ptr getRestoredMessage()
+        BasicMessage::shared_ptr getRestoredMessage()
         {
-            Message::shared_ptr msg(new Message());
+            BasicMessage::shared_ptr msg(new BasicMessage());
             if (header) {
                 header->flip();
                 msg->decodeHeader(*header);
@@ -95,7 +99,7 @@ class MessageBuilderTest : public CppUnit::TestCase
         }
         
         //dont care about any of the other methods:
-        TestMessageStore(u_int32_t _contentBufferSize) : NullMessageStore(false), header(0), content(0), 
+        TestMessageStore(uint32_t _contentBufferSize) : NullMessageStore(), header(0), content(0), 
                                                          contentBufferSize(_contentBufferSize) {}
         ~TestMessageStore(){}
     };
@@ -110,10 +114,13 @@ class MessageBuilderTest : public CppUnit::TestCase
   public:
 
     void testHeaderOnly(){
-        DummyHandler handler;
+        MockHandler handler;
         MessageBuilder builder(&handler);
 
-        Message::shared_ptr message(new Message(0, "test", "my_routing_key", false, false));
+        Message::shared_ptr message(
+            new BasicMessage(
+                0, "test", "my_routing_key", false, false,
+                MockChannel::basicGetBody()));
         AMQHeaderBody::shared_ptr header(new AMQHeaderBody(BASIC));
         header->setContentSize(0);
         
@@ -125,12 +132,14 @@ class MessageBuilderTest : public CppUnit::TestCase
     }
 
     void test1ContentFrame(){
-        DummyHandler handler;
+        MockHandler handler;
         MessageBuilder builder(&handler);
 
         string data1("abcdefg");
 
-        Message::shared_ptr message(new Message(0, "test", "my_routing_key", false, false));
+        Message::shared_ptr message(
+            new BasicMessage(0, "test", "my_routing_key", false, false,
+                             MockChannel::basicGetBody()));
         AMQHeaderBody::shared_ptr header(new AMQHeaderBody(BASIC));
         header->setContentSize(7);
         AMQContentBody::shared_ptr part1(new AMQContentBody(data1));
@@ -145,13 +154,15 @@ class MessageBuilderTest : public CppUnit::TestCase
     }
 
     void test2ContentFrames(){
-        DummyHandler handler;
+        MockHandler handler;
         MessageBuilder builder(&handler);
 
         string data1("abcdefg");
         string data2("hijklmn");
 
-        Message::shared_ptr message(new Message(0, "test", "my_routing_key", false, false));
+        Message::shared_ptr message(
+            new BasicMessage(0, "test", "my_routing_key", false, false,
+                             MockChannel::basicGetBody()));
         AMQHeaderBody::shared_ptr header(new AMQHeaderBody(BASIC));
         header->setContentSize(14);
         AMQContentBody::shared_ptr part1(new AMQContentBody(data1));
@@ -174,13 +185,15 @@ class MessageBuilderTest : public CppUnit::TestCase
         //loaded content is in use)
         TestMessageStore store(14);
         {
-            DummyHandler handler;
+            MockHandler handler;
             MessageBuilder builder(&handler, &store, 5);
             
             string data1("abcdefg");
             string data2("hijklmn");
             
-            Message::shared_ptr message(new Message(0, "test", "my_routing_key", false, false));
+            Message::shared_ptr message(
+                new BasicMessage(0, "test", "my_routing_key", false, false,
+                                 MockChannel::basicGetBody()));
             AMQHeaderBody::shared_ptr header(new AMQHeaderBody(BASIC));
             header->setContentSize(14);
             BasicHeaderProperties* properties = dynamic_cast<BasicHeaderProperties*>(header->getProperties());
@@ -197,13 +210,13 @@ class MessageBuilderTest : public CppUnit::TestCase
             CPPUNIT_ASSERT(handler.msg);
             CPPUNIT_ASSERT_EQUAL(message, handler.msg);
             
-            Message::shared_ptr restored = store.getRestoredMessage();
+            BasicMessage::shared_ptr restored = store.getRestoredMessage();
             CPPUNIT_ASSERT_EQUAL(message->getExchange(), restored->getExchange());
             CPPUNIT_ASSERT_EQUAL(message->getRoutingKey(), restored->getRoutingKey());
             CPPUNIT_ASSERT_EQUAL(message->getHeaderProperties()->getMessageId(), restored->getHeaderProperties()->getMessageId());
             CPPUNIT_ASSERT_EQUAL(message->getHeaderProperties()->getHeaders().getString("abc"), 
                                  restored->getHeaderProperties()->getHeaders().getString("abc"));
-            CPPUNIT_ASSERT_EQUAL((u_int64_t) 14, restored->contentSize());
+            CPPUNIT_ASSERT_EQUAL((uint64_t) 14, restored->contentSize());
         }
     }
 };

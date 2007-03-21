@@ -1,3 +1,6 @@
+#ifndef _broker_BrokerQueue_h
+#define _broker_BrokerQueue_h
+
 /*
  *
  * Licensed to the Apache Software Foundation (ASF) under one
@@ -18,9 +21,6 @@
  * under the License.
  *
  */
-#ifndef _Queue_
-#define _Queue_
-
 #include <vector>
 #include <memory>
 #include <queue>
@@ -34,6 +34,9 @@
 #include <sys/Monitor.h>
 #include <QueuePolicy.h>
 
+// TODO aconway 2007-02-06: Use auto_ptr and boost::ptr_vector to
+// enforce ownership of Consumers.
+
 namespace qpid {
     namespace broker {
         class MessageStore;
@@ -41,8 +44,6 @@ namespace qpid {
         /**
          * Thrown when exclusive access would be violated.
          */
-        struct ExclusiveAccessException{};
-
         using std::string;
 
         /**
@@ -52,20 +53,24 @@ namespace qpid {
          * or more consumers registers.
          */
         class Queue{
+            typedef std::vector<Consumer*> Consumers;
+            typedef std::queue<Binding*> Bindings;
+            typedef std::queue<Message::shared_ptr> Messages;
+            
             const string name;
-            const u_int32_t autodelete;
+            const uint32_t autodelete;
             MessageStore* const store;
             const ConnectionToken* const owner;
-            std::vector<Consumer*> consumers;
-            std::queue<Binding*> bindings;
-            std::queue<Message::shared_ptr> messages;
+            Consumers consumers;
+            Bindings bindings;
+            Messages messages;
             bool queueing;
             bool dispatching;
             int next;
             mutable qpid::sys::Mutex lock;
             int64_t lastUsed;
             Consumer* exclusive;
-            mutable u_int64_t persistenceId;
+            mutable uint64_t persistenceId;
             std::auto_ptr<QueuePolicy> policy;            
 
             void pop();
@@ -80,7 +85,7 @@ namespace qpid {
 
             typedef std::vector<shared_ptr> vector;
 	    
-            Queue(const string& name, u_int32_t autodelete = 0, 
+            Queue(const string& name, uint32_t autodelete = 0, 
                   MessageStore* const store = 0, 
                   const ConnectionToken* const owner = 0);
             ~Queue();
@@ -116,14 +121,14 @@ namespace qpid {
             void dispatch();
             void consume(Consumer* c, bool exclusive = false);
             void cancel(Consumer* c);
-            u_int32_t purge();
-            u_int32_t getMessageCount() const;
-            u_int32_t getConsumerCount() const;
+            uint32_t purge();
+            uint32_t getMessageCount() const;
+            uint32_t getConsumerCount() const;
             inline const string& getName() const { return name; }
             inline const bool isExclusiveOwner(const ConnectionToken* const o) const { return o == owner; }
             inline bool hasExclusiveConsumer() const { return exclusive; }
-            inline u_int64_t getPersistenceId() const { return persistenceId; }
-            inline void setPersistenceId(u_int64_t _persistenceId) const { persistenceId = _persistenceId; }
+            inline uint64_t getPersistenceId() const { return persistenceId; }
+            inline void setPersistenceId(uint64_t _persistenceId) const { persistenceId = _persistenceId; }
 
             bool canAutoDelete() const;
 
@@ -143,4 +148,4 @@ namespace qpid {
 }
 
 
-#endif
+#endif  /*!_broker_BrokerQueue_h*/

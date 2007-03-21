@@ -24,11 +24,11 @@
 #include "framing/AMQHeartbeatBody.h"
 #include "framing/AMQFrame.h"
 #include "sys/posix/EventChannelConnection.h"
-#include "sys/SessionHandler.h"
-#include "sys/SessionHandlerFactory.h"
+#include "sys/ConnectionInputHandler.h"
+#include "sys/ConnectionInputHandlerFactory.h"
 #include "sys/Socket.h"
 #include "qpid_test_plugin.h"
-#include "MockSessionHandler.h"
+#include "MockConnectionInputHandler.h"
 
 using namespace qpid::sys;
 using namespace qpid::framing;
@@ -74,8 +74,8 @@ class EventChannelConnectionTest : public CppUnit::TestCase
         // Send a heartbeat frame, verify connection got it.
         connection->send(new AMQFrame(42, new AMQHeartbeatBody()));
         AMQFrame frame = factory.handler->waitForFrame();
-        CPPUNIT_ASSERT_EQUAL(u_int16_t(42), frame.getChannel());
-        CPPUNIT_ASSERT_EQUAL(u_int8_t(HEARTBEAT_BODY),
+        CPPUNIT_ASSERT_EQUAL(uint16_t(42), frame.getChannel());
+        CPPUNIT_ASSERT_EQUAL(uint8_t(HEARTBEAT_BODY),
                              frame.getBody()->type());
         threads->shutdown();
     }
@@ -100,7 +100,7 @@ class EventChannelConnectionTest : public CppUnit::TestCase
     EventChannelThreads::shared_ptr threads;
     int pipe[2];
     std::auto_ptr<EventChannelConnection> connection;
-    MockSessionHandlerFactory factory;
+    MockConnectionInputHandlerFactory factory;
 };
 
 // Make this test suite a plugin.

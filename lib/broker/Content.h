@@ -21,24 +21,44 @@
 #ifndef _Content_
 #define _Content_
 
+#include <boost/function.hpp>
+
 #include <AMQContentBody.h>
 #include <Buffer.h>
 #include <OutputHandler.h>
-#include <ProtocolVersion.h>
 
 namespace qpid {
-    namespace broker {
-        class Content{
-        public:
-            virtual void add(qpid::framing::AMQContentBody::shared_ptr data) = 0;
-            virtual u_int32_t size() = 0;
-            virtual void send(qpid::framing::ProtocolVersion& version, qpid::framing::OutputHandler* out, int channel, u_int32_t framesize) = 0;
-            virtual void encode(qpid::framing::Buffer& buffer) = 0;
-            virtual void destroy() = 0;
-            virtual ~Content(){}
-        };
-    }
+
+namespace framing {
+class ChannelAdapter;
 }
+
+namespace broker {
+class Content{
+  public:
+    typedef std::string DataBlock;
+    typedef boost::function1<void, const DataBlock&> SendFn;
+
+    virtual ~Content(){}
+    
+    /** Add a block of data to the content */
+    virtual void add(framing::AMQContentBody::shared_ptr data) = 0;
+
+    /** Total size of content in bytes */
+    virtual uint32_t size() = 0;
+
+    /**
+     * Iterate over the content calling SendFn for each block.
+     * Subdivide blocks if necessary to ensure each block is
+     * <= framesize bytes long.
+     */
+    virtual void send(framing::ChannelAdapter& channel, uint32_t framesize) = 0;
+
+    //FIXME aconway 2007-02-07: This is inconsistently implemented
+    //find out what is needed.
+    virtual void encode(qpid::framing::Buffer& buffer) = 0;
+};
+}}
 
 
 #endif

@@ -30,8 +30,8 @@
 #include <AMQFrame.h>
 #include <Buffer.h>
 #include <sys/Monitor.h>
-#include <sys/SessionContext.h>
-#include <sys/SessionHandler.h>
+#include <sys/ConnectionOutputHandler.h>
+#include <sys/ConnectionInputHandler.h>
 
 #include "APRSocket.h"
 #include "LFProcessor.h"
@@ -40,7 +40,7 @@ namespace qpid {
 namespace sys {
 
 
-class LFSessionContext : public virtual qpid::sys::SessionContext
+class LFSessionContext : public virtual qpid::sys::ConnectionOutputHandler
 {
     const bool debug;
     APRSocket socket;
@@ -49,7 +49,7 @@ class LFSessionContext : public virtual qpid::sys::SessionContext
     qpid::framing::Buffer in;
     qpid::framing::Buffer out;
         
-    qpid::sys::SessionHandler* handler;
+    qpid::sys::ConnectionInputHandler* handler;
     LFProcessor* const processor;
 
     apr_pollfd_t fd;
@@ -74,7 +74,7 @@ class LFSessionContext : public virtual qpid::sys::SessionContext
     virtual void close();        
     void read();
     void write();
-    void init(qpid::sys::SessionHandler* handler);
+    void init(qpid::sys::ConnectionInputHandler* handler);
     void startProcessing();
     void stopProcessing();
     void handleClose();        

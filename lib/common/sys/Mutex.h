@@ -32,6 +32,8 @@
 namespace qpid {
 namespace sys {
 
+class Condition;
+
 /**
  * Scoped lock template: calls lock() in ctor, unlock() in dtor.
  * L can be any class with lock() and unlock() functions.
@@ -46,12 +48,23 @@ class ScopedLock
     L& mutex;
 };
 
+template <class L>
+class ScopedUnlock
+{
+  public:
+    ScopedUnlock(L& l) : mutex(l) { l.unlock(); }
+    ~ScopedUnlock() { mutex.lock(); }
+  private:
+    L& mutex;
+};
+    
 /**
  * Mutex lock.
  */
 class Mutex : private boost::noncopyable {
   public:
     typedef ScopedLock<Mutex> ScopedLock;
+    typedef ScopedUnlock<Mutex> ScopedUnlock;
     
     inline Mutex();
     inline ~Mutex();
@@ -65,6 +78,7 @@ class Mutex : private boost::noncopyable {
 #else
     pthread_mutex_t mutex;
 #endif
+  friend class Condition;
 };
 
 #ifdef USE_APR

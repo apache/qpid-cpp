@@ -29,15 +29,18 @@ namespace qpid {
         class LazyLoadedContent : public Content{
             MessageStore* const store;
             Message* const msg;
-            const u_int64_t expectedSize;
+            const uint64_t expectedSize;
         public:
-            LazyLoadedContent(MessageStore* const store, Message* const msg, u_int64_t expectedSize);
+            LazyLoadedContent(
+                MessageStore* const store, Message* const msg,
+                uint64_t expectedSize);
+            ~LazyLoadedContent();
             void add(qpid::framing::AMQContentBody::shared_ptr data);
-            u_int32_t size();
-            void send(qpid::framing::ProtocolVersion& version, qpid::framing::OutputHandler* out, int channel, u_int32_t framesize);
+            uint32_t size();
+            void send(
+                framing::ChannelAdapter&,
+                uint32_t framesize);
             void encode(qpid::framing::Buffer& buffer);
-            void destroy();
-            ~LazyLoadedContent(){}
         };
     }
 }

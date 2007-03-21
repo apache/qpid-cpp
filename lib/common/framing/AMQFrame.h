@@ -1,3 +1,6 @@
+#ifndef _AMQFrame_
+#define _AMQFrame_
+
 /*
  *
  * Licensed to the Apache Software Foundation (ASF) under one
@@ -18,7 +21,8 @@
  * under the License.
  *
  */
-/*#include <qpid/framing/amqp_methods.h>*/
+#include <boost/cast.hpp>
+
 #include <amqp_types.h>
 #include <AMQBody.h>
 #include <AMQDataBlock.h>
@@ -30,42 +34,45 @@
 #include <AMQP_HighestVersion.h>
 #include <Buffer.h>
 
-#ifndef _AMQFrame_
-#define _AMQFrame_
-
 namespace qpid {
-    namespace framing {
+namespace framing {
 
 	
-        class AMQFrame : virtual public AMQDataBlock
-        {
-            static AMQP_MethodVersionMap versionMap;
-            qpid::framing::ProtocolVersion version;
-	    
-            u_int16_t channel;
-            u_int8_t type;//used if the body is decoded separately from the 'head'
-            AMQBody::shared_ptr body;
-			AMQBody::shared_ptr createMethodBody(Buffer& buffer);
-            
-        public:
-            AMQFrame(qpid::framing::ProtocolVersion& _version = highestProtocolVersion);
-            AMQFrame(qpid::framing::ProtocolVersion& _version, u_int16_t channel, AMQBody* body);
-            AMQFrame(qpid::framing::ProtocolVersion& _version, u_int16_t channel, AMQBody::shared_ptr& body);
-            virtual ~AMQFrame();
-            virtual void encode(Buffer& buffer); 
-            virtual bool decode(Buffer& buffer); 
-            virtual u_int32_t size() const;
-            u_int16_t getChannel();
-            AMQBody::shared_ptr& getBody();
+class AMQFrame : public AMQDataBlock
+{
+  public:
+    AMQFrame(ProtocolVersion _version = highestProtocolVersion);
+    AMQFrame(ProtocolVersion _version, uint16_t channel, AMQBody* body);
+    AMQFrame(ProtocolVersion _version, uint16_t channel, const AMQBody::shared_ptr& body);    
+    virtual ~AMQFrame();
+    virtual void encode(Buffer& buffer); 
+    virtual bool decode(Buffer& buffer); 
+    virtual uint32_t size() const;
+    uint16_t getChannel();
+    AMQBody::shared_ptr getBody();
 
-            u_int32_t decodeHead(Buffer& buffer); 
-            void decodeBody(Buffer& buffer, uint32_t size); 
-
-            friend std::ostream& operator<<(std::ostream& out, const AMQFrame& body);
-        };
-
+    /** Convenience template to cast the body to an expected type */
+    template <class T> boost::shared_ptr<T> castBody() {
+        assert(dynamic_cast<T*>(getBody().get()));
+        boost::static_pointer_cast<T>(getBody());
     }
-}
+
+    uint32_t decodeHead(Buffer& buffer); 
+    void decodeBody(Buffer& buffer, uint32_t size); 
+
+  private:
+        static AMQP_MethodVersionMap versionMap;
+    ProtocolVersion version;
+            
+    uint16_t channel;
+    uint8_t type;
+    AMQBody::shared_ptr body;
+            
+
+  friend std::ostream& operator<<(std::ostream& out, const AMQFrame& body);
+};
+
+}} // namespace qpid::framing
 
 
 #endif

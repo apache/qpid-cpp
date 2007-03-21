@@ -9,26 +9,10 @@ INCLUDES =				\
   -I$(top_srcdir)/lib/common/framing	\
   $(APR_CXXFLAGS)
 
-# FIXME: have e.g., topicall, run as part of "make check"?
-EXTRA_DIST =		\
-  .vg-supp		\
-  setup			\
-  env			\
-  broker		\
-  topicall		\
-  topictest		\
-  qpid_test_plugin.h	\
-  APRBaseTest.cpp
-
-client_tests =		\
-  client_test		\
-  echo_service		\
-  topic_listener	\
-  topic_publisher
-
+# Unit tests
 broker_tests =		\
   AccumulatedAckTest	\
-  ChannelTest		\
+  BrokerChannelTest 	\
   ConfigurationTest	\
   ExchangeTest		\
   HeadersExchangeTest	\
@@ -36,6 +20,7 @@ broker_tests =		\
   LazyLoadedContentTest	\
   MessageBuilderTest	\
   MessageTest		\
+  ReferenceTest         \
   QueueRegistryTest	\
   QueueTest		\
   QueuePolicyTest	\
@@ -43,16 +28,20 @@ broker_tests =		\
   TxAckTest		\
   TxBufferTest		\
   TxPublishTest		\
-  ValueTest
+  ValueTest		\
+  MessageHandlerTest 	
+
+client_tests =		\
+  ClientChannelTest
 
 framing_tests =		\
-  BodyHandlerTest	\
   FieldTableTest	\
   FramingTest		\
   HeaderTest
 
 misc_tests =		\
-  ExceptionTest
+  ExceptionTest		\
+  ProducerConsumerTest
 
 posix_tests =		\
   EventChannelTest	\
@@ -60,11 +49,19 @@ posix_tests =		\
 
 unit_tests =		\
   $(broker_tests)	\
+  $(client_tests)	\
   $(framing_tests)	\
-  $(misc_tests)
+  $(misc_tests) 	
 
+# Executable client tests
 
-noinst_PROGRAMS = $(client_tests)
+client_exe_tests =	\
+  client_test		\
+  echo_service		\
+  topic_listener	\
+  topic_publisher
+
+noinst_PROGRAMS = $(client_exe_tests)
 
 TESTS_ENVIRONMENT =			\
   VALGRIND=$(VALGRIND)			\
@@ -72,8 +69,20 @@ TESTS_ENVIRONMENT =			\
   PATH="$(abs_builddir)/../src$(PATH_SEPARATOR)$$PATH" \
   abs_srcdir='$(abs_srcdir)'
 
-TESTS = run-unit-tests run-python-tests
-EXTRA_DIST += $(TESTS)
+CLIENT_TESTS = client_test quick_topictest
+TESTS = run-unit-tests start_broker $(CLIENT_TESTS) python_tests kill_broker
+
+EXTRA_DIST =		\
+  $(TESTS) 		\
+  .vg-supp		\
+  InProcessBroker.h	\
+  MockChannel.h		\
+  MockConnectionInputHandler.h \
+  qpid_test_plugin.h	\
+  setup			\
+  topicall		\
+  topictest		\
+  APRBaseTest.cpp
 
 CLEANFILES=qpidd.log
 DISTCLEANFILES=gen.mk
@@ -88,7 +97,7 @@ lib_broker = $(abs_builddir)/../lib/broker/libqpidbroker.la
 
 gen.mk: Makefile.am
 	(					\
-	  for i in $(client_tests); do		\
+	  for i in $(client_exe_tests); do		\
 	    echo $${i}_SOURCES = $$i.cpp;	\
 	    echo $${i}_LDADD = '$$(lib_client) $$(lib_common) $$(extra_libs)'; \
 	  done;					\
@@ -96,7 +105,7 @@ gen.mk: Makefile.am
 	  for i in $(unit_tests); do		\
 	    libs="$$libs $${i}.la";		\
 	    echo $${i}_la_SOURCES = $$i.cpp;	\
-	    echo $${i}_la_LIBADD = '$$(lib_common)';			\
+	    echo $${i}_la_LIBADD = '$$(lib_common) $$(lib_client)';	\
 	    echo $${i}_la_LIBADD += '$$(lib_broker) $$(extra_libs)';	\
 	    echo $${i}_la_LDFLAGS = "-module -rpath `pwd`";	\
 	  done;					\
@@ -104,3 +113,6 @@ gen.mk: Makefile.am
 	)					\
 	> $@-t
 	mv $@-t $@
+
+
+check: $(check_LTLIBRARIES) $(lib_common) $(lib_client) $(lib_broker)

@@ -1,3 +1,6 @@
+#ifndef _AMQMethodBody_
+#define _AMQMethodBody_
+
 /*
  *
  * Licensed to the Apache Software Foundation (ASF) under one
@@ -23,40 +26,59 @@
 #include <AMQBody.h>
 #include <Buffer.h>
 #include <AMQP_ServerOperations.h>
-
-#ifndef _AMQMethodBody_
-#define _AMQMethodBody_
+#include <MethodContext.h>
 
 namespace qpid {
 namespace framing {
 
-class AMQMethodBody : virtual public AMQBody
+class AMQP_MethodVersionMap;
+
+class AMQMethodBody : public AMQBody
 {
-public:
+  public:
     typedef boost::shared_ptr<AMQMethodBody> shared_ptr;
 
-	ProtocolVersion version;
-    inline u_int8_t type() const { return METHOD_BODY; }
-    inline u_int32_t size() const { return 4 + bodySize(); }
-    inline AMQMethodBody(u_int8_t major, u_int8_t minor) : version(major, minor) {}
-    inline AMQMethodBody(ProtocolVersion version) : version(version) {}
-    inline virtual ~AMQMethodBody() {}
-    virtual void print(std::ostream& out) const = 0;
-    virtual u_int16_t amqpMethodId() const = 0;
-    virtual u_int16_t amqpClassId() const = 0;
-    virtual void invoke(AMQP_ServerOperations& target, u_int16_t channel);
+    static shared_ptr create(
+        AMQP_MethodVersionMap& map, ProtocolVersion version, Buffer& buf);
+
+    ProtocolVersion version;    
+    uint8_t type() const { return METHOD_BODY; }
+    AMQMethodBody(uint8_t major, uint8_t minor) : version(major, minor) {}
+    AMQMethodBody(ProtocolVersion ver) : version(ver) {}
+    virtual ~AMQMethodBody() {}
+    void decode(Buffer&, uint32_t);
+
+    virtual MethodId amqpMethodId() const = 0;
+    virtual ClassId  amqpClassId() const = 0;
+    
+    virtual void invoke(AMQP_ServerOperations&, const MethodContext&);
+
+    template <class T> bool isA() {
+        return amqpClassId()==T::CLASS_ID && amqpMethodId()==T::METHOD_ID;
+    }
+
+    /** Return request ID or response correlationID */
+    virtual RequestId getRequestId() const { return 0; }
+
+    virtual bool isRequest() const { return false; }
+    virtual bool isResponse() const { return false; }
+
+  protected:
+    static uint32_t baseSize() { return 4; }
+
+    struct ClassMethodId {
+        uint16_t classId;
+        uint16_t methodId;
+        void decode(Buffer& b);
+    };
+    
+    void encodeId(Buffer& buffer) const;
     virtual void encodeContent(Buffer& buffer) const = 0;
     virtual void decodeContent(Buffer& buffer) = 0;
-    virtual u_int32_t bodySize() const = 0;
-    void encode(Buffer& buffer) const;
-    void decode(Buffer& buffer, u_int32_t size);
-    bool match(AMQMethodBody* other) const;
 };
 
-std::ostream& operator<<(std::ostream& out, const AMQMethodBody& body);
 
-}
-}
+}} // namespace qpid::framing
 
 
 #endif

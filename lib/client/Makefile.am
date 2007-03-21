@@ -14,6 +14,7 @@ libqpidclient_la_SOURCES =			\
   ClientExchange.cpp				\
   ClientMessage.cpp				\
   ClientQueue.cpp				\
+  Basic.cpp					\
   Connection.cpp				\
   Connector.cpp					\
   IncomingMessage.cpp				\
@@ -25,6 +26,7 @@ pkginclude_HEADERS =				\
   ClientExchange.h				\
   ClientMessage.h				\
   ClientQueue.h					\
+  Basic.h					\
   Connection.h					\
   Connector.h					\
   IncomingMessage.h				\

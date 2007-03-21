@@ -19,36 +19,41 @@
  * under the License.
  *
  */
+#include <boost/format.hpp>
+
 #include <AMQFrame.h>
 #include <QpidError.h>
+#include "AMQRequestBody.h"
+#include "AMQResponseBody.h"
 
-using namespace qpid::framing;
+
+namespace qpid {
+namespace framing {
 
 
 AMQP_MethodVersionMap AMQFrame::versionMap;
 
-
-AMQFrame::AMQFrame(qpid::framing::ProtocolVersion& _version):
+AMQFrame::AMQFrame(ProtocolVersion _version):
 version(_version)
-{}
+ {
+     assert(version != ProtocolVersion(0,0));
+ }
 
-
-AMQFrame::AMQFrame(qpid::framing::ProtocolVersion& _version, u_int16_t _channel, AMQBody* _body) :
+AMQFrame::AMQFrame(ProtocolVersion _version, uint16_t _channel, AMQBody* _body) :
 version(_version), channel(_channel), body(_body)
 {}
 
-
-AMQFrame::AMQFrame(qpid::framing::ProtocolVersion& _version, u_int16_t _channel, AMQBody::shared_ptr& _body) :
+AMQFrame::AMQFrame(ProtocolVersion _version, uint16_t _channel, const AMQBody::shared_ptr& _body) :
 version(_version), channel(_channel), body(_body)
 {}
 
 AMQFrame::~AMQFrame() {}
 
-u_int16_t AMQFrame::getChannel(){
+uint16_t AMQFrame::getChannel(){
     return channel;
 }
 
-AMQBody::shared_ptr& AMQFrame::getBody(){
+AMQBody::shared_ptr AMQFrame::getBody(){
     return body;
 }
 
@@ -61,65 +66,65 @@ void AMQFrame::encode(Buffer& buffer)
     buffer.putOctet(0xCE);
 }
 
-AMQBody::shared_ptr AMQFrame::createMethodBody(Buffer& buffer){
-    u_int16_t classId = buffer.getShort();
-    u_int16_t methodId = buffer.getShort();
-    AMQBody::shared_ptr body(versionMap.createMethodBody(classId, methodId, version.getMajor(), version.getMinor()));
-    return body;
-}
-
-u_int32_t AMQFrame::size() const{
-    if(!body.get()) THROW_QPID_ERROR(INTERNAL_ERROR, "Attempt to get size of frame with no body set!");
-    return 1/*type*/ + 2/*channel*/ + 4/*body size*/ + body->size() + 1/*0xCE*/;
+uint32_t AMQFrame::size() const{
+    assert(body.get());
+    return 1/*type*/ + 2/*channel*/ + 4/*body size*/ + body->size()
+        + 1/*0xCE*/;
 }
 
 bool AMQFrame::decode(Buffer& buffer)
 {    
-    if(buffer.available() < 7) return false;
+    if(buffer.available() < 7)
+        return false;
     buffer.record();
-    u_int32_t bufSize = decodeHead(buffer);
-
-    if(buffer.available() < bufSize + 1){
+    uint32_t frameSize = decodeHead(buffer);
+    if(buffer.available() < frameSize + 1){
         buffer.restore();
         return false;
     }
-    decodeBody(buffer, bufSize);
-    u_int8_t end = buffer.getOctet();
+    decodeBody(buffer, frameSize);
+    uint8_t end = buffer.getOctet();
     if(end != 0xCE) THROW_QPID_ERROR(FRAMING_ERROR, "Frame end not found");
     return true;
 }
 
-u_int32_t AMQFrame::decodeHead(Buffer& buffer){    
+uint32_t AMQFrame::decodeHead(Buffer& buffer){    
     type = buffer.getOctet();
     channel = buffer.getShort();
     return buffer.getLong();
 }
 
-void AMQFrame::decodeBody(Buffer& buffer, uint32_t bufSize)
+void AMQFrame::decodeBody(Buffer& buffer, uint32_t size)
 {    
     switch(type)
     {
-    case METHOD_BODY:
-	body = createMethodBody(buffer);
-	break;
-    case HEADER_BODY: 
+      case METHOD_BODY:
+        body = AMQMethodBody::create(versionMap, version, buffer);
+        break;
+      case REQUEST_BODY:
+        body = AMQRequestBody::create(versionMap, version, buffer);
+        break;
+      case RESPONSE_BODY:
+        body = AMQResponseBody::create(versionMap, version, buffer);
+        break;
+      case HEADER_BODY: 
 	body = AMQBody::shared_ptr(new AMQHeaderBody()); 
 	break;
-    case CONTENT_BODY: 
+      case CONTENT_BODY: 
 	body = AMQBody::shared_ptr(new AMQContentBody()); 
 	break;
-    case HEARTBEAT_BODY: 
+      case HEARTBEAT_BODY: 
 	body = AMQBody::shared_ptr(new AMQHeartbeatBody()); 
 	break;
-    default:
-	string msg("Unknown body type: ");
-	msg += type;
-	THROW_QPID_ERROR(FRAMING_ERROR, msg);
+      default:
+	THROW_QPID_ERROR(
+            FRAMING_ERROR,
+            boost::format("Unknown frame type %d") % type);
     }
-    body->decode(buffer, bufSize);
+    body->decode(buffer, size);
 }
 
-std::ostream& qpid::framing::operator<<(std::ostream& out, const AMQFrame& t)
+std::ostream& operator<<(std::ostream& out, const AMQFrame& t)
 {
     out << "Frame[channel=" << t.channel << "; ";
     if (t.body.get() == 0)
@@ -130,3 +135,5 @@ std::ostream& qpid::framing::operator<<(std::ostream& out, const AMQFrame& t)
     return out;
 }
 
+
+}} // namespace qpid::framing

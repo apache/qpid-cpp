@@ -23,16 +23,19 @@
 #include <sys/Time.h>
 #include "Connector.h"
 
+namespace qpid {
+namespace client {
+
 using namespace qpid::sys;
-using namespace qpid::client;
 using namespace qpid::framing;
 using qpid::QpidError;
 
-Connector::Connector(const qpid::framing::ProtocolVersion& pVersion, bool _debug, u_int32_t buffer_size) :
-    debug(_debug),
+Connector::Connector(
+    ProtocolVersion ver, bool _debug, uint32_t buffer_size
+) : debug(_debug),
     receive_buffer_size(buffer_size),
     send_buffer_size(buffer_size),
-    version(pVersion), 
+    version(ver), 
     closed(true),
     lastIn(0), lastOut(0),
     timeout(0),
@@ -40,7 +43,8 @@ Connector::Connector(const qpid::framing::ProtocolVersion& pVersion, bool _debug
     timeoutHandler(0),
     shutdownHandler(0),
     inbuf(receive_buffer_size), 
-    outbuf(send_buffer_size){ }
+    outbuf(send_buffer_size)
+{ }
 
 Connector::~Connector(){ }
 
@@ -51,9 +55,9 @@ void Connector::connect(const std::string& host, int port){
     receiver = Thread(this);
 }
 
-void Connector::init(ProtocolInitiation* header){
-    writeBlock(header);
-    delete header;
+void Connector::init(){
+    ProtocolInitiation init(version);
+    writeBlock(&init);
 }
 
 void Connector::close(){
@@ -74,10 +78,11 @@ OutputHandler* Connector::getOutputHandler(){
     return this; 
 }
 
-void Connector::send(AMQFrame* frame){
-    writeBlock(frame);    
+void Connector::send(AMQFrame* f){
+    std::auto_ptr<AMQFrame> frame(f);
+    AMQBody::shared_ptr body = frame->getBody();
+    writeBlock(frame.get());
     if(debug) std::cout << "SENT: " << *frame << std::endl; 
-    delete frame;
 }
 
 void Connector::writeBlock(AMQDataBlock* data){
@@ -108,14 +113,16 @@ void Connector::handleClosed(){
 
 void Connector::checkIdle(ssize_t status){
     if(timeoutHandler){
-         Time t = now() * TIME_MSEC;
+        Time t = now() * TIME_MSEC;
         if(status == Socket::SOCKET_TIMEOUT) {
             if(idleIn && (t - lastIn > idleIn)){
                 timeoutHandler->idleIn();
             }
-        }else if(status == Socket::SOCKET_EOF){
+        }
+        else if(status == 0 || status == Socket::SOCKET_EOF) {
             handleClosed();
-        }else{
+        }
+        else {
             lastIn = t;
         }
         if(idleOut && (t - lastOut > idleOut)){
@@ -124,7 +131,7 @@ void Connector::checkIdle(ssize_t status){
     }
 }
 
-void Connector::setReadTimeout(u_int16_t t){
+void Connector::setReadTimeout(uint16_t t){
     idleIn = t * 1000;//t is in secs
     if(idleIn && (!timeout || idleIn < timeout)){
         timeout = idleIn;
@@ -133,7 +140,7 @@ void Connector::setReadTimeout(u_int16_t t){
 
 }
 
-void Connector::setWriteTimeout(u_int16_t t){
+void Connector::setWriteTimeout(uint16_t t){
     idleOut = t * 1000;//t is in secs
     if(idleOut && (!timeout || idleOut < timeout)){
         timeout = idleOut;
@@ -172,10 +179,10 @@ void Connector::run(){
                 inbuf.compact();
 	    }
 	}
-    }catch(QpidError error){
-	std::cout << "Error [" << error.code << "] " << error.msg
-                  << " (" << error.location.file << ":" << error.location.line
-                  << ")" << std::endl;
+    } catch (const std::exception& e) {
+	std::cout << e.what() << std::endl;
         handleClosed();
     }
 }
+
+}} // namespace qpid::client

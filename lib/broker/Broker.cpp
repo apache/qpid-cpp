@@ -20,19 +20,58 @@
  */
 #include <iostream>
 #include <memory>
-#include <Broker.h>
 
+#include "AMQFrame.h"
+#include "DirectExchange.h"
+#include "TopicExchange.h"
+#include "FanOutExchange.h"
+#include "HeadersExchange.h"
+#include "MessageStoreModule.h"
+#include "NullMessageStore.h"
+#include "ProtocolInitiation.h"
+#include "Connection.h"
+#include "sys/ConnectionInputHandler.h"
+#include "sys/ConnectionInputHandlerFactory.h"
+#include "sys/TimeoutHandler.h"
 
-using namespace qpid::broker;
-using namespace qpid::sys;
+#include "Broker.h"
 
-Broker::Broker(const Configuration& config) :
-    acceptor(Acceptor::create(config.getPort(),
-                              config.getConnectionBacklog(),
-                              config.getWorkerThreads(),
-                              config.isTrace())),
-    factory(config.getStore())
-{ }
+namespace qpid {
+namespace broker {
+
+const std::string empty;
+const std::string amq_direct("amq.direct");
+const std::string amq_topic("amq.topic");
+const std::string amq_fanout("amq.fanout");
+const std::string amq_match("amq.match");
+
+Broker::Broker(const Configuration& conf) :
+    config(conf),
+    queues(store.get()),
+    timeout(30000),
+    stagingThreshold(0),
+    cleaner(&queues, timeout/10),
+    factory(*this)
+{
+    if (config.getStore().empty())
+        store.reset(new NullMessageStore(config.isTrace()));
+    else
+        store.reset(new MessageStoreModule(config.getStore()));
+
+    exchanges.declare(empty, DirectExchange::typeName); // Default exchange.
+    exchanges.declare(amq_direct, DirectExchange::typeName);
+    exchanges.declare(amq_topic, TopicExchange::typeName);
+    exchanges.declare(amq_fanout, FanOutExchange::typeName);
+    exchanges.declare(amq_match, HeadersExchange::typeName);
+
+    if(store.get()) {
+        RecoveryManager recoverer(queues, exchanges);
+        MessageStoreSettings storeSettings = { getStagingThreshold() };
+        store->recover(recoverer, &storeSettings);
+    }
+
+    cleaner.start();
+}
 
 
 Broker::shared_ptr Broker::create(int16_t port) 
@@ -47,13 +86,33 @@ Broker::shared_ptr Broker::create(const Configuration& config) {
 }    
         
 void Broker::run() {
-    acceptor->run(&factory);
+    getAcceptor().run(&factory);
 }
 
 void Broker::shutdown() {
-    acceptor->shutdown();
+    if (acceptor)
+        acceptor->shutdown();
 }
 
-Broker::~Broker() { }
+Broker::~Broker() {
+    shutdown();
+}
+
+int16_t Broker::getPort() const  { return getAcceptor().getPort(); }
+
+Acceptor& Broker::getAcceptor() const {
+    if (!acceptor) 
+        const_cast<Acceptor::shared_ptr&>(acceptor) =
+            Acceptor::create(config.getPort(),
+                             config.getConnectionBacklog(),
+                             config.getWorkerThreads(),
+                             config.isTrace());
+    return *acceptor;
+}
+
 
 const int16_t Broker::DEFAULT_PORT(5672);
+
+
+}} // namespace qpid::broker
+

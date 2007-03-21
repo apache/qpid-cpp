@@ -56,13 +56,17 @@ libqpidcommon_la_LDFLAGS =		\
 libqpidcommon_la_SOURCES =			\
   $(platform_src)				\
   $(framing)/AMQBody.cpp			\
+  $(framing)/AMQRequestBody.cpp			\
+  $(framing)/AMQResponseBody.cpp		\
   $(framing)/AMQContentBody.cpp			\
   $(framing)/AMQFrame.cpp			\
   $(framing)/AMQHeaderBody.cpp			\
   $(framing)/AMQHeartbeatBody.cpp		\
   $(framing)/AMQMethodBody.cpp			\
+  $(framing)/MethodContext.cpp			\
   $(framing)/BasicHeaderProperties.cpp		\
   $(framing)/BodyHandler.cpp			\
+  $(framing)/ChannelAdapter.cpp			\
   $(framing)/Buffer.cpp				\
   $(framing)/FieldTable.cpp			\
   $(framing)/FramingContent.cpp			\
@@ -70,7 +74,10 @@ libqpidcommon_la_SOURCES =			\
   $(framing)/ProtocolInitiation.cpp		\
   $(framing)/ProtocolVersion.cpp		\
   $(framing)/ProtocolVersionException.cpp	\
+  $(framing)/Requester.cpp			\
+  $(framing)/Responder.cpp			\
   $(framing)/Value.cpp				\
+  $(framing)/Proxy.cpp				\
   $(gen)/AMQP_ClientProxy.cpp			\
   $(gen)/AMQP_HighestVersion.h		\
   $(gen)/AMQP_MethodVersionMap.cpp		\
@@ -79,9 +86,11 @@ libqpidcommon_la_SOURCES =			\
   ExceptionHolder.cpp				\
   QpidError.cpp					\
   sys/Runnable.cpp				\
-  sys/Time.cpp
+  sys/Time.cpp					\
+  sys/ProducerConsumer.cpp
 
 nobase_pkginclude_HEADERS =			\
+  $(gen)/AMQP_HighestVersion.h			\
   $(platform_hdr)				\
   $(framing)/AMQBody.h				\
   $(framing)/AMQContentBody.h			\
@@ -90,8 +99,10 @@ nobase_pkginclude_HEADERS =			\
   $(framing)/AMQHeaderBody.h			\
   $(framing)/AMQHeartbeatBody.h			\
   $(framing)/AMQMethodBody.h			\
+  $(framing)/MethodContext.h			\
   $(framing)/BasicHeaderProperties.h		\
   $(framing)/BodyHandler.h			\
+  $(framing)/ChannelAdapter.h			\
   $(framing)/Buffer.h				\
   $(framing)/FieldTable.h			\
   $(framing)/FramingContent.h			\
@@ -105,6 +116,7 @@ nobase_pkginclude_HEADERS =			\
   $(framing)/Value.h				\
   $(framing)/amqp_framing.h			\
   $(framing)/amqp_types.h			\
+  $(framing)/Proxy.h				\
   Exception.h					\
   ExceptionHolder.h				\
   QpidError.h					\
@@ -115,14 +127,15 @@ nobase_pkginclude_HEADERS =			\
   sys/Monitor.h					\
   sys/Mutex.h					\
   sys/Runnable.h				\
-  sys/SessionContext.h				\
-  sys/SessionHandler.h				\
-  sys/SessionHandlerFactory.h			\
+  sys/ConnectionOutputHandler.h			\
+  sys/ConnectionInputHandler.h			\
+  sys/ConnectionInputHandlerFactory.h		\
   sys/ShutdownHandler.h				\
   sys/Socket.h					\
   sys/Thread.h					\
   sys/Time.h					\
-  sys/TimeoutHandler.h
+  sys/TimeoutHandler.h				\
+  sys/ProducerConsumer.h
 
 
 # Force build during dist phase so help2man will work.

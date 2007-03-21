@@ -18,44 +18,69 @@
  * under the License.
  *
  */
+#include <boost/format.hpp>
+
 #include <ResponseHandler.h>
 #include <sys/Monitor.h>
 #include <QpidError.h>
+#include "amqp_types.h"
 
 using namespace qpid::sys;
+using namespace qpid::framing;
 
-qpid::client::ResponseHandler::ResponseHandler() : waiting(false){}
+namespace qpid {
+namespace client {
 
-qpid::client::ResponseHandler::~ResponseHandler(){}
+ResponseHandler::ResponseHandler() : waiting(false){}
 
-bool qpid::client::ResponseHandler::validate(const qpid::framing::AMQMethodBody& expected){
-    return expected.match(response.get());
+ResponseHandler::~ResponseHandler(){}
+
+bool ResponseHandler::validate(ClassId c, MethodId  m) {
+    return response != 0 &&
+        response->amqpClassId() ==c && response->amqpMethodId() == m;
 }
 
-void qpid::client::ResponseHandler::waitForResponse(){
+void ResponseHandler::waitForResponse(){
     Monitor::ScopedLock l(monitor);
-    if(waiting){
+    while (waiting)
 	monitor.wait();
-    }
 }
 
-void qpid::client::ResponseHandler::signalResponse(qpid::framing::AMQMethodBody::shared_ptr _response){
-    response = _response;
+void ResponseHandler::signalResponse(
+    qpid::framing::AMQMethodBody::shared_ptr _response)
+{
     Monitor::ScopedLock l(monitor);
+    response = _response;
     waiting = false;
     monitor.notify();
 }
 
-void qpid::client::ResponseHandler::receive(const qpid::framing::AMQMethodBody& expected){
+void ResponseHandler::receive(ClassId c, MethodId  m) {
     Monitor::ScopedLock l(monitor);
-    if(waiting){
+    while (waiting)
 	monitor.wait();
-    }
-    if(!validate(expected)){
-	THROW_QPID_ERROR(PROTOCOL_ERROR, "Protocol Error");
+    getResponse(); // Check for closed.
+    if(!validate(response->amqpClassId(), response->amqpMethodId())) {
+	THROW_QPID_ERROR(
+            PROTOCOL_ERROR,
+            boost::format("Expected class:method %d:%d, got %d:%d")
+            % c % m % response->amqpClassId() % response->amqpMethodId());
     }
 }
 
-void qpid::client::ResponseHandler::expect(){
+framing::AMQMethodBody::shared_ptr ResponseHandler::getResponse() {
+    if (!response) 
+        THROW_QPID_ERROR(
+            PROTOCOL_ERROR, "Channel closed unexpectedly.");
+    return response;
+}
+
+RequestId ResponseHandler::getRequestId() {
+    assert(response->getRequestId());
+    return response->getRequestId();
+}
+void ResponseHandler::expect(){
     waiting = true;
 }
+
+}} // namespace qpid::client

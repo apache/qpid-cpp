@@ -23,34 +23,34 @@
 
 #include "EventChannelThreads.h"
 #include "sys/Monitor.h"
-#include "sys/SessionContext.h"
-#include "sys/SessionHandler.h"
+#include "sys/ConnectionOutputHandler.h"
+#include "sys/ConnectionInputHandler.h"
 #include "sys/AtomicCount.h"
 #include "framing/AMQFrame.h"
 
 namespace qpid {
 namespace sys {
 
-class SessionHandlerFactory;
+class ConnectionInputHandlerFactory;
 
 /**
- * Implements SessionContext and delegates to a SessionHandler
+ * Implements ConnectionOutputHandler and delegates to a ConnectionInputHandler
  * for a connection via the EventChannel.
  *@param readDescriptor file descriptor for reading.
  *@param writeDescriptor file descriptor for writing,
  * by default same as readDescriptor
  */
-class EventChannelConnection : public SessionContext {
+class EventChannelConnection : public ConnectionOutputHandler {
   public:
     EventChannelConnection(
         EventChannelThreads::shared_ptr threads, 
-        SessionHandlerFactory& factory,
+        ConnectionInputHandlerFactory& factory,
         int readDescriptor, 
         int writeDescriptor = 0,
         bool isTrace = false
     );
 
-    // TODO aconway 2006-11-30: SessionContext::send should take auto_ptr
+    // TODO aconway 2006-11-30: ConnectionOutputHandler::send should take auto_ptr
     virtual void send(qpid::framing::AMQFrame* frame) {
         send(std::auto_ptr<qpid::framing::AMQFrame>(frame));
     }
@@ -86,7 +86,7 @@ class EventChannelConnection : public SessionContext {
     AtomicCount busyThreads;
 
     EventChannelThreads::shared_ptr threads;
-    std::auto_ptr<SessionHandler> handler;
+    std::auto_ptr<ConnectionInputHandler> handler;
     qpid::framing::Buffer in, out;
     FrameQueue writeFrames;
     bool isTrace;

@@ -1,3 +1,6 @@
+#ifndef _client_ClientQueue_h
+#define _client_ClientQueue_h
+
 /*
  *
  * Licensed to the Apache Software Foundation (ASF) under one
@@ -19,9 +22,6 @@
  *
  */
 #include <string>
-
-#ifndef _Queue_
-#define _Queue_
 
 namespace qpid {
 namespace client {
@@ -100,5 +100,4 @@ namespace client {
 }
 }
 
-
-#endif
+#endif  /*!_client_ClientQueue_h*/

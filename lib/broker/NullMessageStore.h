@@ -34,14 +34,14 @@ namespace qpid {
         class NullMessageStore : public MessageStore{
             const bool warn;
         public:
-            NullMessageStore(bool warn = true);
+            NullMessageStore(bool warn = false);
             virtual void create(const Queue& queue, const qpid::framing::FieldTable& settings);
             virtual void destroy(const Queue& queue);
             virtual void recover(RecoveryManager& queues, const MessageStoreSettings* const settings = 0);
             virtual void stage(Message* const msg);
             virtual void destroy(Message* const msg);
             virtual void appendContent(Message* const msg, const std::string& data);
-            virtual void loadContent(Message* const msg, std::string& data, u_int64_t offset, u_int32_t length);
+            virtual void loadContent(Message* const msg, std::string& data, uint64_t offset, uint32_t length);
             virtual void enqueue(TransactionContext* ctxt, Message* const msg, const Queue& queue, const string * const xid);
             virtual void dequeue(TransactionContext* ctxt, Message* const msg, const Queue& queue, const string * const xid);
             virtual void prepared(const std::string * const xid);

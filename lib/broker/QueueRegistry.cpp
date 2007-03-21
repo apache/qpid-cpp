@@ -19,7 +19,6 @@
  *
  */
 #include <QueueRegistry.h>
-#include <SessionHandlerImpl.h>
 #include <sstream>
 #include <assert.h>
 
@@ -32,7 +31,7 @@ QueueRegistry::~QueueRegistry(){}
 
 std::pair<Queue::shared_ptr, bool>
 QueueRegistry::declare(const string& declareName, bool durable, 
-                       u_int32_t autoDelete, const ConnectionToken* owner)
+                       uint32_t autoDelete, const ConnectionToken* owner)
 {
     Mutex::ScopedLock locker(lock);
     string name = declareName.empty() ? generateName() : declareName;

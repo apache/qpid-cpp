@@ -12,7 +12,7 @@ export JAVA JAVAC
 # If we're building in the qpid tree, we can generate
 # some Makefile snippets:
 
-if test -d ../gentools && test -d ../specs; then
+if test -d ../specs; then
   # Transform gen/Makefile.am, removing automake-constructs and the
   # contents of the sole automake-else clause (the warning), then
   # use the result to run the rules that create gen-src.mk, a file
@@ -30,8 +30,10 @@ fi
 automake
 autoconf
 
+
 if [ "$1" = "-build" -o "$1" = "--build" ] ; then
-    ./configure
+    shift
+    ./configure "$@"
     make
     make check
 fi

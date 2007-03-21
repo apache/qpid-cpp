@@ -19,11 +19,18 @@
  *
  */
 #include <LazyLoadedContent.h>
+#include "AMQFrame.h"
+#include "framing/ChannelAdapter.h"
 
 using namespace qpid::broker;
 using namespace qpid::framing;
 
-LazyLoadedContent::LazyLoadedContent(MessageStore* const _store, Message* const _msg, u_int64_t _expectedSize) : 
+LazyLoadedContent::~LazyLoadedContent()
+{
+    store->destroy(msg);
+}
+
+LazyLoadedContent::LazyLoadedContent(MessageStore* const _store, Message* const _msg, uint64_t _expectedSize) : 
     store(_store), msg(_msg), expectedSize(_expectedSize) {}
 
 void LazyLoadedContent::add(AMQContentBody::shared_ptr data)
@@ -31,24 +38,26 @@ void LazyLoadedContent::add(AMQContentBody::shared_ptr data)
     store->appendContent(msg, data->getData());
 }
 
-u_int32_t LazyLoadedContent::size()
+uint32_t LazyLoadedContent::size()
 {
     return 0;//all content is written as soon as it is added
 }
 
-void LazyLoadedContent::send(qpid::framing::ProtocolVersion& version, OutputHandler* out, int channel, u_int32_t framesize)
+void LazyLoadedContent::send(ChannelAdapter& channel, uint32_t framesize)
 {
     if (expectedSize > framesize) {        
-        for (u_int64_t offset = 0; offset < expectedSize; offset += framesize) {            
-            u_int64_t remaining = expectedSize - offset;
+        for (uint64_t offset = 0; offset < expectedSize; offset += framesize)
+        {            
+            uint64_t remaining = expectedSize - offset;
             string data;
-            store->loadContent(msg, data, offset, remaining > framesize ? framesize : remaining);              
-            out->send(new AMQFrame(version, channel, new AMQContentBody(data)));
+            store->loadContent(msg, data, offset,
+                               remaining > framesize ? framesize : remaining);
+            channel.send(new AMQContentBody(data));
         }
     } else {
         string data;
         store->loadContent(msg, data, 0, expectedSize);  
-        out->send(new AMQFrame(version, channel, new AMQContentBody(data)));
+        channel.send(new AMQContentBody(data));
     }
 }
 
@@ -57,7 +66,3 @@ void LazyLoadedContent::encode(Buffer&)
     //do nothing as all content is written as soon as it is added 
 }
 
-void LazyLoadedContent::destroy()
-{
-    store->destroy(msg);
-}
