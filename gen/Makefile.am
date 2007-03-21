@@ -14,7 +14,7 @@ DISTCLEANFILES = $(BUILT_SOURCES) timestamp gen-src.mk
 #
 if CAN_GENERATE_CODE
 
-gentools_dir = $(srcdir)/../../gentools
+gentools_dir = $(srcdir)/../gentools
 spec_dir = $(srcdir)/../../specs
 
 # FIXME aconway 2007-01-04: Enabling Basic class until
