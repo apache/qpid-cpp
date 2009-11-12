@@ -26,7 +26,7 @@ EXTRA_DIST = \
   LICENSE NOTICE README SSL RELEASE_NOTES DESIGN \
   xml/cluster.xml INSTALL-WINDOWS
 
-SUBDIRS = managementgen etc src docs/api docs/man examples bindings/qmf bindings/sasl
+SUBDIRS = managementgen etc src docs/api docs/man examples bindings/qmf
 
 # Update libtool, if needed.
 libtool: $(LIBTOOL_DEPS)
