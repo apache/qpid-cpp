@@ -36,7 +36,7 @@ It is strongly recommended that you use a separate build directory and do not tr
 build in the source directory. You may use a build directory in any convenient place.
 These instructions use a build directory inside the source tree but this isn't essential.
 
-In the cpp distribution directory (<qpid>/cpp), build the code with:
+In the distribution directory, build the code with:
 
  # mkdir bld       # This is just a suggested name for the build directory
  # cd bld
@@ -162,15 +162,15 @@ Qpid test suite.
 =====================================
 To get the source code from the subversion repository (trunk) do:
 
- # svn checkout http://svn.apache.org/repos/asf/qpid/trunk/qpid/.
+ # git clone https://git-wip-us.apache.org/repos/asf/qpid-cpp.git
 
-To build, cd to <qpid>/cpp subdirectory and then follow the instructions for building
+To build, cd to the new qpid-cpp directory and then follow the instructions for building
 from a Source Distribution in step (2).
 
 
 4. Tests
 ========
-See <qpid>/cpp/src/tests/README.txt for details.
+See src/tests/README.txt for details.
 
 
 ======================================================================================
