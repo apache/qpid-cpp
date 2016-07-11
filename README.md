@@ -56,4 +56,4 @@ In C++ distributions:
 The INSTALL.txt notes contain more detailed information on compiling
 and installing this software.
 
-qpid/cpp/examples/README.txt describes the C++ client API examples.
+examples/README.txt describes the C++ client API examples.
