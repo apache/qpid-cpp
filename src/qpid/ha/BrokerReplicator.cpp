@@ -214,16 +214,10 @@ class BrokerReplicator::UpdateTracker {
                   const LogPrefix& lp)
         : type(type_), cleanFn(f), logPrefix(lp) {}
 
-    /** Destructor cleans up remaining initial queues. */
-    ~UpdateTracker() {
-        // Don't throw in a destructor.
-        try {
-            for_each(initial.begin(), initial.end(),
-                     boost::bind(&UpdateTracker::clean, this, _1));
-        }
-        catch (const std::exception& e) {
-            QPID_LOG(error, logPrefix << "Error in cleanup of lost objects: " << e.what());
-        }
+    /** Clean up remaining initial queues. */
+    void done() {
+        for_each(initial.begin(), initial.end(),
+                 boost::bind(&UpdateTracker::clean, this, _1));
     }
 
     /** Add an exchange name */
@@ -471,16 +465,17 @@ void BrokerReplicator::route(Deliverable& msg) {
             }
             if (MessageTransfer::isLastQMFResponse(msg.getMessage(), EXCHANGE)) {
                 QPID_LOG(debug, logPrefix << "All exchange responses received.")
-                exchangeTracker.reset(); // Clean up exchanges that no longer exist in the primary
+                exchangeTracker->done(); // Clean up exchanges that no longer exist in the primary
+                exchangeTracker.reset();
                 alternates.clear();
             }
             if (MessageTransfer::isLastQMFResponse(msg.getMessage(), QUEUE)) {
                 QPID_LOG(debug, logPrefix << "All queue responses received.");
-                queueTracker.reset(); // Clean up queues that no longer exist in the primary
+                queueTracker->done(); // Clean up queues that no longer exist in the primary
+                queueTracker.reset();
             }
         }
     } catch (const std::exception& e) {
-;
         haBroker.shutdown(
             QPID_MSG(logPrefix << "Configuration replication failed: "
                      << e.what() << ": while handling: " << list));
