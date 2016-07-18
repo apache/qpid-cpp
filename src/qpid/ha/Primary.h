@@ -105,8 +105,6 @@ class Primary : public Role
 
     typedef std::set<RemoteBackupPtr > BackupSet;
 
-    typedef std::pair<types::Uuid, boost::shared_ptr<broker::Queue> > UuidQueue;
-
     RemoteBackupPtr backupConnect(const BrokerInfo&, broker::Connection&, sys::Mutex::ScopedLock&);
     void backupDisconnect(RemoteBackupPtr, sys::Mutex::ScopedLock&);
 
