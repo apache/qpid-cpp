@@ -500,6 +500,7 @@ void ConnectionContext::sendLH(
     }
     while (!snd->send(message, delivery)) {
         QPID_LOG(debug, "Waiting for capacity...");
+        if (pn_transport_pending(engine)) wakeupDriver();
         wait(ssn, snd);//wait for capacity
     }
     wakeupDriver();
