@@ -144,9 +144,12 @@ bool QueueRegistry::destroyIfUntouched(const string& name, long version,
     //
     // Outside the lock (avoid deadlock) but guaranteed to be called exactly once,
     // since q will only be set on the first call to destroy above.
-    if (q)
+    if (q) {
         q->destroyed();
-    return q;
+        return true;
+    } else {
+        return false;
+    }
 }
 
 Queue::shared_ptr QueueRegistry::find(const string& name){
