@@ -332,7 +332,7 @@ struct IncomingMessageHandler : IncomingMessages::Handler
 
     bool expire(IncomingMessages::MessageTransfer& transfer)
     {
-        if (receiver && receiver->getName() == transfer.getDestination()/* && receiver->getCapacity() > 0*/) {
+        if (receiver && receiver->getName() == transfer.getDestination() && receiver->getCapacity() > 0) {
             receiver->received();
             return true;
         } else {
