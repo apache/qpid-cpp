@@ -137,7 +137,7 @@ class QPID_COMMON_CLASS_EXTERN ManagementObject : public ManagementItem
 {
 protected:
     // Thread safe wrapper for Manageable* with atomic calls and destroy().
-    class ManageablePtr {
+    QPID_COMMON_EXTERN class ManageablePtr {
         Manageable* ptr;
         mutable Mutex lock;
         Manageable* get() const;
@@ -147,8 +147,8 @@ protected:
       public:
         ManageablePtr(Manageable* m) : ptr(m) {}
 
-        uint32_t ManagementMethod(uint32_t methodId, Args& args, std::string& text);
-        bool AuthorizeMethod(uint32_t methodId, Args& args, const std::string& userId);
+        QPID_COMMON_EXTERN uint32_t ManagementMethod(uint32_t methodId, Args& args, std::string& text);
+        QPID_COMMON_EXTERN bool AuthorizeMethod(uint32_t methodId, Args& args, const std::string& userId);
         void reset();
     };
 
