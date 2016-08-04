@@ -548,8 +548,9 @@ bool Poller::hasShutdown()
 
 Poller::Event Poller::wait(Duration timeout) {
     static __thread PollerHandlePrivate* lastReturnedHandle = 0;
+    // Make sure lighly used threads regularly purge DeletionManager memory.
+    static const Duration maxEpollWait = 60 * TIME_SEC;
     epoll_event epe;
-    int timeoutMs = (timeout == TIME_INFINITE) ? -1 : timeout / TIME_MSEC;
     AbsTime targetTimeout = 
         (timeout == TIME_INFINITE) ?
             FAR_FUTURE :
@@ -563,6 +564,18 @@ Poller::Event Poller::wait(Duration timeout) {
     // Repeat until we weren't interrupted by signal
     do {
         PollerHandleDeletionManager.markAllUnusedInThisThread();
+        int timeoutMs;
+        AbsTime now_(now());
+        if (timeout == TIME_INFINITE) {
+            timeoutMs = maxEpollWait / TIME_MSEC;
+        } else if (now_ > targetTimeout || now_ == targetTimeout) {
+                timeoutMs = 0;
+        } else {
+            // Account for truncation when converting to millisecs.
+            Duration remaining(now_, AbsTime(targetTimeout, TIME_MSEC - 1));
+            timeoutMs = std::min(remaining, maxEpollWait) / TIME_MSEC;
+        }
+
         int rc = ::epoll_wait(impl->epollFd, &epe, 1, timeoutMs);
         if (rc ==-1 && errno != EINTR) {
             QPID_POSIX_CHECK(rc);
@@ -655,7 +668,7 @@ Poller::Event Poller::wait(Duration timeout) {
         // be indefinite then we should never return with a time out so we go again.
         // If the wait wasn't indefinite, we check whether we are after the target wait
         // time or not
-        if (timeoutMs == -1) {
+        if (timeout == TIME_INFINITE) {
             continue;
         }
         if (rc == 0 && now() > targetTimeout) {
