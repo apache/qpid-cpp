@@ -137,7 +137,7 @@ class QPID_COMMON_CLASS_EXTERN ManagementObject : public ManagementItem
 {
 protected:
     // Thread safe wrapper for Manageable* with atomic calls and destroy().
-    QPID_COMMON_EXTERN class ManageablePtr {
+    class QPID_COMMON_CLASS_EXTERN ManageablePtr {
         Manageable* ptr;
         mutable Mutex lock;
         Manageable* get() const;
