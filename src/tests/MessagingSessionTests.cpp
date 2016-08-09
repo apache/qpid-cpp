@@ -1559,7 +1559,7 @@ QPID_AUTO_TEST_CASE(testClientExpiration)
         done = received.getContent() == "b_50";
         fix.session.acknowledge();
     }
-    BOOST_CHECK_EQUAL(b_count, 50);
+    BOOST_CHECK_EQUAL(b_count, 50u);
 }
 
 QPID_AUTO_TEST_CASE(testClientExpirationNoPrefetch)
@@ -1589,7 +1589,7 @@ QPID_AUTO_TEST_CASE(testClientExpirationNoPrefetch)
         done = received.getContent() == "b_50";
         fix.session.acknowledge();
     }
-    BOOST_CHECK_EQUAL(b_count, 50);
+    BOOST_CHECK_EQUAL(b_count, 50u);
 }
 
 QPID_AUTO_TEST_CASE(testExpiredPrefetchOnClose)
