@@ -30,6 +30,7 @@ namespace journal {
 
 #include <deque>
 #include "qpid/linearstore/journal/EmptyFilePoolTypes.h"
+#include "qpid/linearstore/journal/jcfg.h"
 #include "qpid/linearstore/journal/smutex.h"
 
 namespace qpid {
@@ -48,6 +49,12 @@ protected:
 
     static std::string s_inuseFileDirectory_;
     static std::string s_returnedFileDirectory_;
+    static size_t s_fhdr_buff_size_;
+    static unsigned char s_fhdr_buff_[(QLS_JRNL_FHDR_RES_SIZE_SBLKS * QLS_SBLK_SIZE_KIB) * 1024];
+    static smutex s_fhdr_buff_mutex_;
+    static size_t s_zero_buff_size_;
+    static unsigned char s_zero_buff_[QLS_SBLK_SIZE_KIB * 1024];
+    static bool s_static_initializer_flag_;
 
     const std::string efpDirectory_;
     const efpDataSize_kib_t efpDataSize_kib_;
@@ -112,6 +119,7 @@ protected:
     static bool isSymlink(const std::string& fqName);
     static bool moveFile(const std::string& fromFqPath,
                          const std::string& toFqPath);
+    static void initializeStaticBuffers();
 };
 
 }}}

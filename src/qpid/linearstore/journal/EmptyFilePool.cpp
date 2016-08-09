@@ -23,7 +23,6 @@
 
 #include <fstream>
 #include "qpid/linearstore/journal/EmptyFilePoolPartition.h"
-#include "qpid/linearstore/journal/jcfg.h"
 #include "qpid/linearstore/journal/jdir.h"
 #include "qpid/linearstore/journal/JournalLog.h"
 #include "qpid/linearstore/journal/slock.h"
@@ -37,11 +36,20 @@ namespace qpid {
 namespace linearstore {
 namespace journal {
 
-// static
-std::string EmptyFilePool::s_inuseFileDirectory_ = "in_use";
+#define FHDR_BUFF_SIZE (QLS_JRNL_FHDR_RES_SIZE_SBLKS * QLS_SBLK_SIZE_KIB) * 1024
+#define ZERO_BUFF_SIZE QLS_SBLK_SIZE_KIB * 1024
 
-// static
+// tatic declarations
+
+std::string EmptyFilePool::s_inuseFileDirectory_ = "in_use";
 std::string EmptyFilePool::s_returnedFileDirectory_ = "returned";
+size_t EmptyFilePool::s_fhdr_buff_size_ = FHDR_BUFF_SIZE;
+unsigned char EmptyFilePool::s_fhdr_buff_[FHDR_BUFF_SIZE];
+smutex EmptyFilePool::s_fhdr_buff_mutex_;
+size_t EmptyFilePool::s_zero_buff_size_ = ZERO_BUFF_SIZE;
+unsigned char EmptyFilePool::s_zero_buff_[ZERO_BUFF_SIZE];
+bool EmptyFilePool::s_static_initializer_flag_ = false;
+
 
 EmptyFilePool::EmptyFilePool(const std::string& efpDirectory,
                              const EmptyFilePoolPartition* partitionPtr,
@@ -54,7 +62,12 @@ EmptyFilePool::EmptyFilePool(const std::string& efpDirectory,
                 overwriteBeforeReturnFlag_(overwriteBeforeReturnFlag),
                 truncateFlag_(truncateFlag),
                 journalLogRef_(journalLogRef)
-{}
+{
+    if (!s_static_initializer_flag_) {
+        initializeStaticBuffers();
+        s_static_initializer_flag_ = true;
+    }
+}
 
 EmptyFilePool::~EmptyFilePool() {}
 
@@ -250,19 +263,28 @@ void EmptyFilePool::initializeSubDirectory(const std::string& fqDirName) {
 }
 
 void EmptyFilePool::overwriteFileContents(const std::string& fqFileName) {
-    ::file_hdr_t fh;
-    ::file_hdr_create(&fh, QLS_FILE_MAGIC, QLS_JRNL_VERSION, QLS_JRNL_FHDR_RES_SIZE_SBLKS, partitionPtr_->getPartitionNumber(), efpDataSize_kib_);
-    std::ofstream ofs(fqFileName.c_str(), std::ofstream::out | std::ofstream::binary);
-    checkIosState(errno, ofs, jerrno::JERR_EFP_FOPEN, fqFileName, "constructor", "Failed to create file", "EmptyFilePool", "overwriteFileContents");
-    ofs.write((char*)&fh, sizeof(::file_hdr_t));
-    checkIosState(errno, ofs, jerrno::JERR_EFP_FWRITE, fqFileName, "write()", "Failed to write header", "EmptyFilePool", "overwriteFileContents");
-    uint64_t rem = ((efpDataSize_kib_ + (QLS_JRNL_FHDR_RES_SIZE_SBLKS * QLS_SBLK_SIZE_KIB)) * 1024) - sizeof(::file_hdr_t);
-    while (rem--) {
-        ofs.put('\0');
-        checkIosState(errno, ofs, jerrno::JERR_EFP_FWRITE, fqFileName, "put()", "Failed to put \0", "EmptyFilePool", "overwriteFileContents");
+    FILE* pFile;
+    pFile = ::fopen(fqFileName.c_str(), "wb");
+    {
+        slock l(s_fhdr_buff_mutex_);
+
+        // Initialize file header
+        ::file_hdr_create((::file_hdr_t*)s_fhdr_buff_,
+                          QLS_FILE_MAGIC,
+                          QLS_JRNL_VERSION,
+                          QLS_JRNL_FHDR_RES_SIZE_SBLKS,
+                          partitionPtr_->getPartitionNumber(),
+                          efpDataSize_kib_);
+
+        // Write file header
+        ::fwrite((void*)s_fhdr_buff_, 1, s_fhdr_buff_size_, pFile);
     }
-    ofs.close();
-//std::cout << "*** WARNING: EFP " << efpDirectory_ << " is empty - created new journal file " << fqFileName.substr(fqFileName.rfind('/') + 1) << " on the fly" << std::endl; // DEBUG
+
+    // Fill rest of file with zeros (buffer is 1 sblk in size)
+    for (efpDataSize_sblks_t i = 0; i < dataSize_sblks(); ++i) {
+        ::fwrite((void*)s_zero_buff_, 1, s_zero_buff_size_, pFile);
+    }
+    ::fclose(pFile);
 }
 
 std::string EmptyFilePool::popEmptyFile() {
@@ -474,6 +496,13 @@ bool EmptyFilePool::moveFile(const std::string& from,
         throw jexception(jerrno::JERR_JDIR_FMOVE, oss.str(), "EmptyFilePool", "returnEmptyFile");
     }
     return true;
+}
+
+//static
+void EmptyFilePool::initializeStaticBuffers() {
+    // Overwrite buffers with zeros
+    ::memset(s_fhdr_buff_, 0, s_fhdr_buff_size_);
+    ::memset(s_zero_buff_, 0, s_zero_buff_size_);
 }
 
 }}}
