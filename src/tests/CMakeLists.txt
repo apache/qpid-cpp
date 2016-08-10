@@ -293,7 +293,6 @@ add_test(NAME transaction_tests COMMAND ${PYTHON_EXECUTABLE} run_transaction_tes
 
 if (BUILD_AMQP)
     add_test(NAME idle_timeout_tests COMMAND ${PYTHON_EXECUTABLE} run_idle_timeout_tests)
-    add_test(NAME interlink_tests COMMAND ${PYTHON_EXECUTABLE} run_interlink_tests)
     add_test(NAME interop_tests COMMAND ${PYTHON_EXECUTABLE} run_interop_tests)
 endif (BUILD_AMQP)
 
@@ -310,6 +309,10 @@ else (CMAKE_SYSTEM_NAME STREQUAL Windows)
     add_test(NAME paged_queue_tests COMMAND run_paged_queue_tests)
     add_test(NAME ring_queue_tests COMMAND run_ring_queue_tests)
     add_test(NAME topic_tests COMMAND run_topic_tests)
+
+    if (BUILD_AMQP)
+        add_test(NAME interlink_tests COMMAND ${PYTHON_EXECUTABLE} run_interlink_tests)
+    endif (BUILD_AMQP)
 
     if (BUILD_SASL)
         add_test(NAME sasl_tests COMMAND run_sasl_tests)
