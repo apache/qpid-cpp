@@ -43,13 +43,15 @@ find_program(VALGRIND_EXECUTABLE valgrind DOC "Location of the valgrind program"
 mark_as_advanced(VALGRIND_EXECUTABLE)
 find_package_handle_standard_args(VALGRIND DEFAULT_MSG VALGRIND_EXECUTABLE)
 
-find_program(SASLPASSWD2_EXECUTABLE saslpasswd2 DOC "Location of the saslpasswd2 program")
-mark_as_advanced(SASLPASSWD2_EXECUTABLE)
+# See if Cyrus SASL is available
+find_library(CYRUS_SASL_LIBRARY sasl2)
+find_path(CYRUS_SASL_INCLUDE_DIR sasl/sasl.h PATH_SUFFIXES include)
+find_package_handle_standard_args(CyrusSASL DEFAULT_MSG CYRUS_SASL_LIBRARY CYRUS_SASL_INCLUDE_DIR)
+mark_as_advanced(CYRUS_SASL_LIBRARY CYRUS_SASL_INCLUDE_DIR)
 
-# See if Cyrus SASL is desired and available
-CHECK_LIBRARY_EXISTS (sasl2 sasl_checkpass "" FOUND_SASL_LIB)
-CHECK_INCLUDE_FILES (sasl/sasl.h FOUND_SASL_H)
-find_package_handle_standard_args(SASL DEFAULT_MSG FOUND_SASL_LIB FOUND_SASL_H)
+# Find saslpasswd2 executable to generate test config
+find_program(SASLPASSWD2_EXECUTABLE saslpasswd2 DOC "Program used to make SASL user db for testing")
+mark_as_advanced(SASLPASSWD2_EXECUTABLE)
 
 #set (CMAKE_VERBOSE_MAKEFILE ON)  # for debugging
 
@@ -359,17 +361,18 @@ endif (NOT CMAKE_SYSTEM_NAME STREQUAL Windows)
 
 check_size_t_distinct (QPID_SIZE_T_DISTINCT)
 
-option(BUILD_SASL "Build with Cyrus SASL support" ${SASL_FOUND})
+option(BUILD_SASL "Build with Cyrus SASL support" ${CyrusSASL_FOUND})
 if (BUILD_SASL)
-  if (NOT SASL_FOUND)
-    message(FATAL_ERROR "Cyrus SASL support requested but libsasl2 libraryor headers not found")
-  endif (NOT SASL_FOUND)
+  if (NOT CyrusSASL_FOUND)
+    message(FATAL_ERROR "Cyrus SASL support requested but libsasl2 library or headers not found")
+  endif (NOT CyrusSASL_FOUND)
 
   set(qpidcommon_sasl_source
       qpid/sys/cyrus/CyrusSecurityLayer.h
       qpid/sys/cyrus/CyrusSecurityLayer.cpp
      )
-  set(sasl_LIB sasl2)
+  include_directories (${CYRUS_SASL_INCLUDE_DIR})
+  set(sasl_LIB ${CYRUS_SASL_LIBRARY})
   set(HAVE_SASL 1)
 else (BUILD_SASL)
   set(HAVE_SASL 0)
