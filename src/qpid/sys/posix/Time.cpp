@@ -27,6 +27,7 @@
 #include <sstream>
 #include <time.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <sys/time.h>
 #include <unistd.h>
 #include <iomanip>
@@ -100,21 +101,27 @@ std::ostream& operator<<(std::ostream& o, const Duration& d) {
 
 std::istream& operator>>(std::istream& i, Duration& d) {
     // Don't throw, let the istream throw if it's configured to do so.
-    double number;
-    i >> number;
+    std::string s;
+    i >> s;
     if (i.fail()) return i;
 
-    if (i.eof() || std::isspace(i.peek())) // No suffix
+    const char* start = s.c_str();
+    char* end;
+    double number = std::strtod(start, &end);
+    // check whether we could do any conversion
+    if (start==end) {
+        i.setstate(std::ios::failbit);
+        return i;
+    }
+
+    if (*end=='\0') // No suffix
         d = int64_t(number*TIME_SEC);
     else {
-        std::stringbuf suffix;
-        i >> &suffix;
-        if (i.fail()) return i;
-	std::string suffix_str = suffix.str();
-        if (suffix_str.compare("s") == 0) d = int64_t(number*TIME_SEC);
-        else if (suffix_str.compare("ms") == 0) d = int64_t(number*TIME_MSEC);
-        else if (suffix_str.compare("us") == 0) d = int64_t(number*TIME_USEC);
-        else if (suffix_str.compare("ns") == 0) d = int64_t(number*TIME_NSEC);
+	std::string suffix(end);
+        if (suffix.compare("s") == 0) d = int64_t(number*TIME_SEC);
+        else if (suffix.compare("ms") == 0) d = int64_t(number*TIME_MSEC);
+        else if (suffix.compare("us") == 0) d = int64_t(number*TIME_USEC);
+        else if (suffix.compare("ns") == 0) d = int64_t(number*TIME_NSEC);
         else i.setstate(std::ios::failbit);
     }
     return i;
