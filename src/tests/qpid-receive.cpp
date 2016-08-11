@@ -267,6 +267,15 @@ int main(int argc, char ** argv)
                         s.setCapacity(opts.capacity);
                         replyTo[msg.getReplyTo().str()] = s;
                     }
+                    if (!msg.getSubject().empty()) {
+                        msg.setSubject(msg.getReplyTo().getSubject());
+                        if (msg.getProperties().count("qpid.subject") == 1) {
+                            msg.setProperty("qpid.subject", msg.getReplyTo().getSubject());
+                        }
+                        if (msg.getProperties().count("x-amqp-0-10.routing-key") == 1) {
+                            msg.setProperty("x-amqp-0-10.routing-key", msg.getReplyTo().getSubject());
+                        }
+                    }
                     msg.setReplyTo(Address(opts.replyto));
                     s.send(msg);
                 }
