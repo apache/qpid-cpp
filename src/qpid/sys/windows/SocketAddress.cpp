@@ -57,7 +57,11 @@ SocketAddress& SocketAddress::operator=(const SocketAddress& sa)
 {
     SocketAddress temp(sa);
 
-    std::swap(temp, *this);
+    std::swap(temp.host, host);
+    std::swap(temp.port, port);
+    std::swap(temp.addrInfo, addrInfo);
+    std::swap(temp.currentAddrInfo, currentAddrInfo);
+
     return *this;
 }
 
