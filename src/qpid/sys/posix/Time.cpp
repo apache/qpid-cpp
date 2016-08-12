@@ -107,7 +107,7 @@ std::istream& operator>>(std::istream& i, Duration& d) {
 
     const char* start = s.c_str();
     char* end;
-    double number = std::strtod(start, &end);
+    double number = strtod(start, &end);
     // check whether we could do any conversion
     if (start==end) {
         i.setstate(std::ios::failbit);
