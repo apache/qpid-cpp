@@ -333,7 +333,7 @@ bool ConnectionImpl::tryConnect()
             QPID_LOG(info, "Connected to " << *i);
             mergeUrls(connection.getInitialBrokers(), l);
             return resetSessions(l);
-        } catch (const qpid::ProtocolVersionError& e) {
+        } catch (const qpid::ProtocolVersionError&) {
             throw qpid::messaging::ProtocolVersionError("AMQP 0-10 not supported");
         } catch (const qpid::TransportFailure& e) {
             QPID_LOG(info, "Failed to connect to " << *i << ": " << e.what());
