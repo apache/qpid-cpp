@@ -21,6 +21,12 @@ addons:
     - python-dev
     - valgrind
     - ruby
+before_install:
+- export PATH=/home/travis/.local/bin:$PATH
+- export PYTHONPATH=/home/travis/.local/lib/python2.7/site-packages:$PYTHONPATH
+install:
+- pip install --user --upgrade pip
+- pip install --user qpid-python
 before_script:
 - mkdir Build
 - cd Build
