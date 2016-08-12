@@ -44,8 +44,6 @@ template<> struct UintType<4> { typedef uint32_t Type; };
 template<> struct UintType<8> { typedef uint64_t Type; };
 
 template<int W> struct FloatType{};
-template<> struct FloatType<1> { typedef int8_t Type; }; // Dummy, never used.
-template<> struct FloatType<2> { typedef int16_t Type; }; // Dummy, never used.
 template<> struct FloatType<4> { typedef float Type; };
 template<> struct FloatType<8> { typedef double Type; };
 
@@ -57,6 +55,22 @@ template<int W> FixedWidthValue<W>* numericFixedWidthValue(uint8_t kind) {
       case 2: return new FixedWidthIntValue<typename UintType<W>::Type>();
       case 3: return new FixedWidthFloatValue<typename FloatType<W>::Type>();
       default: return new FixedWidthValue<W>();
+    }
+}
+
+template<> FixedWidthValue<1>* numericFixedWidthValue<1>(uint8_t kind) {
+    switch (kind) {
+      case 1: return new FixedWidthIntValue<typename IntType<1>::Type>();
+      case 2: return new FixedWidthIntValue<typename UintType<1>::Type>();
+      default: return new FixedWidthValue<1>();
+    }
+}
+
+template<> FixedWidthValue<2>* numericFixedWidthValue<2>(uint8_t kind) {
+    switch (kind) {
+      case 1: return new FixedWidthIntValue<typename IntType<2>::Type>();
+      case 2: return new FixedWidthIntValue<typename UintType<2>::Type>();
+      default: return new FixedWidthValue<2>();
     }
 }
 

@@ -182,21 +182,21 @@ template <class T> class FixedWidthIntValue : public FixedWidthValue<sizeof(T)> 
     double getFloat() const { return getInt(); }
 };
 
+// Explicitly specialise width 1 variants to avoid using the byte swapping code
+template<> inline FixedWidthIntValue<bool>::FixedWidthIntValue(bool v) { this->octets[0] = v; }
+template<> inline FixedWidthIntValue<int8_t>::FixedWidthIntValue(int8_t v) { this->octets[0] = v; }
+template<> inline FixedWidthIntValue<uint8_t>::FixedWidthIntValue(uint8_t v) { this->octets[0] = v; }
+
+template<> inline int64_t FixedWidthIntValue<bool>::getInt() const { return this->octets[0]; }
+template<> inline int64_t FixedWidthIntValue<int8_t>::getInt() const { return this->octets[0]; }
+template<> inline int64_t FixedWidthIntValue<uint8_t>::getInt() const { return this->octets[0]; }
+
 template <class T> class FixedWidthFloatValue : public FixedWidthValue<sizeof(T)> {
   public:
     FixedWidthFloatValue(T v = 0) { endian::encodeFloat(this->octets, v); }
     bool convertsToFloat() const { return true; }
     double getFloat() const { return endian::decodeFloat<T>(this->octets); }
 };
-
-// Dummy implementations that are never used but needed to avoid compile errors.
-template <> class FixedWidthFloatValue<uint8_t> : public FixedWidthValue<1> {
-    FixedWidthFloatValue() { assert(0); }
-};
-template <> class FixedWidthFloatValue<uint16_t> : public FixedWidthValue<2> {
-    FixedWidthFloatValue() { assert(0); }
-};
-
 
 class UuidData : public FixedWidthValue<16> {
   public:
