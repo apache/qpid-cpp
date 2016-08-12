@@ -31,6 +31,27 @@
 namespace qpid {
 namespace types {
 
+// Stolen from C++11
+template <bool, class T=void> struct enable_if {};
+template <class T> struct enable_if<true, T> { typedef T type; };
+
+struct true_type { static const bool value = true; };
+struct false_type { static const bool value = false; };
+
+template <class T> struct is_signed : public false_type {};
+template <> struct is_signed<uint8_t> : public false_type {};
+template <> struct is_signed<uint16_t> : public false_type {};
+template <> struct is_signed<uint32_t> : public false_type {};
+template <> struct is_signed<uint64_t> : public false_type {};
+template <> struct is_signed<int8_t> : public true_type {};
+template <> struct is_signed<int16_t> : public true_type {};
+template <> struct is_signed<int32_t> : public true_type {};
+template <> struct is_signed<int64_t> : public true_type {};
+
+template <> struct is_signed<float> : public true_type {};
+template <> struct is_signed<double> : public true_type {};
+
+
 namespace {
 const std::string EMPTY;
 const std::string PREFIX("invalid conversion: ");
@@ -115,7 +136,26 @@ class VariantImpl
     } value;
     std::string encoding;       // Optional encoding for variable length data.
 
-  template<class T> T convertFromString() const
+    template<class T>
+    typename enable_if<is_signed<T>::value, T>::type convertFromString() const
+    {
+        const std::string& s = *value.string;
+
+        try {
+            // Extra shenanigans to work around negative zero
+            // conversion error in older GCC libs.
+            if ( s[0] != '-' ) {
+                return boost::lexical_cast<T>(s);
+            } else {
+                return -boost::lexical_cast<T>(s.substr(1));
+            }
+        } catch(const boost::bad_lexical_cast&) {
+        }
+        throw InvalidConversion(QPID_MSG("Cannot convert " << s));
+    }
+
+    template<class T>
+    typename enable_if<!is_signed<T>::value, T>::type convertFromString() const
     {
         const std::string& s = *value.string;
 
@@ -126,17 +166,12 @@ class VariantImpl
                 return boost::lexical_cast<T>(s);
             } else {
                 T r = boost::lexical_cast<T>(s.substr(1));
-                if (std::numeric_limits<T>::is_signed) {
-                    return -r;
-                } else {
-                    if (r==0) return 0;
-                }
+                if (r==0) return 0;
             }
         } catch(const boost::bad_lexical_cast&) {
         }
         throw InvalidConversion(QPID_MSG("Cannot convert " << s));
     }
-
 };
 
 VariantImpl::VariantImpl() : type(VAR_VOID) {}
