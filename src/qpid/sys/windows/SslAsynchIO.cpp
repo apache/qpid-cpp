@@ -172,6 +172,11 @@ void SslAsynchIO::queueWrite(AsynchIO::BufferBase* buff) {
     // not obtained via getQueuedBuffer.
     SslIoBuff *sslBuff = dynamic_cast<SslIoBuff*>(buff);
     assert(sslBuff != 0);
+    if (!sslBuff->dataCount) {
+        queueReadBuffer(sslBuff->aioBuff);  // No op.  Send real buff back to the pool.
+        delete sslBuff;
+        return;
+    }
 
     // Encrypt and hand off to the io layer. Remember that the upper layer's
     // encoding was working on, and adjusting counts for, the SslIoBuff.
@@ -294,6 +299,8 @@ void SslAsynchIO::negotiationFailed(SECURITY_STATUS status) {
 }
 
 void SslAsynchIO::sslDataIn(qpid::sys::AsynchIO& a, BufferBase *buff) {
+    // See SslAsynchIO::unread() for the partner mechanism to maintain
+    // separation between unencrypted data and leftoverPlaintext.
     if (state == ShuttingDown) {
         return;
     }
@@ -301,70 +308,89 @@ void SslAsynchIO::sslDataIn(qpid::sys::AsynchIO& a, BufferBase *buff) {
         negotiateStep(buff);
         return;
     }
+    char *extraBytes;
+    int32_t extraLength;
+    BufferBase *extraBuff;
 
     // Decrypt one block; if there's legit data, pass it on through.
     // However, it's also possible that the peer hasn't supplied enough
     // data yet, or the session needs to be renegotiated, or the session
-    // is ending.
-    SecBuffer recvBuffs[4];
-    recvBuffs[0].cbBuffer = buff->dataCount;
-    recvBuffs[0].BufferType = SECBUFFER_DATA;
-    recvBuffs[0].pvBuffer = &buff->bytes[buff->dataStart];
-    recvBuffs[1].BufferType = SECBUFFER_EMPTY;
-    recvBuffs[2].BufferType = SECBUFFER_EMPTY;
-    recvBuffs[3].BufferType = SECBUFFER_EMPTY;
-    SecBufferDesc buffDesc;
-    buffDesc.ulVersion = SECBUFFER_VERSION;
-    buffDesc.cBuffers = 4;
-    buffDesc.pBuffers = recvBuffs;
-    SECURITY_STATUS status = ::DecryptMessage(&ctxtHandle, &buffDesc, 0, NULL);
-    if (status != SEC_E_OK) {
-        if (status == SEC_E_INCOMPLETE_MESSAGE) {
-            // Give the partially filled buffer back and get more data
-            a.unread(buff);
-        }
-        else {
-            // Don't need this any more...
-            a.queueReadBuffer(buff);
-
-            if (status == SEC_I_RENEGOTIATE) {
-                state = Redo;
-                negotiateStep(0);
-            }
-            else if (status == SEC_I_CONTEXT_EXPIRED) {
-                queueWriteClose();
+    // is ending.  Discard empty SSL frames as we encounter them.
+    while (true) {
+        SecBuffer recvBuffs[4];
+        recvBuffs[0].cbBuffer = buff->dataCount;
+        recvBuffs[0].BufferType = SECBUFFER_DATA;
+        recvBuffs[0].pvBuffer = &buff->bytes[buff->dataStart];
+        recvBuffs[1].BufferType = SECBUFFER_EMPTY;
+        recvBuffs[2].BufferType = SECBUFFER_EMPTY;
+        recvBuffs[3].BufferType = SECBUFFER_EMPTY;
+        SecBufferDesc buffDesc;
+        buffDesc.ulVersion = SECBUFFER_VERSION;
+        buffDesc.cBuffers = 4;
+        buffDesc.pBuffers = recvBuffs;
+        SECURITY_STATUS status = ::DecryptMessage(&ctxtHandle, &buffDesc, 0, NULL);
+        if (status != SEC_E_OK) {
+            if (status == SEC_E_INCOMPLETE_MESSAGE) {
+                // Give the partially filled buffer back and get more data
+                a.unread(buff);
             }
             else {
-                throw QPID_WINDOWS_ERROR(status);
+                // Don't need this any more...
+                a.queueReadBuffer(buff);
+
+                if (status == SEC_I_RENEGOTIATE) {
+                    state = Redo;
+                    negotiateStep(0);
+                }
+                else if (status == SEC_I_CONTEXT_EXPIRED) {
+                    queueWriteClose();
+                }
+                else {
+                    throw QPID_WINDOWS_ERROR(status);
+                }
+            }
+            return;
+        }
+
+        // All decrypted and verified... continue with AMQP. The recvBuffs have
+        // been set up by DecryptMessage to demarcate the SSL header, data, and
+        // trailer, as well as any extra data left over. Walk through and find
+        // that info, adjusting the buff data accordingly to reflect only the
+        // actual decrypted data.
+        // If there's extra data, copy that out to a new buffer and run through
+        // this method again.
+        extraBytes = 0;
+        extraLength = 0;
+        for (int i = 0; i < 4; i++) {
+            switch (recvBuffs[i].BufferType) {
+            case SECBUFFER_STREAM_HEADER:
+                buff->dataStart += recvBuffs[i].cbBuffer;
+                // Fall through - also don't count these bytes as data
+            case SECBUFFER_STREAM_TRAILER:
+                buff->dataCount -= recvBuffs[i].cbBuffer;
+                break;
+            case SECBUFFER_EXTRA:
+                extraBytes = (char *) recvBuffs[i].pvBuffer;
+                extraLength = recvBuffs[i].cbBuffer;
+                break;
+            default:
+                break;
             }
         }
-        return;
-    }
 
-    // All decrypted and verified... continue with AMQP. The recvBuffs have
-    // been set up by DecryptMessage to demarcate the SSL header, data, and
-    // trailer, as well as any extra data left over. Walk through and find
-    // that info, adjusting the buff data accordingly to reflect only the
-    // actual decrypted data.
-    // If there's extra data, copy that out to a new buffer and run through
-    // this method again.
-    char *extraBytes = 0;
-    int32_t extraLength = 0;
-    BufferBase *extraBuff = 0;
-    for (int i = 0; i < 4; i++) {
-        switch (recvBuffs[i].BufferType) {
-        case SECBUFFER_STREAM_HEADER:
-            buff->dataStart += recvBuffs[i].cbBuffer;
-            // Fall through - also don't count these bytes as data
-        case SECBUFFER_STREAM_TRAILER:
-            buff->dataCount -= recvBuffs[i].cbBuffer;
-            break;
-        case SECBUFFER_EXTRA:
-            extraBytes = (char *) recvBuffs[i].pvBuffer;
-            extraLength = recvBuffs[i].cbBuffer;
-            break;
-        default:
-            break;
+        if (buff->dataCount)
+            break;  // Process decrypted data
+        else {
+            if (extraLength) {
+                // Point past the empty frame and decrypt the next one.
+                buff->dataStart = extraBytes - buff->bytes;
+                buff->dataCount = extraLength;
+            }
+            else {
+                // No encrypted data remaining.
+                a.queueReadBuffer(buff);
+                return;
+            }
         }
     }
 
@@ -377,6 +403,8 @@ void SslAsynchIO::sslDataIn(qpid::sys::AsynchIO& a, BufferBase *buff) {
     // (so we can count on more bytes being on the way via aio).
     do {
         BufferBase *temp = 0;
+        extraBuff = 0;
+
         // See if there was partial data left over from last time. If so, append this new
         // data to that and release the current buff back to aio. Assume that
         // leftoverPlaintext was squished so the data starts at 0.
@@ -433,7 +461,7 @@ void SslAsynchIO::sslDataIn(qpid::sys::AsynchIO& a, BufferBase *buff) {
             temp = buff;
             buff = 0;
         }
-        if (readCallback) {
+        if (readCallback && temp->dataCount) {
             // The callback guard here is to prevent an upcall from deleting
             // this out from under us via queueForDeletion().
             readCallback(*this, temp);

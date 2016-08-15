@@ -326,6 +326,10 @@ void AsynchIO::unread(AsynchIO::BufferBase* buff) {
 
 void AsynchIO::queueWrite(AsynchIO::BufferBase* buff) {
     assert(buff);
+    if (!buff->dataCount) {
+        queueReadBuffer(buff);  // No op.  Back to the pool.
+        return;
+    }
     QLock l(bufferQueueLock);
     writeQueue.push_back(buff);
     if (!writeInProgress)
@@ -385,6 +389,8 @@ void AsynchIO::startReading() {
     }
     if (buff != 0) {
         int readCount = buff->byteCount - buff->dataCount;
+        if (readCount == 0)
+            QPID_LOG(error, "No read space in AsynchIO buffer");
         AsynchReadResult *result =
             new AsynchReadResult(boost::bind(&AsynchIO::completion, this, _1),
                                  buff,
