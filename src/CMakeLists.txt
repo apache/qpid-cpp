@@ -361,11 +361,11 @@ endif (NOT CMAKE_SYSTEM_NAME STREQUAL Windows)
 
 check_size_t_distinct (QPID_SIZE_T_DISTINCT)
 
-option(BUILD_SASL "Build with Cyrus SASL support" ${CyrusSASL_FOUND})
+option(BUILD_SASL "Build with Cyrus SASL support" ${CYRUSSASL_FOUND})
 if (BUILD_SASL)
-  if (NOT CyrusSASL_FOUND)
+  if (NOT CYRUSSASL_FOUND)
     message(FATAL_ERROR "Cyrus SASL support requested but libsasl2 library or headers not found")
-  endif (NOT CyrusSASL_FOUND)
+  endif (NOT CYRUSSASL_FOUND)
 
   set(qpidcommon_sasl_source
       qpid/sys/cyrus/CyrusSecurityLayer.h
