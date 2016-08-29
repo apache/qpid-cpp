@@ -82,10 +82,15 @@ Message* MessageMap::find(const framing::SequenceNumber& position, QueueCursor* 
     }
 }
 
+bool MessageMap::reset(const QueueCursor& cursor)
+{
+    return !cursor.valid || (cursor.type == CONSUMER && cursor.version != version);
+}
+
 Message* MessageMap::next(QueueCursor& cursor)
 {
     Ordering::iterator i;
-    if (!cursor.valid) i = messages.begin(); //start with oldest message
+    if (reset(cursor)) i = messages.begin(); //start with oldest message
     else i = messages.upper_bound(cursor.position); //get first message that is greater than position
 
     while (i != messages.end()) {
@@ -137,6 +142,7 @@ Message* MessageMap::release(const QueueCursor& cursor)
     Ordering::iterator i = messages.find(cursor.position);
     if (i != messages.end()) {
         i->second.setState(AVAILABLE);
+        version++;
         return &i->second;
     } else {
         return 0;

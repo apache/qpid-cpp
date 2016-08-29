@@ -1653,6 +1653,47 @@ QPID_AUTO_TEST_CASE(testPriorityRingEviction)
     BOOST_CHECK(!receiver.fetch(msg, Duration::IMMEDIATE));
 }
 
+QPID_AUTO_TEST_CASE(testReleaseResetsCursor)
+{
+    QueueFixture fix;
+    Sender sender = fix.session.createSender(fix.queue);
+    send(sender, 10);
+    Receiver r1 = fix.session.createReceiver(fix.queue);
+    Receiver r2 = fix.session.createReceiver(fix.queue);
+    Message m1;
+    BOOST_CHECK(r1.fetch(m1, Duration::IMMEDIATE));
+    BOOST_CHECK_EQUAL(m1.getContent(), "Message_1");
+    for (uint i = 1; i < 10; i++) {
+        Message msg;
+        BOOST_CHECK(r2.fetch(msg, Duration::IMMEDIATE));
+        BOOST_CHECK_EQUAL(msg.getContent(), (boost::format("Message_%1%") % (i+1)).str());
+    }
+    fix.session.release(m1);
+    Message msg;
+    BOOST_CHECK(r2.fetch(msg, Duration::IMMEDIATE));
+    BOOST_CHECK_EQUAL(msg.getContent(), "Message_1");
+    fix.session.acknowledge();
+}
+
+QPID_AUTO_TEST_CASE(testReleaseResetsCursorForLVQ)
+{
+    MessagingFixture fix;
+    std::string queue("queue; {create:always, node:{x-declare:{auto-delete:True, arguments:{qpid.last_value_queue_key:qpid.subject}}}}");
+    Sender sender = fix.session.createSender(queue);
+    sender.send(Message("please release me"));
+    Receiver r1 = fix.session.createReceiver(queue);
+    Receiver r2 = fix.session.createReceiver(queue);
+    Message m1;
+    Message m2;
+    BOOST_CHECK(r1.fetch(m1, Duration::IMMEDIATE));
+    BOOST_CHECK_EQUAL(m1.getContent(), "please release me");
+    BOOST_CHECK(!r2.fetch(m2, Duration::IMMEDIATE));
+    fix.session.release(m1);
+    BOOST_CHECK(r2.fetch(m2, Duration::SECOND*5));
+    BOOST_CHECK_EQUAL(m2.getContent(), "please release me");
+    fix.session.acknowledge();
+}
+
 QPID_AUTO_TEST_SUITE_END()
 
 }} // namespace qpid::tests

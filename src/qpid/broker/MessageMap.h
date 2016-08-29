@@ -65,6 +65,7 @@ class MessageMap : public Messages
     std::string getKey(const Message&);
     virtual const Message& replace(const Message&, const Message&);
     void erase(Ordering::iterator);
+    bool reset(const QueueCursor& cursor);
 };
 }} // namespace qpid::broker
 
