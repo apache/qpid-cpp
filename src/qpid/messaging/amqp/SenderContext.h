@@ -26,6 +26,7 @@
 #include <vector>
 #include <boost/shared_ptr.hpp>
 #include "qpid/sys/IntegerTypes.h"
+#include "qpid/sys/Time.h"
 #include "qpid/messaging/Address.h"
 #include "qpid/messaging/amqp/AddressHelper.h"
 #include "qpid/messaging/amqp/EncodedMessage.h"
@@ -41,10 +42,24 @@ namespace messaging {
 class Message;
 class MessageImpl;
 
+struct MessageReleased : public SendError
+{
+    MessageReleased(const std::string&);
+};
+
 namespace amqp {
 
 class Transaction;
 
+class SenderOptions {
+ public:
+    bool setToOnSend;
+    uint32_t maxDeliveryAttempts;
+    bool raiseRejected;
+    qpid::sys::Duration redeliveryTimeout;
+
+    SenderOptions(bool setToOnSend, uint32_t maxDeliveryAttempts, bool raiseRejected, const qpid::sys::Duration& redeliveryTimeout=qpid::sys::Duration(0));
+};
 
 class SenderContext
 {
@@ -52,14 +67,19 @@ class SenderContext
     class Delivery
     {
       public:
-        Delivery(int32_t id);
+        Delivery(int32_t id, const uint32_t max_attempts = 0, const qpid::sys::Duration& = qpid::sys::Duration(0));
         void encode(const qpid::messaging::MessageImpl& message, const qpid::messaging::Address&, bool setToField);
         void send(pn_link_t*, bool unreliable, const types::Variant& state=types::Variant());
         bool delivered();
         bool accepted();
         bool rejected();
+        bool released();
+        bool modified();
+        bool delivery_refused();
+        bool not_delivered();
         void settle();
         void reset();
+        void settleAndReset();
         bool sent() const;
         pn_delivery_t* getToken() const { return token; }
         std::string error();
@@ -67,14 +87,19 @@ class SenderContext
         int32_t id;
         pn_delivery_t* token;
         EncodedMessage encoded;
-        bool presettled;
-    };
+        bool settled;
+        uint32_t attempts;
+        const uint32_t max_attempts;
+        const qpid::sys::AbsTime retry_until;
+
+        std::string getStatus();
+};
 
     typedef boost::shared_ptr<Transaction> CoordinatorPtr;
 
     SenderContext(pn_session_t* session, const std::string& name,
                   const qpid::messaging::Address& target,
-                  bool setToOnSend,
+                  const SenderOptions&,
                   const CoordinatorPtr& transaction = CoordinatorPtr());
     virtual ~SenderContext();
 
@@ -107,7 +132,7 @@ class SenderContext
     Deliveries deliveries;
     uint32_t capacity;
     bool unreliable;
-    bool setToOnSend;
+    const SenderOptions options;
     boost::shared_ptr<Transaction> transaction;
 
     uint32_t processUnsettled(bool silent);

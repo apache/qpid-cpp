@@ -199,7 +199,11 @@ void ConnectionContext::close()
     if (state != CONNECTED) return;
     if (!(pn_connection_state(connection) & PN_LOCAL_CLOSED)) {
         for (SessionMap::iterator i = sessions.begin(); i != sessions.end(); ++i) {
-            syncLH(i->second, l);
+            try {
+                syncLH(i->second, l);
+            } catch (const MessageRejected& e) {
+                QPID_LOG(error, "Could not sync session on connection close due to message rejection (use explicit sync to handle exception): " << e.what());
+            }
             if (!(pn_session_state(i->second->session) & PN_LOCAL_CLOSED)) {
                 pn_session_close(i->second->session);
             }
@@ -493,7 +497,9 @@ qpid::messaging::Address ConnectionContext::passthrough(const qpid::messaging::A
 boost::shared_ptr<SenderContext> ConnectionContext::createSender(boost::shared_ptr<SessionContext> session, const qpid::messaging::Address& address)
 {
     sys::Monitor::ScopedLock l(lock);
-    boost::shared_ptr<SenderContext> sender = session->createSender(usePassthrough() ? passthrough(address) : address, setToOnSend);
+    boost::shared_ptr<SenderContext> sender =
+        session->createSender(usePassthrough() ? passthrough(address) : address,
+                              SenderOptions(setToOnSend, maxDeliveryAttempts, raiseRejected, redeliveryTimeout * qpid::sys::TIME_SEC));
     try {
         attach(session, sender);
         return sender;
@@ -565,10 +571,6 @@ void ConnectionContext::sendLH(
             QPID_LOG(debug, "Waiting for confirmation...");
             wait(ssn, snd);//wait until message has been confirmed
         }
-        if ((*delivery)->rejected()) {
-            throw MessageRejected("Message was rejected by peer");
-        }
-
     }
 }
 

@@ -51,6 +51,7 @@ EncodedMessage::EncodedMessage() : size(0), data(0), nestAnnotations(false)
 EncodedMessage::EncodedMessage(const EncodedMessage& other) : size(other.size), data(size ? new char[size] : 0), nestAnnotations(false)
 {
     init();
+    ::memcpy(data, other.data, size);
 }
 
 void EncodedMessage::init()

@@ -52,7 +52,8 @@ void merge(const qpid::types::Variant::List& from, std::vector<std::string>& to)
 
 ConnectionOptions::ConnectionOptions(const std::map<std::string, qpid::types::Variant>& options)
     : replaceUrls(false), reconnect(false), timeout(FOREVER), limit(-1), minReconnectInterval(0.001), maxReconnectInterval(2),
-      retries(0), reconnectOnLimitExceeded(true), nestAnnotations(false), setToOnSend(false)
+      retries(0), reconnectOnLimitExceeded(true), nestAnnotations(false), setToOnSend(false),
+      maxDeliveryAttempts(0), raiseRejected(true), redeliveryTimeout(0)
 {
     // By default we want the sasl service name to be "amqp" for 1.0
     // this will be overridden by a parsed "sasl-service" option
@@ -127,6 +128,12 @@ void ConnectionOptions::set(const std::string& name, const qpid::types::Variant&
         setToOnSend = value;
     } else if (name == "address-passthrough" || name == "address_passthrough") {
         addressPassthrough = value;
+    } else if (name == "max-delivery-attempts" || name == "max_delivery_attempts") {
+        maxDeliveryAttempts = value;
+    } else if (name == "raise-rejected" || name == "raise_rejected") {
+        raiseRejected = value;
+    } else if (name == "redelivery-timeout" || name == "redelivery_timeout") {
+        redeliveryTimeout = timeValue(value);
     } else if (name == "properties" || name == "client-properties" || name == "client_properties") {
         properties = value.asMap();
     } else {

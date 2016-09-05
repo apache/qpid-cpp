@@ -49,6 +49,9 @@ struct ConnectionOptions : qpid::client::ConnectionSettings
     bool nestAnnotations;
     bool setToOnSend;
     boost::optional<bool> addressPassthrough;
+    uint32_t maxDeliveryAttempts;
+    bool raiseRejected;
+    double redeliveryTimeout;
     std::map<std::string, qpid::types::Variant> properties;
 
     QPID_MESSAGING_EXTERN ConnectionOptions(const std::map<std::string, qpid::types::Variant>&);

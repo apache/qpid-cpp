@@ -42,7 +42,7 @@ const std::string ADDRESS("tx-transaction;{link:{reliability:at-least-once}}");
 }
 
 Transaction::Transaction(pn_session_t* session) :
-    SenderContext(session, TX_COORDINATOR, Address(ADDRESS), false), committing(false)
+    SenderContext(session, TX_COORDINATOR, Address(ADDRESS), SenderOptions(false, true, true)), committing(false)
 {}
 
 void Transaction::clear() {

@@ -42,19 +42,26 @@ extern "C" {
 
 namespace qpid {
 namespace messaging {
+
+MessageReleased::MessageReleased(const std::string& msg) : SendError(msg) {}
+
 namespace amqp {
+
+SenderOptions::SenderOptions(bool setToOnSend_, uint32_t maxDeliveryAttempts_, bool raiseRejected_, const qpid::sys::Duration& d)
+    : setToOnSend(setToOnSend_), maxDeliveryAttempts(maxDeliveryAttempts_), raiseRejected(raiseRejected_), redeliveryTimeout(d) {}
+
 
 //TODO: proper conversion to wide string for address
 SenderContext::SenderContext(pn_session_t* session, const std::string& n,
                              const qpid::messaging::Address& a,
-                             bool setToOnSend_,
+                             const SenderOptions& o,
                              const CoordinatorPtr& coord)
   : sender(pn_sender(session, n.c_str())),
     name(n),
     address(a),
     helper(address),
     nextId(0), capacity(50), unreliable(helper.isUnreliable()),
-    setToOnSend(setToOnSend_),
+    options(o),
     transaction(coord)
 {}
 
@@ -103,15 +110,15 @@ bool SenderContext::send(const qpid::messaging::Message& message, SenderContext:
             state = transaction->getSendState();
         if (unreliable) {
             Delivery delivery(nextId++);
-            delivery.encode(MessageImplAccess::get(message), address, setToOnSend);
+            delivery.encode(MessageImplAccess::get(message), address, options.setToOnSend);
             delivery.send(sender, unreliable, state);
             *out = 0;
             return true;
         } else {
-            deliveries.push_back(Delivery(nextId++));
+            deliveries.push_back(Delivery(nextId++, options.maxDeliveryAttempts, options.redeliveryTimeout));
             try {
                 Delivery& delivery = deliveries.back();
-                delivery.encode(MessageImplAccess::get(message), address, setToOnSend);
+                delivery.encode(MessageImplAccess::get(message), address, options.setToOnSend);
                 delivery.send(sender, unreliable, state);
                 *out = &delivery;
                 return true;
@@ -140,11 +147,35 @@ uint32_t SenderContext::processUnsettled(bool silent)
     if (!silent) {
         check();
     }
+    bool resend_required = false;
     //remove messages from front of deque once peer has confirmed receipt
-    while (!deliveries.empty() && deliveries.front().delivered() && !(pn_link_state(sender) & PN_REMOTE_CLOSED)) {
-        deliveries.front().settle();
-        deliveries.pop_front();
+    while (!deliveries.empty() && !(pn_link_state(sender) & PN_REMOTE_CLOSED)) {
+        try {
+            if (deliveries.front().delivered()) {
+                deliveries.front().settle();
+                deliveries.pop_front();
+            } else {
+                break;
+            }
+        } catch (const MessageReleased& e) {
+            //mark it eligible for resending,
+            deliveries.front().settleAndReset();
+            //and move it to the back
+            deliveries.push_back(deliveries.front());
+            deliveries.pop_front();
+            resend_required = true;
+        } catch (const MessageRejected& e) {
+            deliveries.front().settle();
+            if (options.raiseRejected) {
+                QPID_LOG(info, e.what());
+                throw;
+            } else {
+                QPID_LOG(warning, e.what());
+                deliveries.pop_front();
+            }
+        }
     }
+    if (resend_required) resend();
     return deliveries.size();
 }
 namespace {
@@ -446,7 +477,16 @@ bool changedSubject(const qpid::messaging::MessageImpl& msg, const qpid::messagi
 
 }
 
-SenderContext::Delivery::Delivery(int32_t i) : id(i), token(0), presettled(false) {}
+namespace{
+qpid::sys::AbsTime until(const qpid::sys::Duration& d)
+{
+    return d ? qpid::sys::AbsTime(qpid::sys::now(), d) : qpid::sys::FAR_FUTURE;
+}
+}
+
+SenderContext::Delivery::Delivery(int32_t i, const uint32_t max_attempts_, const qpid::sys::Duration& max_time) :
+    id(i), token(0), settled(false), attempts(0), max_attempts(max_attempts_),
+    retry_until(until(max_time)) {}
 
 void SenderContext::Delivery::reset()
 {
@@ -517,6 +557,7 @@ void SenderContext::Delivery::encode(const qpid::messaging::MessageImpl& msg, co
 
 void SenderContext::Delivery::send(pn_link_t* sender, bool unreliable, const types::Variant& state)
 {
+    ++attempts;
     pn_delivery_tag_t tag;
     tag.size = sizeof(id);
 #ifdef NO_PROTON_DELIVERY_TAG_T
@@ -532,22 +573,36 @@ void SenderContext::Delivery::send(pn_link_t* sender, bool unreliable, const typ
     }
     pn_link_send(sender, encoded.getData(), encoded.getSize());
     if (unreliable) {
-        pn_delivery_settle(token);
-        presettled = true;
+        settle();
     }
     pn_link_advance(sender);
 }
 
 bool SenderContext::Delivery::sent() const
 {
-    return presettled || token;
+    return settled || token;
 }
 bool SenderContext::Delivery::delivered()
 {
-    if (presettled || (token && (pn_delivery_remote_state(token) || pn_delivery_settled(token)))) {
-        //TODO: need a better means for signalling outcomes other than accepted
-        if (rejected()) {
-            QPID_LOG(warning, "delivery " << id << " was rejected by peer");
+    if (settled) {
+        return true;
+    } else if (token && (pn_delivery_remote_state(token) || pn_delivery_settled(token))) {
+        if (delivery_refused()) {
+            throw MessageRejected(Msg() << "delivery " << id << " refused: " << getStatus());
+        } else if (not_delivered()) {
+            if (max_attempts && (attempts >= max_attempts)) {
+                throw MessageRejected(Msg() << "delivery " << id << " cannot be delivered after " << attempts << " attempts");
+            } else if (qpid::sys::now() > retry_until) {
+                throw MessageRejected(Msg() << "delivery " << id << " cannot be delivered, timed out after " << attempts << " attempts");
+            } else {
+                std::string status = getStatus();
+                if (max_attempts) {
+                    QPID_LOG(info, "delivery " << id << " failed attempt " << attempts << " of " << max_attempts << ": " << status);
+                } else {
+                    QPID_LOG(info, "delivery " << id << " was not successful: " << status);
+                }
+                throw MessageReleased(Msg() << "delivery " << id << " was not successful: " << status);
+            }
         } else if (!accepted()) {
             QPID_LOG(info, "delivery " << id << " was not accepted by peer");
         }
@@ -556,18 +611,66 @@ bool SenderContext::Delivery::delivered()
         return false;
     }
 }
+std::string SenderContext::Delivery::getStatus()
+{
+    if (rejected()) {
+        pn_disposition_t* d = token ? pn_delivery_remote(token) : 0;
+        if (d) {
+            pn_condition_t* c = pn_disposition_condition(d);
+            if (c && pn_condition_is_set(c)) {
+                return Msg() << pn_condition_get_name(c) << ": " << pn_condition_get_description(c);
+            }
+        }
+        return "rejected";
+    } else if (released()) {
+        return "released";
+    } else if (delivery_refused()) {
+        return "undeliverable-here";
+    } else if (not_delivered()) {
+        return "delivery-failed";
+    } else if (modified()) {
+        return "modified";
+    }
+    return "";
+}
 bool SenderContext::Delivery::accepted()
 {
-    return pn_delivery_remote_state(token) == PN_ACCEPTED;
+    return token && pn_delivery_remote_state(token) == PN_ACCEPTED;
 }
 bool SenderContext::Delivery::rejected()
 {
-    return pn_delivery_remote_state(token) == PN_REJECTED;
+    return token && pn_delivery_remote_state(token) == PN_REJECTED;
+}
+bool SenderContext::Delivery::released()
+{
+    return token && pn_delivery_remote_state(token) == PN_RELEASED;
+}
+bool SenderContext::Delivery::modified()
+{
+    return token && pn_delivery_remote_state(token) == PN_MODIFIED;
+}
+bool SenderContext::Delivery::delivery_refused()
+{
+    if (modified()) {
+        pn_disposition_t* d = token ? pn_delivery_remote(token) : 0;
+        return d && pn_disposition_is_undeliverable(d);
+    } else {
+        return rejected();
+    }
+}
+bool SenderContext::Delivery::not_delivered()
+{
+    if (modified()) {
+        pn_disposition_t* d = token ? pn_delivery_remote(token) : 0;
+        return d && !pn_disposition_is_undeliverable(d);
+    } else {
+        return released();
+    }
 }
 
 std::string SenderContext::Delivery::error()
 {
-    pn_condition_t *condition = pn_disposition_condition(pn_delivery_remote(token));
+    pn_condition_t *condition = token ? pn_disposition_condition(pn_delivery_remote(token)) : 0;
     return (condition && pn_condition_is_set(condition)) ?
         Msg() << get_error_string(condition, std::string(), std::string()) :
         std::string();
@@ -575,7 +678,18 @@ std::string SenderContext::Delivery::error()
 
 void SenderContext::Delivery::settle()
 {
-    pn_delivery_settle(token);
+    if (!settled) {
+        pn_delivery_settle(token);
+        token = 0; // can no longer use the delivery
+        settled = true;
+    }
+}
+void SenderContext::Delivery::settleAndReset()
+{
+    //settle current delivery:
+    settle();
+    //but treat message as unsent:
+    settled = false;
 }
 void SenderContext::verify()
 {
@@ -635,7 +749,7 @@ void SenderContext::reset(pn_session_t* session)
 
 void SenderContext::resend()
 {
-    for (Deliveries::iterator i = deliveries.begin(); i != deliveries.end() && pn_link_credit(sender) && !i->sent(); ++i) {
+    for (Deliveries::iterator i = deliveries.begin(); i != deliveries.end() && !i->sent(); ++i) {
         i->send(sender, false/*only resend reliable transfers*/);
     }
 }
