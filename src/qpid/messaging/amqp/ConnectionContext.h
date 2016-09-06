@@ -226,6 +226,10 @@ class ConnectionContext : public qpid::sys::ConnectionCodec, public qpid::messag
                 const qpid::messaging::Message& message, bool sync,
                 SenderContext::Delivery** delivery, sys::Monitor::ScopedLock&);
     void acknowledgeLH(boost::shared_ptr<SessionContext> ssn, qpid::messaging::Message* message, bool cumulative, sys::Monitor::ScopedLock&);
+
+    types::Variant::List getPeersOfferedCapabilities();
+    bool usePassthrough();
+    qpid::messaging::Address passthrough(const qpid::messaging::Address&);
 };
 
 }}} // namespace qpid::messaging::amqp

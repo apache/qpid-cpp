@@ -434,10 +434,66 @@ void ConnectionContext::attach(boost::shared_ptr<SessionContext> ssn, pn_link_t*
     }
 }
 
+namespace {
+const std::string PASSTHROUGH_CAPABILITY("qpid:messaging:address");
+const std::string LINK("link");
+const std::string NAME("name");
+const std::string RELIABILITY("reliability");
+bool copy(const qpid::types::Variant::Map& from, qpid::types::Variant::Map& to, const std::string& key)
+{
+    Variant::Map::const_iterator i = from.find(key);
+    if (i == from.end()) {
+        return false;
+    } else {
+        to[key] = i->second.asString();
+        return true;
+    }
+}
+}
+
+types::Variant::List ConnectionContext::getPeersOfferedCapabilities()
+{
+    qpid::types::Variant::List capabilities;
+    pn_data_t* raw = pn_connection_remote_offered_capabilities(connection);
+    if (raw) {
+        PnData data(raw);
+        data.getList(capabilities);
+    }
+    return capabilities;
+}
+
+bool ConnectionContext::usePassthrough()
+{
+    if (!addressPassthrough) {
+        qpid::types::Variant::List capabilities = getPeersOfferedCapabilities();
+        for (qpid::types::Variant::List::const_iterator i = capabilities.begin(); i != capabilities.end(); i++) {
+            if (i->asString() == PASSTHROUGH_CAPABILITY) {
+                return true;
+            }
+        }
+        return false;
+    } else {
+        return addressPassthrough.get();
+    }
+}
+qpid::messaging::Address ConnectionContext::passthrough(const qpid::messaging::Address& in)
+{
+    qpid::messaging::Address out;
+    out.setName(in.str());
+    qpid::types::Variant::Map::const_iterator i = in.getOptions().find(LINK);
+    if (i != in.getOptions().end()) {
+        qpid::types::Variant::Map linkOptions;
+        if (copy(i->second.asMap(), linkOptions, NAME) || copy(i->second.asMap(), linkOptions, RELIABILITY)) {
+            out.getOptions()[LINK] = linkOptions;
+        }
+    }
+    return out;
+}
+
 boost::shared_ptr<SenderContext> ConnectionContext::createSender(boost::shared_ptr<SessionContext> session, const qpid::messaging::Address& address)
 {
     sys::Monitor::ScopedLock l(lock);
-    boost::shared_ptr<SenderContext> sender = session->createSender(address, setToOnSend);
+    boost::shared_ptr<SenderContext> sender = session->createSender(usePassthrough() ? passthrough(address) : address, setToOnSend);
     try {
         attach(session, sender);
         return sender;
@@ -450,7 +506,7 @@ boost::shared_ptr<SenderContext> ConnectionContext::createSender(boost::shared_p
 boost::shared_ptr<ReceiverContext> ConnectionContext::createReceiver(boost::shared_ptr<SessionContext> session, const qpid::messaging::Address& address)
 {
     sys::Monitor::ScopedLock l(lock);
-    boost::shared_ptr<ReceiverContext> receiver = session->createReceiver(address);
+    boost::shared_ptr<ReceiverContext> receiver = session->createReceiver(usePassthrough() ? passthrough(address) : address);
     try {
         attach(session, receiver);
         return receiver;

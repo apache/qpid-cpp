@@ -26,6 +26,7 @@
 #include "qpid/client/ConnectionSettings.h"
 #include <map>
 #include <vector>
+#include <boost/optional.hpp>
 
 namespace qpid {
 namespace types {
@@ -47,6 +48,7 @@ struct ConnectionOptions : qpid::client::ConnectionSettings
     std::string identifier;
     bool nestAnnotations;
     bool setToOnSend;
+    boost::optional<bool> addressPassthrough;
     std::map<std::string, qpid::types::Variant> properties;
 
     QPID_MESSAGING_EXTERN ConnectionOptions(const std::map<std::string, qpid::types::Variant>&);
