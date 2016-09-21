@@ -18,9 +18,11 @@
 # under the License.
 #
 
-import optparse, random, os, time, uuid
-from qpid.messaging import *
-import statistics
+import optparse, random, os, time, uuid, statistics
+try:
+    from qpid_messaging import *
+except:
+    from qpid.messaging import *
 
 EOS = "eos"
 SN = "sn"

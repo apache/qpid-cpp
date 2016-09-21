@@ -20,8 +20,10 @@
 #
 
 import optparse, sys, time, os, re, math
-from qpid.messaging import Connection
-from qpid.messaging import Message as QpidMessage
+try:
+    from qpid_messaging import Connection
+except:
+    from qpid.messaging import Connection
 from qpid.util import URL
 from qpidtoollibs.broker import BrokerAgent
 from qpidtoollibs.config import parse_qpidd_conf

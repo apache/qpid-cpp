@@ -468,13 +468,14 @@ QPID_EXCEPTION(UnauthorizedAccess, SessionError)
 
          def _get_content(self) :
              obj = self.getContentObject()
-             if obj:
+             if obj is not None:
                  return obj
              if self.content_type == "amqp/list" :
                  return decodeList(self)
              if self.content_type == "amqp/map" :
                  return decodeMap(self)
              return self.getContent()
+
          def _set_content(self, content) :
              if isinstance(content, str) :
                  self.setContent(content)

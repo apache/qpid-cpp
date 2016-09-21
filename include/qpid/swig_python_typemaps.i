@@ -69,7 +69,10 @@ typedef int Py_ssize_t;
         if (PyInt_Check(value))    return qpid::types::Variant(int64_t(PyLong_AS_LONG(value)));
         if (PyString_Check(value)) return qpid::types::Variant(std::string(PyBytes_AS_STRING(value)));
         if (PyUnicode_Check(value)) {
-            qpid::types::Variant v(std::string(PyUnicode_AS_DATA(value)));
+            PyObject* utf8 = PyUnicode_AsUTF8String(value);
+            std::string s(PyBytes_AS_STRING(utf8));
+            Py_XDECREF(utf8);
+            qpid::types::Variant v(s);
             v.setEncoding("utf8");
             return v;
         }

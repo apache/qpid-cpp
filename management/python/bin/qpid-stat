@@ -25,7 +25,11 @@ import sys
 import locale
 import socket
 import re
-from qpid.messaging import Connection
+
+try:
+    from qpid_messaging import Connection
+except:
+    from qpid.messaging import Connection
 
 home = os.environ.get("QPID_TOOLS_HOME", os.path.normpath("/usr/share/qpid-tools"))
 sys.path.append(os.path.join(home, "python"))
