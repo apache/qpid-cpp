@@ -289,6 +289,7 @@ add_test(NAME performance_tests COMMAND ${PYTHON_EXECUTABLE} run_performance_tes
 add_test(NAME python_tests COMMAND ${PYTHON_EXECUTABLE} run_python_tests)
 add_test(NAME queue_redirect_tests COMMAND ${PYTHON_EXECUTABLE} run_queue_redirect_tests)
 add_test(NAME qmf_tests COMMAND ${PYTHON_EXECUTABLE} run_qmf_tests)
+add_test(NAME qmf_client_tests COMMAND ${PYTHON_EXECUTABLE} run_qmf_client_tests)
 add_test(NAME transaction_tests COMMAND ${PYTHON_EXECUTABLE} run_transaction_tests)
 
 if (BUILD_AMQP)
