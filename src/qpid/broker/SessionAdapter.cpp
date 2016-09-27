@@ -115,12 +115,12 @@ void SessionAdapter::ExchangeHandlerImpl::checkType(Exchange::shared_ptr exchang
 
 void SessionAdapter::ExchangeHandlerImpl::checkAlternate(Exchange::shared_ptr exchange, Exchange::shared_ptr alternate)
 {
-    if (alternate && ((exchange->getAlternate() && alternate != exchange->getAlternate())
-                      || !exchange->getAlternate()))
-        throw NotAllowedException(QPID_MSG("Exchange declared with alternate-exchange "
-                                           << (exchange->getAlternate() ? exchange->getAlternate()->getName() : "<nonexistent>")
-                                           << ", requested "
-                                           << alternate->getName()));
+    if (alternate && alternate != exchange->getAlternate()) {
+        std::string got(exchange->getAlternate() ? exchange->getAlternate()->getName() : "<none>");
+        throw NotAllowedException(
+            QPID_MSG("Exchange declared with alternate-exchange " << got
+                     << ", requested " << alternate->getName()));
+    }
 }
 
 void SessionAdapter::ExchangeHandlerImpl::delete_(const string& name, bool /*ifUnused*/)
