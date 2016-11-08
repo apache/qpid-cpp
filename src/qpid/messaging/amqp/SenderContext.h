@@ -26,6 +26,7 @@
 #include <vector>
 #include <boost/shared_ptr.hpp>
 #include "qpid/sys/IntegerTypes.h"
+#include "qpid/sys/ExceptionHolder.h"
 #include "qpid/sys/Time.h"
 #include "qpid/messaging/Address.h"
 #include "qpid/messaging/amqp/AddressHelper.h"
@@ -117,6 +118,7 @@ class SenderContext
     virtual bool settled();
     virtual bool closed();
     virtual Address getAddress() const;
+    void cleanup();
 
   protected:
     pn_link_t* sender;
@@ -134,6 +136,7 @@ class SenderContext
     bool unreliable;
     const SenderOptions options;
     boost::shared_ptr<Transaction> transaction;
+    sys::ExceptionHolder error;
 
     uint32_t processUnsettled(bool silent);
     void configure(pn_terminus_t*);

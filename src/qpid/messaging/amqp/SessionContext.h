@@ -90,6 +90,7 @@ class SessionContext
     void acknowledge(const qpid::framing::SequenceNumber& id, bool cummulative);
     void acknowledge(DeliveryMap::iterator begin, DeliveryMap::iterator end);
     void resetSession(pn_session_t*);
+    void cleanup();
 };
 }}} // namespace qpid::messaging::amqp
 

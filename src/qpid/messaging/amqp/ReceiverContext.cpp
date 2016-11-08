@@ -40,11 +40,12 @@ ReceiverContext::ReceiverContext(pn_session_t* session, const std::string& n, co
 
 ReceiverContext::~ReceiverContext()
 {
-    if (receiver) pn_link_free(receiver);
+    if (!error && receiver) pn_link_free(receiver);
 }
 
 void ReceiverContext::setCapacity(uint32_t c)
 {
+    error.raise();
     if (c != capacity) {
         //stop
         capacity = c;
@@ -59,17 +60,20 @@ uint32_t ReceiverContext::getCapacity()
 
 uint32_t ReceiverContext::getAvailable()
 {
+    error.raise();
     return pn_link_queued(receiver);
 }
 
 uint32_t ReceiverContext::getUnsettled()
 {
+    error.raise();
     assert(pn_link_unsettled(receiver) >= pn_link_queued(receiver));
     return pn_link_unsettled(receiver) - pn_link_queued(receiver);
 }
 
 void ReceiverContext::close()
 {
+    error.raise();
     if (receiver) pn_link_close(receiver);
 }
 
@@ -84,6 +88,7 @@ const std::string& ReceiverContext::getSource() const
 }
 void ReceiverContext::verify()
 {
+    error.raise();
     pn_terminus_t* source = pn_link_remote_source(receiver);
     if (!helper.isNameNull() && !pn_terminus_get_address(source)) {
         std::string msg("No such source : ");
@@ -98,10 +103,12 @@ void ReceiverContext::verify()
 }
 void ReceiverContext::configure()
 {
+    error.raise();
     if (receiver) configure(pn_link_source(receiver));
 }
 void ReceiverContext::configure(pn_terminus_t* source)
 {
+    error.raise();
     helper.configure(receiver, source, AddressHelper::FOR_RECEIVER);
     std::string option;
     if (helper.getLinkTarget(option)) {
@@ -124,6 +131,7 @@ void ReceiverContext::reset(pn_session_t* session)
 
 bool ReceiverContext::hasCurrent()
 {
+    error.raise();
     return receiver &&  pn_link_current(receiver);
 }
 
@@ -134,6 +142,16 @@ bool ReceiverContext::wakeupToIssueCredit()
         return true;
     } else {
         return false;
+    }
+}
+
+void ReceiverContext::cleanup()
+{
+    if (!error && receiver) {
+        error = new LinkError("receiver no longer valid");
+        pn_link_free(receiver);
+        receiver = 0;
+
     }
 }
 

@@ -67,16 +67,18 @@ SenderContext::SenderContext(pn_session_t* session, const std::string& n,
 
 SenderContext::~SenderContext()
 {
-    if (sender) pn_link_free(sender);
+    if (!error && sender) pn_link_free(sender);
 }
 
 void SenderContext::close()
 {
+    error.raise();
     if (sender) pn_link_close(sender);
 }
 
 void SenderContext::setCapacity(uint32_t c)
 {
+    error.raise();
     if (c < deliveries.size()) throw qpid::messaging::SenderError("Desired capacity is less than unsettled message count!");
     capacity = c;
 }
@@ -88,6 +90,7 @@ uint32_t SenderContext::getCapacity()
 
 uint32_t SenderContext::getUnsettled()
 {
+    error.raise();
     return processUnsettled(true/*always allow retrieval of unsettled count, even if link has failed*/);
 }
 
@@ -103,6 +106,7 @@ const std::string& SenderContext::getTarget() const
 
 bool SenderContext::send(const qpid::messaging::Message& message, SenderContext::Delivery** out)
 {
+    error.raise();
     resend();//if there are any messages needing to be resent at the front of the queue, send them first
     if (processUnsettled(false) < capacity && pn_link_credit(sender)) {
         types::Variant state;
@@ -135,6 +139,7 @@ bool SenderContext::send(const qpid::messaging::Message& message, SenderContext:
 
 void SenderContext::check()
 {
+    error.raise();
     if (pn_link_state(sender) & PN_REMOTE_CLOSED && !(pn_link_state(sender) & PN_LOCAL_CLOSED)) {
         std::string text = get_error_string(pn_link_remote_condition(sender), "Link detached by peer");
         pn_link_close(sender);
@@ -144,6 +149,7 @@ void SenderContext::check()
 
 uint32_t SenderContext::processUnsettled(bool silent)
 {
+    error.raise();
     if (!silent) {
         check();
     }
@@ -693,6 +699,7 @@ void SenderContext::Delivery::settleAndReset()
 }
 void SenderContext::verify()
 {
+    error.raise();
     pn_terminus_t* target = pn_link_remote_target(sender);
     if (!helper.isNameNull() && !pn_terminus_get_address(target)) {
         std::string msg("No such target : ");
@@ -709,11 +716,13 @@ void SenderContext::verify()
 
 void SenderContext::configure()
 {
+    error.raise();
     if (sender) configure(pn_link_target(sender));
 }
 
 void SenderContext::configure(pn_terminus_t* target)
 {
+    error.raise();
     helper.configure(sender, target, AddressHelper::FOR_SENDER);
     std::string option;
     if (helper.getLinkSource(option)) {
@@ -725,12 +734,17 @@ void SenderContext::configure(pn_terminus_t* target)
 
 bool SenderContext::settled()
 {
+    error.raise();
     return processUnsettled(false) == 0;
 }
 
 bool SenderContext::closed()
 {
-    return pn_link_state(sender) & PN_LOCAL_CLOSED;
+    if (sender) {
+        return pn_link_state(sender) & PN_LOCAL_CLOSED;
+    } else {
+        return true;
+    }
 }
 
 Address SenderContext::getAddress() const
@@ -751,6 +765,16 @@ void SenderContext::resend()
 {
     for (Deliveries::iterator i = deliveries.begin(); i != deliveries.end() && !i->sent(); ++i) {
         i->send(sender, false/*only resend reliable transfers*/);
+    }
+}
+
+void SenderContext::cleanup()
+{
+    if (!error && sender) {
+        error = new LinkError("sender no longer valid");
+        pn_link_free(sender);
+        sender = 0;
+
     }
 }
 

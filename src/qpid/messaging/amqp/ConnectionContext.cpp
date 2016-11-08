@@ -193,7 +193,7 @@ void ConnectionContext::endSession(boost::shared_ptr<SessionContext> ssn)
     while (!(pn_session_state(ssn->session) & PN_REMOTE_CLOSED)) {
         wait();
     }
-
+    ssn->cleanup();
     sessions.erase(ssn->getName());
 }
 
@@ -221,6 +221,9 @@ void ConnectionContext::close()
                 break;
             }
             lock.wait();
+        }
+        for (SessionMap::iterator i = sessions.begin(); i != sessions.end(); ++i) {
+            i->second->cleanup();
         }
         sessions.clear();
     }
