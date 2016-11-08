@@ -188,9 +188,13 @@ void ConnectionContext::endSession(boost::shared_ptr<SessionContext> ssn)
     if (pn_session_state(ssn->session) & PN_REMOTE_ACTIVE) {
         pn_session_close(ssn->session);
     }
-    sessions.erase(ssn->getName());
 
     wakeupDriver();
+    while (!(pn_session_state(ssn->session) & PN_REMOTE_CLOSED)) {
+        wait();
+    }
+
+    sessions.erase(ssn->getName());
 }
 
 void ConnectionContext::close()
