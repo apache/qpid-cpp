@@ -57,7 +57,7 @@ if platform.system() == "Windows":
     scripts.append("bin/qpid-tool.bat")
 
 setup(name="qpid-tools",
-      version="1.36.0",
+      version="1.37.0",
       author="Apache Qpid",
       author_email="users@qpid.apache.org",
       package_dir={'' : 'lib'},
