@@ -19,7 +19,12 @@
 
 project(qpid-cpp)
 
-cmake_minimum_required(VERSION 2.8.7 FATAL_ERROR)
+if (NOT MSVC)
+  cmake_minimum_required(VERSION 2.8.7 FATAL_ERROR)
+else (NOT MSVC)
+  # windows PDB file installation needs v3.1
+  cmake_minimum_required(VERSION 3.1.3 FATAL_ERROR)
+endif (NOT MSVC)
 
 if (CMAKE_CONFIGURATION_TYPES)
   # There is no single "build type"...
