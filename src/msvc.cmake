@@ -21,11 +21,6 @@
 #  * Allows for detailed specification of file/product versions.
 #  * Installs PDB files.
 
-if (MSVC)
-  # TARGET_PDB_FILE generator expression introduced in 3.1
-  cmake_minimum_required(VERSION 3.1.3 FATAL_ERROR)
-endif (MSVC)
-
 #
 # If the compiler is Visual Studio set up installation of .pdb files 
 #
