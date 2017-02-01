@@ -80,7 +80,7 @@ uint32_t MessageStoreImpl::chkJrnlWrPageCacheSize(const uint32_t param_, const s
         // For zero value, use default
         p = QLS_WMGR_DEF_PAGE_SIZE_KIB;
         QLS_LOG(warning, "parameter " << paramName_ << " (" << param_ << ") must be a power of 2 between 1 and 128; changing this parameter to default value (" << p << ")");
-    } else if ( p > 128 || (p & (p-1)) ) {
+    } else if ( p > 128 || p < 4 || (p & (p-1)) ) {
         // For any positive value that is not a power of 2, use closest value
         if      (p <   6)   p =   4;
         else if (p <  12)   p =   8;
@@ -88,7 +88,7 @@ uint32_t MessageStoreImpl::chkJrnlWrPageCacheSize(const uint32_t param_, const s
         else if (p <  48)   p =  32;
         else if (p <  96)   p =  64;
         else                p = 128;
-        QLS_LOG(warning, "parameter " << paramName_ << " (" << param_ << ") must be a power of 2 between 1 and 128; changing this parameter to closest allowable value (" << p << ")");
+        QLS_LOG(warning, "parameter " << paramName_ << " (" << param_ << ") must be a power of 2 between 4 and 128; changing this parameter to closest allowable value (" << p << ")");
     }
     return p;
 }
@@ -99,8 +99,6 @@ uint16_t MessageStoreImpl::getJrnlWrNumPages(const uint32_t wrPageSizeKib_)
     uint32_t defTotWCacheSizeSblks = QLS_WMGR_DEF_PAGE_SIZE_SBLKS * QLS_WMGR_DEF_PAGES;
     switch (wrPageSizeKib_)
     {
-      case 1:
-      case 2:
       case 4:
         // 256 KiB total cache
         return defTotWCacheSizeSblks / wrPageSizeSblks / 4;
@@ -1543,7 +1541,7 @@ MessageStoreImpl::StoreOptions::StoreOptions(const std::string& name_) :
                 "Lower values decrease latency at the expense of throughput.")
         ("tpl-wcache-page-size", qpid::optValue(tplWCachePageSizeKib, "N"),
                 "Size of the pages in the transaction prepared list write page cache in KiB. "
-                "Allowable values - powers of 2: 1, 2, 4, ... , 128. "
+                "Allowable values - powers of 2: 4, 8, 16, 32, 64, 128. "
                 "Lower values decrease latency at the expense of throughput.")
         ("efp-partition", qpid::optValue(efpPartition, "N"),
                 "Empty File Pool partition to use for finding empty journal files")

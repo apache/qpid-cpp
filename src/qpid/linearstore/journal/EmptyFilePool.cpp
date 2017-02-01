@@ -39,7 +39,7 @@ namespace journal {
 #define FHDR_BUFF_SIZE (QLS_JRNL_FHDR_RES_SIZE_SBLKS * QLS_SBLK_SIZE_KIB) * 1024
 #define ZERO_BUFF_SIZE QLS_SBLK_SIZE_KIB * 1024
 
-// tatic declarations
+// Static declarations
 
 std::string EmptyFilePool::s_inuseFileDirectory_ = "in_use";
 std::string EmptyFilePool::s_returnedFileDirectory_ = "returned";
