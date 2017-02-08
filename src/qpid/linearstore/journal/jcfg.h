@@ -38,9 +38,10 @@
 #define QLS_SBLK_SIZE_DBLKS             (QLS_SBLK_SIZE_BYTES / QLS_DBLK_SIZE_BYTES) /**< Disk softblock size in multiples of QLS_DBLK_SIZE_BYTES */
 #define QLS_SBLK_SIZE_KIB               (QLS_SBLK_SIZE_BYTES / 1024) /**< Disk softblock size in KiB */
 
-#define QLS_WMGR_DEF_PAGE_SIZE_KIB      32          /**< Journal write page size in KiB (default) */
-#define QLS_WMGR_DEF_PAGE_SIZE_SBLKS    (QLS_WMGR_DEF_PAGE_SIZE_KIB / QLS_SBLK_SIZE_KIB) /**< Journal write page size in softblocks (default) */
-#define QLS_WMGR_DEF_PAGES              32          /**< Number of pages to use in wmgr (default) */
+#define QLS_WMGR_DEF_PAGE_SIZE_KIB      16          /**< Journal buffer page size in KiB (default) */
+#define QLS_WMGR_DEF_NUM_PAGES          16          /**< Number of buffer pages to use in wmgr (default) */
+#define QLS_WMGR_DEF_TPL_PAGE_SIZE_KIB  4           /**< TPL buffer page size in KiB (default) */
+#define QLS_WMGR_DEF_TPL_NUM_PAGES      16          /**< Number of TPL buffer pages to use in wmgr (default) */
 
 #define QLS_WMGR_MAXDTOKPP              1024        /**< Max. dtoks (data blocks) per page in wmgr */
 #define QLS_WMGR_MAXWAITUS              100         /**< Max. wait time (us) before submitting AIO */

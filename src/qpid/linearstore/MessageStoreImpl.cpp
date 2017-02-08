@@ -21,6 +21,7 @@
 
 #include "qpid/linearstore/MessageStoreImpl.h"
 
+#include <cmath>
 #include "qpid/broker/Broker.h"
 #include "qpid/framing/FieldValue.h"
 #include "qpid/linearstore/BindingDbt.h"
@@ -72,44 +73,29 @@ MessageStoreImpl::MessageStoreImpl(qpid::broker::Broker* broker_, const char* en
     ::srand(::time(NULL));
 }
 
-uint32_t MessageStoreImpl::chkJrnlWrPageCacheSize(const uint32_t param_, const std::string& paramName_)
-{
+uint32_t MessageStoreImpl::chkJrnlWrPageCacheSize(const uint32_t param_, const std::string& paramName_) {
     uint32_t p = param_;
 
     if (p == 0) {
         // For zero value, use default
         p = QLS_WMGR_DEF_PAGE_SIZE_KIB;
-        QLS_LOG(warning, "parameter " << paramName_ << " (" << param_ << ") must be a power of 2 between 1 and 128; changing this parameter to default value (" << p << ")");
-    } else if ( p > 128 || p < 4 || (p & (p-1)) ) {
-        // For any positive value that is not a power of 2, use closest value
-        if      (p <   6)   p =   4;
-        else if (p <  12)   p =   8;
-        else if (p <  24)   p =  16;
-        else if (p <  48)   p =  32;
-        else if (p <  96)   p =  64;
-        else                p = 128;
+    } else if ( p < 4 ) {
+        p = 4;
+    } else if (p & (p-1)) {
+        p = std::pow(2, std::round(std::log2(p)));
         QLS_LOG(warning, "parameter " << paramName_ << " (" << param_ << ") must be a power of 2 between 4 and 128; changing this parameter to closest allowable value (" << p << ")");
     }
     return p;
 }
 
-uint16_t MessageStoreImpl::getJrnlWrNumPages(const uint32_t wrPageSizeKib_)
-{
-    uint32_t wrPageSizeSblks = wrPageSizeKib_ / QLS_SBLK_SIZE_KIB; // convert from KiB to number sblks
-    uint32_t defTotWCacheSizeSblks = QLS_WMGR_DEF_PAGE_SIZE_SBLKS * QLS_WMGR_DEF_PAGES;
-    switch (wrPageSizeKib_)
-    {
-      case 4:
-        // 256 KiB total cache
-        return defTotWCacheSizeSblks / wrPageSizeSblks / 4;
-      case 8:
-      case 16:
-        // 512 KiB total cache
-        return defTotWCacheSizeSblks / wrPageSizeSblks / 2;
-      default: // 32, 64, 128
-        // 1 MiB total cache
-        return defTotWCacheSizeSblks / wrPageSizeSblks;
-    }
+uint16_t MessageStoreImpl::chkJrnlWrCacheNumPages(const uint16_t param_, const std::string& paramName_) {
+    uint16_t p = param_;
+
+    if (p >= 4)
+        return p;
+    p = 4;
+    QLS_LOG(warning, "parameter " << paramName_ << " must have a minimum value of 4. Changing this parameter from " << param_ << " to " << p << ".");
+    return p;
 }
 
 qpid::linearstore::journal::efpPartitionNumber_t MessageStoreImpl::chkEfpPartition(const qpid::linearstore::journal::efpPartitionNumber_t partition_,
@@ -167,12 +153,21 @@ bool MessageStoreImpl::init(const qpid::Options* options_)
     qpid::linearstore::journal::efpPartitionNumber_t efpPartition = chkEfpPartition(opts->efpPartition, "efp-partition");
     qpid::linearstore::journal::efpDataSize_kib_t efpFilePoolSize_kib = chkEfpFileSizeKiB(opts->efpFileSizeKib, "efp-file-size");
     uint32_t jrnlWrCachePageSizeKib = chkJrnlWrPageCacheSize(opts->wCachePageSizeKib, "wcache-page-size");
+    uint16_t jrnlWrCacheNumPages = chkJrnlWrCacheNumPages(opts->wCacheNumPages, "wcache-num-pages");
     uint32_t tplJrnlWrCachePageSizeKib = chkJrnlWrPageCacheSize(opts->tplWCachePageSizeKib, "tpl-wcache-page-size");
+    uint16_t tplJrnlWrCacheNumPages = chkJrnlWrCacheNumPages(opts->tplWCacheNumPages, "tpl-wcache-num-pages");
     journalFlushTimeout = opts->journalFlushTimeout;
 
     // Pass option values to init()
-    return init(opts->storeDir, efpPartition, efpFilePoolSize_kib, opts->truncateFlag, jrnlWrCachePageSizeKib,
-                tplJrnlWrCachePageSizeKib, opts->overwriteBeforeReturnFlag);
+    return init(opts->storeDir,
+                efpPartition,
+                efpFilePoolSize_kib,
+                opts->truncateFlag,
+                jrnlWrCachePageSizeKib,
+                jrnlWrCacheNumPages,
+                tplJrnlWrCachePageSizeKib,
+                tplJrnlWrCacheNumPages,
+                opts->overwriteBeforeReturnFlag);
 }
 
 // These params, taken from options, are assumed to be correct and verified
@@ -181,7 +176,9 @@ bool MessageStoreImpl::init(const std::string& storeDir_,
                            qpid::linearstore::journal::efpDataSize_kib_t efpFileSize_kib_,
                            const bool truncateFlag_,
                            uint32_t wCachePageSizeKib_,
+                           uint16_t wCacheNumPages_,
                            uint32_t tplWCachePageSizeKib_,
+                           uint16_t tplWCacheNumPages_,
                            const bool overwriteBeforeReturnFlag_)
 {
     if (isInit) return true;
@@ -191,9 +188,9 @@ bool MessageStoreImpl::init(const std::string& storeDir_,
     defaultEfpPartitionNumber = efpPartition_;
     defaultEfpFileSize_kib = efpFileSize_kib_;
     wCachePgSizeSblks = wCachePageSizeKib_ / QLS_SBLK_SIZE_KIB; // convert from KiB to number sblks
-    wCacheNumPages = getJrnlWrNumPages(wCachePageSizeKib_);
+    wCacheNumPages = wCacheNumPages_;
     tplWCachePgSizeSblks = tplWCachePageSizeKib_ / QLS_SBLK_SIZE_KIB; // convert from KiB to number sblks
-    tplWCacheNumPages = getJrnlWrNumPages(tplWCachePageSizeKib_);
+    tplWCacheNumPages = tplWCacheNumPages_;
     if (storeDir_.size()>0) storeDir = storeDir_;
 
     if (truncateFlag_)
@@ -349,7 +346,7 @@ void MessageStoreImpl::chkTplStoreInit()
     qpid::sys::Mutex::ScopedLock sl(tplInitLock);
     if (!tplStorePtr->is_ready()) {
         qpid::linearstore::journal::jdir::create_dir(getTplBaseDir());
-        tplStorePtr->initialize(getEmptyFilePool(defaultEfpPartitionNumber, defaultEfpFileSize_kib), tplWCacheNumPages, tplWCachePgSizeSblks);
+        tplStorePtr->initialize(getEmptyFilePool(defaultEfpPartitionNumber, defaultEfpFileSize_kib), tplWCacheNumPages, tplWCachePgSizeSblks, "");
         if (mgmtObject.get() != 0) mgmtObject->set_tplIsInitialized(true);
     }
 }
@@ -395,7 +392,7 @@ MessageStoreImpl::~MessageStoreImpl()
 void MessageStoreImpl::create(qpid::broker::PersistableQueue& queue_,
                               const qpid::framing::FieldTable& args_)
 {
-    QLS_LOG(info,   "*** MessageStoreImpl::create() queue=\"" << queue_.getName() << "\""); // DEBUG
+    QLS_LOG(debug,   "*** MessageStoreImpl::create() queue=\"" << queue_.getName() << "\"");
     checkInit();
     if (queue_.getPersistenceId()) {
         THROW_STORE_EXCEPTION("Queue already created: " + queue_.getName());
@@ -408,6 +405,23 @@ void MessageStoreImpl::create(qpid::broker::PersistableQueue& queue_,
         return;
     }
 
+    // Check if QMF has changed default values for write cache parameters for this queue
+    std::ostringstream oss; // Used to report non-standard options as they are discovered
+
+    uint16_t localWCacheNumPages = wCacheNumPages;
+    qpid::framing::FieldTable::ValuePtr value = args_.get("qpid.wcache-num-pages");
+    if (value.get() != 0 && !value->empty() && value->convertsTo<int>()) {
+        localWCacheNumPages = chkJrnlWrCacheNumPages(u_int16_t(value->get<int>()), "qpid.wcache-num-pages");
+        oss << " qpid.wcache-num-pages=" << localWCacheNumPages;
+    }
+
+    uint32_t localWCachePgSizeSblks = wCachePgSizeSblks;
+    value = args_.get("qpid.wcache-page-size");
+    if (value.get() != 0 && !value->empty() && value->convertsTo<int>()) {
+        localWCachePgSizeSblks = chkJrnlWrPageCacheSize(u_int32_t(value->get<int>()), "qpid.wcache-page-size") / QLS_SBLK_SIZE_KIB;
+        oss << " qpid.wcache-page-size=" << localWCachePgSizeSblks;
+    }
+
     jQueue = new JournalImpl(broker->getTimer(), queue_.getName(), getJrnlDir(queue_.getName()), jrnlLog,
                              defJournalGetEventsTimeoutNs, journalFlushTimeout, agent,
                              boost::bind(&MessageStoreImpl::journalDeleted, this, _1));
@@ -418,7 +432,8 @@ void MessageStoreImpl::create(qpid::broker::PersistableQueue& queue_,
 
     queue_.setExternalQueueStore(dynamic_cast<qpid::broker::ExternalQueueStore*>(jQueue));
     try {
-        jQueue->initialize(getEmptyFilePool(args_), wCacheNumPages, wCachePgSizeSblks);
+        journal::EmptyFilePool* efpp = getEmptyFilePool(args_, oss);
+        jQueue->initialize(efpp, localWCacheNumPages, localWCachePgSizeSblks, oss.str());
     } catch (const qpid::linearstore::journal::jexception& e) {
         THROW_STORE_EXCEPTION(std::string("Queue ") + queue_.getName() + ": create() failed: " + e.what());
     }
@@ -444,18 +459,20 @@ MessageStoreImpl::getEmptyFilePool(const qpid::linearstore::journal::efpPartitio
 }
 
 qpid::linearstore::journal::EmptyFilePool*
-MessageStoreImpl::getEmptyFilePool(const qpid::framing::FieldTable& args_) {
+MessageStoreImpl::getEmptyFilePool(const qpid::framing::FieldTable& args_, std::ostringstream& oss) {
     qpid::framing::FieldTable::ValuePtr value;
     qpid::linearstore::journal::efpPartitionNumber_t localEfpPartition = defaultEfpPartitionNumber;
     value = args_.get("qpid.efp_partition_num");
     if (value.get() != 0 && !value->empty() && value->convertsTo<int>()) {
         localEfpPartition = chkEfpPartition((uint32_t)value->get<int>(), "qpid.efp_partition_num");
+        oss << " qpid.efp_partition_num=" << localEfpPartition;
     }
 
     qpid::linearstore::journal::efpDataSize_kib_t localEfpFileSizeKib = defaultEfpFileSize_kib;
     value = args_.get("qpid.efp_pool_file_size");
     if (value.get() != 0 && !value->empty() && value->convertsTo<int>()) {
         localEfpFileSizeKib = chkEfpFileSizeKiB((uint32_t)value->get<int>(), "qpid.efp_pool_file_size");
+        oss << " qpid.efp_pool_file_size=" << localEfpFileSizeKib;
     }
     return getEmptyFilePool(localEfpPartition, localEfpFileSizeKib);
 }
@@ -1522,7 +1539,9 @@ MessageStoreImpl::StoreOptions::StoreOptions(const std::string& name_) :
                                              qpid::Options(name_),
                                              truncateFlag(defTruncateFlag),
                                              wCachePageSizeKib(defWCachePageSizeKib),
+                                             wCacheNumPages(defWCacheNumPages),
                                              tplWCachePageSizeKib(defTplWCachePageSizeKib),
+                                             tplWCacheNumPages(defTplWCacheNumPages),
                                              efpPartition(defEfpPartition),
                                              efpFileSizeKib(defEfpFileSizeKib),
                                              overwriteBeforeReturnFlag(defOverwriteBeforeReturnFlag),
@@ -1537,12 +1556,17 @@ MessageStoreImpl::StoreOptions::StoreOptions(const std::string& name_) :
                 "the existing store files for recovery.")
         ("wcache-page-size", qpid::optValue(wCachePageSizeKib, "N"),
                 "Size of the pages in the write page cache in KiB. "
-                "Allowable values - powers of 2: 1, 2, 4, ... , 128. "
+                "Allowable values - powers of 2 starting at 4 (4, 8, 16, 32...) "
                 "Lower values decrease latency at the expense of throughput.")
+        ("wcache-num-pages", qpid::optValue(wCacheNumPages, "N"),
+                "Number of pages in the write page cache. Minimum value: 4.")
         ("tpl-wcache-page-size", qpid::optValue(tplWCachePageSizeKib, "N"),
                 "Size of the pages in the transaction prepared list write page cache in KiB. "
-                "Allowable values - powers of 2: 4, 8, 16, 32, 64, 128. "
+                "Allowable values - powers of 2 starting at: 4 (4, 8, 16, 32...) "
                 "Lower values decrease latency at the expense of throughput.")
+        ("tpl-wcache-num-pages", qpid::optValue(tplWCacheNumPages, "N"),
+                "Number of pages in the transaction prepared list write page cache. "
+                "Minimum value: 4.")
         ("efp-partition", qpid::optValue(efpPartition, "N"),
                 "Empty File Pool partition to use for finding empty journal files")
         ("efp-file-size", qpid::optValue(efpFileSizeKib, "N"),

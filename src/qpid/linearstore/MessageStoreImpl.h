@@ -80,7 +80,9 @@ class MessageStoreImpl : public qpid::broker::MessageStore, public qpid::managem
         std::string storeDir;
         bool truncateFlag;
         uint32_t wCachePageSizeKib;
+        uint16_t wCacheNumPages;
         uint32_t tplWCachePageSizeKib;
+        uint16_t tplWCacheNumPages;
         uint16_t efpPartition;
         uint64_t efpFileSizeKib;
         bool overwriteBeforeReturnFlag;
@@ -101,7 +103,9 @@ class MessageStoreImpl : public qpid::broker::MessageStore, public qpid::managem
     // Default store settings
     static const bool defTruncateFlag = false;
     static const uint32_t defWCachePageSizeKib = QLS_WMGR_DEF_PAGE_SIZE_KIB;
-    static const uint32_t defTplWCachePageSizeKib = defWCachePageSizeKib / 8;
+    static const uint16_t defWCacheNumPages = QLS_WMGR_DEF_NUM_PAGES;
+    static const uint32_t defTplWCachePageSizeKib = QLS_WMGR_DEF_TPL_PAGE_SIZE_KIB;
+    static const uint16_t defTplWCacheNumPages = QLS_WMGR_DEF_TPL_NUM_PAGES;
     static const uint16_t defEfpPartition = 1;
     static const uint64_t defEfpFileSizeKib = 512 * QLS_SBLK_SIZE_KIB;
     static const bool defOverwriteBeforeReturnFlag = false;
@@ -153,9 +157,9 @@ class MessageStoreImpl : public qpid::broker::MessageStore, public qpid::managem
 
     // Parameter validation and calculation
     static uint32_t chkJrnlWrPageCacheSize(const uint32_t param,
-                                           const std::string& paramName/*,
-                                           const uint16_t jrnlFsizePgs*/);
-    static uint16_t getJrnlWrNumPages(const uint32_t wrPageSizeKiB);
+                                           const std::string& paramName);
+    static uint16_t chkJrnlWrCacheNumPages(const uint16_t param,
+                                           const std::string& paramName);
     static qpid::linearstore::journal::efpPartitionNumber_t chkEfpPartition(const qpid::linearstore::journal::efpPartitionNumber_t partition,
                                                                 const std::string& paramName);
     static qpid::linearstore::journal::efpDataSize_kib_t chkEfpFileSizeKiB(const qpid::linearstore::journal::efpDataSize_kib_t efpFileSizeKiB,
@@ -233,7 +237,7 @@ class MessageStoreImpl : public qpid::broker::MessageStore, public qpid::managem
     void createJrnlQueue(const qpid::broker::PersistableQueue& queue);
     std::string getJrnlDir(const std::string& queueName);
     qpid::linearstore::journal::EmptyFilePool* getEmptyFilePool(const qpid::linearstore::journal::efpPartitionNumber_t p, const qpid::linearstore::journal::efpDataSize_kib_t s);
-    qpid::linearstore::journal::EmptyFilePool* getEmptyFilePool(const qpid::framing::FieldTable& args);
+    qpid::linearstore::journal::EmptyFilePool* getEmptyFilePool(const qpid::framing::FieldTable& args, std::ostringstream& oss);
     std::string getStoreTopLevelDir();
     std::string getJrnlBaseDir();
     std::string getBdbBaseDir();
@@ -258,7 +262,9 @@ class MessageStoreImpl : public qpid::broker::MessageStore, public qpid::managem
               qpid::linearstore::journal::efpDataSize_kib_t efpFileSizeKib = defEfpFileSizeKib,
               const bool truncateFlag = false,
               uint32_t wCachePageSize = defWCachePageSizeKib,
+              uint16_t wCacheNumPages = defWCacheNumPages,
               uint32_t tplWCachePageSize = defTplWCachePageSizeKib,
+              uint16_t tplWCacheNumPages = defTplWCacheNumPages,
               const bool overwriteBeforeReturnFlag_ = false);
 
     void truncateInit();

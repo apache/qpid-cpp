@@ -108,15 +108,17 @@ class JournalImpl : public ::qpid::broker::ExternalQueueStore,
 
     void initManagement(::qpid::management::ManagementAgent* agent);
 
-    void initialize(::qpid::linearstore::journal::EmptyFilePool* efp,
+    void initialize(::qpid::linearstore::journal::EmptyFilePool* efpp,
                     const uint16_t wcache_num_pages,
                     const uint32_t wcache_pgsize_sblks,
-                    ::qpid::linearstore::journal::aio_callback* const cbp);
+                    ::qpid::linearstore::journal::aio_callback* const cbp,
+                    const std::string& nonDefaultParamsMsg);
 
     inline void initialize(::qpid::linearstore::journal::EmptyFilePool* efpp,
                            const uint16_t wcache_num_pages,
-                           const uint32_t wcache_pgsize_sblks) {
-        initialize(efpp, wcache_num_pages, wcache_pgsize_sblks, this);
+                           const uint32_t wcache_pgsize_sblks,
+                           const std::string& nonDefaultParamsMsg) {
+        initialize(efpp, wcache_num_pages, wcache_pgsize_sblks, this, nonDefaultParamsMsg);
     }
 
     void recover(boost::shared_ptr< ::qpid::linearstore::journal::EmptyFilePoolManager> efpm,

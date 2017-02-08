@@ -115,6 +115,8 @@ class Config:
         self._fileSize          = None
         self._efp_partition_num = None
         self._efp_pool_file_size = None
+        self._wcache_page_size  = None
+        self._wcache_num_pages  = None
         self._maxQueueSize      = None
         self._maxQueueCount     = None
         self._limitPolicy       = None
@@ -149,6 +151,8 @@ FILECOUNT = "qpid.file_count"
 FILESIZE  = "qpid.file_size"
 EFP_PARTITION_NUM = "qpid.efp_partition_num"
 EFP_POOL_FILE_SIZE = "qpid.efp_pool_file_size"
+WCACHE_PAGE_SIZE = "qpid.wcache-page-size"
+WCACHE_NUM_PAGES = "qpid.wcache-num-pages"
 MAX_QUEUE_SIZE  = "qpid.max_size"
 MAX_QUEUE_COUNT  = "qpid.max_count"
 POLICY_TYPE  = "qpid.policy_type"
@@ -170,6 +174,7 @@ REPLICATE = "qpid.replicate"
 #list
 SPECIAL_ARGS=[
     FILECOUNT,FILESIZE,EFP_PARTITION_NUM,EFP_POOL_FILE_SIZE,
+    WCACHE_PAGE_SIZE,WCACHE_NUM_PAGES,
     MAX_QUEUE_SIZE,MAX_QUEUE_COUNT,POLICY_TYPE,
     LVQ_KEY,MSG_SEQUENCE,IVE,
     FLOW_STOP_COUNT,FLOW_RESUME_COUNT,FLOW_STOP_SIZE,FLOW_RESUME_SIZE,
@@ -230,6 +235,8 @@ def OptionsAndArguments(argv):
     group3.add_option("--file-size", action="store", type="int", metavar="<n>", help="[legactystore] File size in pages (64KiB/page)")
     group3.add_option("--efp-partition-num", action="store", type="int", metavar="<n>", help="[linearstore] EFP partition number")
     group3.add_option("--efp-pool-file-size", action="store", type="int", metavar="<n>", help="[linearstore] EFP file size (KiB)")
+    group3.add_option("--wcache-page-size", action="store", type="int", metavar="<n>", help="[linearstore] Per-queue buffer page size (kiB), value may be powers of 2 starting at 4 (4, 8, 16, 32...)")
+    group3.add_option("--wcache-num-pages", action="store", type="int", metavar="<n>", help="[linearstore] Per-queue num buffer pages")
     group3.add_option("--max-queue-size", action="store", type="int", metavar="<n>", help="Maximum in-memory queue size as bytes")
     group3.add_option("--max-queue-count", action="store", type="int", metavar="<n>", help="Maximum in-memory queue size as a number of messages")
     group3.add_option("--limit-policy", action="store", choices=["none", "reject", "ring", "ring-strict"], metavar="<policy>", help="Action to take when queue limit is reached")
@@ -312,6 +319,10 @@ def OptionsAndArguments(argv):
         config._efp_partition_num = opts.efp_partition_num
     if opts.efp_pool_file_size is not None:
         config._efp_pool_file_size = opts.efp_pool_file_size
+    if opts.wcache_page_size is not None:
+        config._wcache_page_size = opts.wcache_page_size
+    if opts.wcache_num_pages is not None:
+        config._wcache_num_pages = opts.wcache_num_pages
     if opts.max_queue_size is not None:
         config._maxQueueSize = opts.max_queue_size
     if opts.max_queue_count is not None:
@@ -544,6 +555,8 @@ class BrokerManager:
                 if FILECOUNT in args: print "--file-count=%s" % args[FILECOUNT],
                 if EFP_PARTITION_NUM in args: print "--efp-partition-num=%s" % args[EFP_PARTITION_NUM],
                 if EFP_POOL_FILE_SIZE in args: print "--efp-pool-file-size=%s" % args[EFP_POOL_FILE_SIZE],
+                if WCACHE_PAGE_SIZE in args: print "--wcache-page-size=%s" % args[WCACHE_PAGE_SIZE],
+                if WCACHE_NUM_PAGES in args: print "--wcache-num-pages=%s" % args[WCACHE_NUM_PAGES],
                 if MAX_QUEUE_SIZE in args: print "--max-queue-size=%s" % args[MAX_QUEUE_SIZE],
                 if MAX_QUEUE_COUNT in args: print "--max-queue-count=%s" % args[MAX_QUEUE_COUNT],
                 if POLICY_TYPE in args: print "--limit-policy=%s" % args[POLICY_TYPE].replace("_", "-"),
@@ -629,6 +642,10 @@ class BrokerManager:
                 declArgs[EFP_PARTITION_NUM] = config._efp_partition_num
             if config._efp_pool_file_size:
                 declArgs[EFP_POOL_FILE_SIZE] = config._efp_pool_file_size
+            if config._wcache_page_size:
+                declArgs[WCACHE_PAGE_SIZE] = config._wcache_page_size
+            if config._wcache_num_pages:
+                declArgs[WCACHE_NUM_PAGES] = config._wcache_num_pages
 
         if config._maxQueueSize is not None:
             declArgs[MAX_QUEUE_SIZE]  = config._maxQueueSize
