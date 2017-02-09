@@ -58,7 +58,7 @@ MessageStoreImpl::MessageStoreImpl(qpid::broker::Broker* broker_, const char* en
                                    tplWCachePgSizeSblks(0),
                                    tplWCacheNumPages(0),
                                    highestRid(0),
-                                   journalFlushTimeout(defJournalFlushTimeoutNs),
+                                   journalFlushTimeoutNs(0),
                                    isInit(false),
                                    envPath(envpath_),
                                    broker(broker_),
@@ -156,7 +156,7 @@ bool MessageStoreImpl::init(const qpid::Options* options_)
     uint16_t jrnlWrCacheNumPages = chkJrnlWrCacheNumPages(opts->wCacheNumPages, "wcache-num-pages");
     uint32_t tplJrnlWrCachePageSizeKib = chkJrnlWrPageCacheSize(opts->tplWCachePageSizeKib, "tpl-wcache-page-size");
     uint16_t tplJrnlWrCacheNumPages = chkJrnlWrCacheNumPages(opts->tplWCacheNumPages, "tpl-wcache-num-pages");
-    journalFlushTimeout = opts->journalFlushTimeout;
+    journalFlushTimeoutNs = opts->journalFlushTimeoutMs * 1000000;
 
     // Pass option values to init()
     return init(opts->storeDir,
@@ -204,10 +204,8 @@ bool MessageStoreImpl::init(const std::string& storeDir_,
     QLS_LOG(info,   "> Default number of write cache pages: " << wCacheNumPages);
     QLS_LOG(info,   "> TPL write cache page size: " << tplWCachePageSizeKib_ << " (KiB)");
     QLS_LOG(info,   "> TPL number of write cache pages: " << tplWCacheNumPages);
-    QLS_LOG(info,   "> EFP partition: " << defaultEfpPartitionNumber);
-    QLS_LOG(info,   "> EFP file size pool: " << defaultEfpFileSize_kib << " (KiB)");
     QLS_LOG(info,   "> Overwrite before return to EFP: " << (overwriteBeforeReturnFlag?"True":"False"));
-    QLS_LOG(info,   "> Maximum journal flush time: " << journalFlushTimeout);
+    QLS_LOG(info,   "> Maximum journal flush time: " << (journalFlushTimeoutNs/1000000) << "ms");
 
     return isInit;
 }
@@ -262,7 +260,7 @@ void MessageStoreImpl::init(const bool truncateFlag)
             // NOTE: during normal initialization, agent == 0 because the store is initialized before the management infrastructure.
             // However during a truncated initialization in a cluster, agent != 0. We always pass 0 as the agent for the
             // TplStore to keep things consistent in a cluster. See https://bugzilla.redhat.com/show_bug.cgi?id=681026
-            tplStorePtr.reset(new TplJournalImpl(broker->getTimer(), "TplStore", getTplBaseDir(), jrnlLog, defJournalGetEventsTimeoutNs, journalFlushTimeout, 0));
+            tplStorePtr.reset(new TplJournalImpl(broker->getTimer(), "TplStore", getTplBaseDir(), jrnlLog, defJournalGetEventsTimeoutNs, journalFlushTimeoutNs, 0));
             isInit = true;
         } catch (const DbException& e) {
             if (e.get_errno() == DB_VERSION_MISMATCH)
@@ -423,7 +421,7 @@ void MessageStoreImpl::create(qpid::broker::PersistableQueue& queue_,
     }
 
     jQueue = new JournalImpl(broker->getTimer(), queue_.getName(), getJrnlDir(queue_.getName()), jrnlLog,
-                             defJournalGetEventsTimeoutNs, journalFlushTimeout, agent,
+                             defJournalGetEventsTimeoutNs, journalFlushTimeoutNs, agent,
                              boost::bind(&MessageStoreImpl::journalDeleted, this, _1));
     {
         qpid::sys::Mutex::ScopedLock sl(journalListLock);
@@ -742,7 +740,7 @@ void MessageStoreImpl::recoverQueues(TxnCtxt& txn,
             break;
         }
         jQueue = new JournalImpl(broker->getTimer(), queueName, getJrnlDir(queueName),jrnlLog,
-                                 defJournalGetEventsTimeoutNs, journalFlushTimeout, agent,
+                                 defJournalGetEventsTimeoutNs, journalFlushTimeoutNs, agent,
                                  boost::bind(&MessageStoreImpl::journalDeleted, this, _1));
         {
             qpid::sys::Mutex::ScopedLock sl(journalListLock);
@@ -1545,7 +1543,7 @@ MessageStoreImpl::StoreOptions::StoreOptions(const std::string& name_) :
                                              efpPartition(defEfpPartition),
                                              efpFileSizeKib(defEfpFileSizeKib),
                                              overwriteBeforeReturnFlag(defOverwriteBeforeReturnFlag),
-                                             journalFlushTimeout(defJournalFlushTimeoutNs)
+                                             journalFlushTimeoutMs(defJournalFlushTimeoutMs)
 {
     addOptions()
         ("store-dir", qpid::optValue(storeDir, "DIR"),
@@ -1576,8 +1574,8 @@ MessageStoreImpl::StoreOptions::StoreOptions(const std::string& name_) :
                 "it to the Empty File Pool. When not in use (the default), then old message data remains "
                 "in the file, but is overwritten on next use. This option should only be used where security "
                 "considerations justify it as it makes the store somewhat slower.")
-        ("journal-flush-timeout", qpid::optValue(journalFlushTimeout, "SECONDS"),
-                "Maximum time to wait to flush journal")
+        ("journal-flush-timeout", qpid::optValue(journalFlushTimeoutMs, "MS"),
+                "Maximum time to wait to flush journal in milliseconds")
         ;
 }
 
