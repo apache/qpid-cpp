@@ -44,7 +44,6 @@ namespace {
 static LONG volatile initialized = 0;
 
 class WinSockSetup {
-    //  : public boost::details::pool::singleton_default<WinSockSetup> {
 
 public:
     WinSockSetup() {

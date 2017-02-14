@@ -76,7 +76,7 @@ protected:
 
 /**
  * PODMutex is a POD, can be static-initialized with
- * PODMutex m = QPID_PODMUTEX_INITIALIZER
+ * PODMutex m = QPID_MUTEX_INITIALIZER
  */
 struct PODMutex
 {
