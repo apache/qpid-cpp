@@ -20,10 +20,7 @@
 
 import optparse, sys, time
 import statistics
-try:
-    from qpid_messaging import *
-except:
-    from qpid.messaging import *
+from qpid.messaging import *
 
 SECOND = 1000
 TIME_SEC = 1000000000

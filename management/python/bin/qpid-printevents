@@ -25,10 +25,7 @@ import sys
 from optparse       import IndentedHelpFormatter
 from time           import time, strftime, gmtime, sleep
 from threading      import Lock, Condition, Thread
-try:
-  from qpid_messaging import Connection, exceptions
-except:
-  from qpid.messaging import Connection, exceptions
+from qpid.messaging import Connection, exceptions
 
 home = os.environ.get("QPID_TOOLS_HOME", os.path.normpath("/usr/share/qpid-tools"))
 sys.path.append(os.path.join(home, "python"))
