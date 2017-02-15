@@ -82,7 +82,9 @@ uint32_t MessageStoreImpl::chkJrnlWrPageCacheSize(const uint32_t param_, const s
     } else if ( p < 4 ) {
         p = 4;
     } else if (p & (p-1)) {
-        p = std::pow(2, std::floor(std::log2(p) + 0.5));
+        // When C++11 is enabled, use this:
+        // p = std::pow(2, std::round(std::log2(p)));
+        p = std::pow(2, std::floor((std::log(p)/std::log(2)) + 0.5));
         QLS_LOG(warning, "parameter " << paramName_ << " (" << param_ << ") must be a power of 2 between 4 and 128; changing this parameter to closest allowable value (" << p << ")");
     }
     return p;
