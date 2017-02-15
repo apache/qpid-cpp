@@ -24,13 +24,6 @@
 #include "qpid/sys/Time.h"
 #include "qpid/DisableExceptionLogging.h"
 
-#include "boost/version.hpp"
-#if (BOOST_VERSION >= 104000)
-#include <boost/serialization/singleton.hpp>
-#else
-#include <boost/pool/detail/singleton.hpp>
-#endif
-
 #include <boost/bind.hpp>
 #include <boost/function.hpp>
 #include <algorithm>
@@ -51,12 +44,15 @@ inline void Logger::enable_unlocked(Statement* s) {
     s->enabled=selector.isEnabled(s->level, s->function, s->category);
 }
 
+namespace {
+sys::PODMutex loggerLock = QPID_MUTEX_INITIALIZER;
+std::auto_ptr<Logger> logger;
+}
+
 Logger& Logger::instance() {
-#if (BOOST_VERSION >= 104000)
-    return boost::serialization::singleton<Logger>::get_mutable_instance();
-#else
-    return boost::details::pool::singleton_default<Logger>::instance();
-#endif
+    sys::PODMutex::ScopedLock l(loggerLock);
+    if (!logger.get()) logger.reset(new Logger);
+    return *logger;
 }
 
 Logger::Logger() : flags(0) {

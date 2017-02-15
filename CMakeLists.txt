@@ -147,7 +147,7 @@ if (CMAKE_CXX_COMPILER_ID STREQUAL GNU)
    # -Wunreachable-code -Wpadded -Winline
    # -Wshadow - warns about boost headers.
    set (WARNING_FLAGS
-        "-Werror -pedantic -Wall -Wextra -Wno-shadow -Wpointer-arith -Wcast-qual -Wcast-align -Wno-long-long -Wvolatile-register-var -Winvalid-pch -Wno-system-headers -Woverloaded-virtual -Wno-error=deprecated-declarations")
+        "-Werror -pedantic -Wall -Wextra -Wno-shadow -Wpointer-arith -Wcast-qual -Wcast-align -Wno-long-long -Wvolatile-register-var -Winvalid-pch -Wno-system-headers -Woverloaded-virtual -Wno-error=deprecated-declarations -Wno-implicit-fallthrough")
 
    set (CATCH_UNDEFINED "-Wl,--no-undefined")
    # gcc on SunOS uses native linker whose "-z defs" is too fussy
