@@ -137,14 +137,16 @@ bool DirectExchange::unbind(Queue::shared_ptr queue, const string& routingKey, c
              << " on exchange " << getName() << " origin=" << fedOrigin << ")" );
     {
         Mutex::ScopedLock l(lock);
-        BoundKey& bk = bindings[routingKey];
+        Bindings::iterator it = bindings.find(routingKey);
+        if (it == bindings.end()) return false;
+        BoundKey& bk(it->second);
         if (bk.queues.remove_if(MatchQueue(queue))) {
             propagate = bk.fedBinding.delOrigin(queue->getName(), fedOrigin);
             if (mgmtExchange != 0) {
                 mgmtExchange->dec_bindingCount();
             }
             if (bk.queues.empty()) {
-                bindings.erase(routingKey);
+                bindings.erase(it);
                 if (bindings.empty()) empty = true;
             }
         } else {
