@@ -24,6 +24,7 @@
 #include "qpid/broker/amqp/Header.h"
 #include "qpid/broker/amqp/Session.h"
 #include "qpid/broker/amqp/Translation.h"
+#include "qpid/broker/Broker.h"
 #include "qpid/broker/Queue.h"
 #include "qpid/broker/Selector.h"
 #include "qpid/broker/TopicKeyNode.h"
@@ -65,7 +66,7 @@ OutgoingFromQueue::OutgoingFromQueue(Broker& broker, const std::string& source, 
       Consumer(pn_link_name(l), type, target),
       exclusive(e),
       isControllingUser(p),
-      queue(q), deliveries(5000), link(l), out(o),
+      queue(q), deliveries(broker.getSessionMaxUnacked()), link(l), out(o),
       current(0),
       buffer(1024)/*used only for header at present*/,
       //for exclusive queues, assume unreliable unless reliable is explicitly requested; otherwise assume reliable unless unreliable requested

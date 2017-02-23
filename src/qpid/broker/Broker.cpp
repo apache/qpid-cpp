@@ -150,7 +150,8 @@ BrokerOptions::BrokerOptions(const std::string& name) :
     linkHeartbeatInterval(120*sys::TIME_SEC),
     dtxDefaultTimeout(60),      // 60s
     dtxMaxTimeout(3600),        // 3600s
-    maxNegotiateTime(10000)     // 10s
+    maxNegotiateTime(10000),    // 10s
+    sessionMaxUnacked(5000) 
 {
     int c = sys::SystemInfo::concurrency();
     workerThreads=c+1;
@@ -200,6 +201,7 @@ BrokerOptions::BrokerOptions(const std::string& name) :
         ("dtx-max-timeout", optValue(dtxMaxTimeout, "SECONDS"), "Maximum allowed timeout for DTX transaction. A value of zero disables maximum timeout limit checks and allows arbitrarily large timeout settings.")
         ("max-negotiate-time", optValue(maxNegotiateTime, "MILLISECONDS"), "Maximum time a connection can take to send the initial protocol negotiation")
         ("federation-tag", optValue(fedTag, "NAME"), "Override the federation tag")
+        ("session-max-unacked", optValue(sessionMaxUnacked, "DELIVERIES"), "Maximum number of un-acknowledged outoing messages per sesssion")
         ;
 }
 
@@ -441,6 +443,11 @@ bool Broker::getTcpNoDelay() const
 uint32_t Broker::getMaxNegotiateTime() const
 {
     return config.maxNegotiateTime;
+}
+
+size_t Broker::getSessionMaxUnacked() const
+{
+    return config.sessionMaxUnacked;
 }
 
 uint16_t Broker::getPortOption() const
