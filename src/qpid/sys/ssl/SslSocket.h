@@ -73,6 +73,7 @@ public:
 protected:
     mutable PRFileDesc* nssSocket;
     std::string certname;
+    bool clientAuth;
     mutable std::string url;
 
     /**

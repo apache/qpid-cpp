@@ -118,16 +118,9 @@ std::string getAuthId(CertificateGetter certificateGetter)
 }
 }
 
-SslSocket::SslSocket(const std::string& certName, bool clientAuth) :
-    nssSocket(0), certname(certName), prototype(0), hostnameVerification(true)
+SslSocket::SslSocket(const std::string& certName, bool _clientAuth) :
+    nssSocket(0), certname(certName), clientAuth(_clientAuth), prototype(0), hostnameVerification(true)
 {
-    //configure prototype socket:
-    prototype = SSL_ImportFD(0, PR_NewTCPSocket());
-
-    if (clientAuth) {
-        NSS_CHECK(SSL_OptionSet(prototype, SSL_REQUEST_CERTIFICATE, PR_TRUE));
-        NSS_CHECK(SSL_OptionSet(prototype, SSL_REQUIRE_CERTIFICATE, PR_TRUE));
-    }
 }
 
 /**
@@ -226,6 +219,13 @@ void SslSocket::close() const
 
 int SslSocket::listen(const SocketAddress& sa, int backlog) const
 {
+    //configure prototype socket:
+    prototype = SSL_ImportFD(0, PR_NewTCPSocket());
+
+    if (clientAuth) {
+        NSS_CHECK(SSL_OptionSet(prototype, SSL_REQUEST_CERTIFICATE, PR_TRUE));
+        NSS_CHECK(SSL_OptionSet(prototype, SSL_REQUIRE_CERTIFICATE, PR_TRUE));
+    }
     //get certificate and key (is this the correct way?)
     std::string cName( (certname == "") ? "localhost.localdomain" : certname);
     CERTCertificate *cert = PK11_FindCertFromNickname(const_cast<char*>(cName.c_str()), 0);
