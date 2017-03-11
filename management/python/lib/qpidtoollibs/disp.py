@@ -19,6 +19,8 @@
 # under the License.
 #
 
+from __future__ import print_function
+
 from time import strftime, gmtime
 
 def YN(val):
@@ -158,7 +160,7 @@ class Display:
       for idx in range(diff):
         row.append("")
 
-    print title
+    print(title)
     if len (rows) == 0:
       return
     colWidth = []
@@ -179,12 +181,12 @@ class Display:
         for i in range (colWidth[col] - len (head)):
           line = line + " "
       col = col + 1
-    print line
+    print(line)
     line = self.tablePrefix
     for width in colWidth:
       line = line + "=" * width
     line = line[:255]
-    print line
+    print(line)
 
     for row in rows:
       line = self.tablePrefix
@@ -198,7 +200,7 @@ class Display:
           for i in range (width - len(unicode(text))):
             line = line + " "
         col = col + 1
-      print line
+      print(line)
 
   def do_setTimeFormat (self, fmt):
     """ Select timestamp format """

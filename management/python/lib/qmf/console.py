@@ -19,6 +19,8 @@
 
 """ Console API for Qpid Management Framework """
 
+from __future__ import print_function
+
 import os
 import platform
 import qpid
@@ -257,7 +259,7 @@ class Object(object):
           result += u":"
         try:
           valstr = unicode(self._session._displayValue(value, prop.type))
-        except Exception, e:
+        except Exception:
           valstr = u"<undecodable>"
         result += valstr
     return result
@@ -1270,7 +1272,7 @@ class Session:
         epoch = values['_epoch']
       elif 'epoch' in values:
         epoch = values['epoch']
-    except Exception,e:
+    except Exception:
       return
 
     if self.agent_filter:
@@ -2447,7 +2449,7 @@ class Broker(Thread):
                                          acquire_mode=self.amqpSession.acquire_mode.pre_acquired)
       self.amqpSession.incoming("rdest").listen(self._v1Cb, self._exceptionCb)
       self.amqpSession.message_set_flow_mode(destination="rdest", flow_mode=self.amqpSession.flow_mode.window)
-      self.amqpSession.message_flow(destination="rdest", unit=self.amqpSession.credit_unit.byte, value=0xFFFFFFFFL)
+      self.amqpSession.message_flow(destination="rdest", unit=self.amqpSession.credit_unit.byte, value=0xFFFFFFFF)
       self.amqpSession.message_flow(destination="rdest", unit=self.amqpSession.credit_unit.message, value=200)
 
       self.topicName = "topic-%s" % self.amqpSessionId
@@ -2459,7 +2461,7 @@ class Broker(Thread):
                                          acquire_mode=self.amqpSession.acquire_mode.pre_acquired)
       self.amqpSession.incoming("tdest").listen(self._v1Cb, self._exceptionCb)
       self.amqpSession.message_set_flow_mode(destination="tdest", flow_mode=self.amqpSession.flow_mode.window)
-      self.amqpSession.message_flow(destination="tdest", unit=self.amqpSession.credit_unit.byte, value=0xFFFFFFFFL)
+      self.amqpSession.message_flow(destination="tdest", unit=self.amqpSession.credit_unit.byte, value=0xFFFFFFFF)
       self.amqpSession.message_flow(destination="tdest", unit=self.amqpSession.credit_unit.message, value=200)
 
       ##
@@ -2505,7 +2507,7 @@ class Broker(Thread):
                                            acquire_mode=self.amqpSession.acquire_mode.pre_acquired)
         self.amqpSession.incoming("v2dest").listen(self._v2Cb, self._exceptionCb)
         self.amqpSession.message_set_flow_mode(destination="v2dest", flow_mode=self.amqpSession.flow_mode.window)
-        self.amqpSession.message_flow(destination="v2dest", unit=self.amqpSession.credit_unit.byte, value=0xFFFFFFFFL)
+        self.amqpSession.message_flow(destination="v2dest", unit=self.amqpSession.credit_unit.byte, value=0xFFFFFFFF)
         self.amqpSession.message_flow(destination="v2dest", unit=self.amqpSession.credit_unit.message, value=50)
 
         self.amqpSession.message_subscribe(queue=self.v2_topic_queue_ui, destination="v2TopicUI",
@@ -2513,7 +2515,7 @@ class Broker(Thread):
                                            acquire_mode=self.amqpSession.acquire_mode.pre_acquired)
         self.amqpSession.incoming("v2TopicUI").listen(self._v2Cb, self._exceptionCb)
         self.amqpSession.message_set_flow_mode(destination="v2TopicUI", flow_mode=self.amqpSession.flow_mode.window)
-        self.amqpSession.message_flow(destination="v2TopicUI", unit=self.amqpSession.credit_unit.byte, value=0xFFFFFFFFL)
+        self.amqpSession.message_flow(destination="v2TopicUI", unit=self.amqpSession.credit_unit.byte, value=0xFFFFFFFF)
         self.amqpSession.message_flow(destination="v2TopicUI", unit=self.amqpSession.credit_unit.message, value=25)
 
 
@@ -2522,7 +2524,7 @@ class Broker(Thread):
                                            acquire_mode=self.amqpSession.acquire_mode.pre_acquired)
         self.amqpSession.incoming("v2TopicHB").listen(self._v2Cb, self._exceptionCb)
         self.amqpSession.message_set_flow_mode(destination="v2TopicHB", flow_mode=self.amqpSession.flow_mode.window)
-        self.amqpSession.message_flow(destination="v2TopicHB", unit=self.amqpSession.credit_unit.byte, value=0xFFFFFFFFL)
+        self.amqpSession.message_flow(destination="v2TopicHB", unit=self.amqpSession.credit_unit.byte, value=0xFFFFFFFF)
         self.amqpSession.message_flow(destination="v2TopicHB", unit=self.amqpSession.credit_unit.message, value=100)
 
       codec = Codec()
@@ -2532,7 +2534,7 @@ class Broker(Thread):
 
       return True  # connection complete
 
-    except Exception, e:
+    except Exception as e:
       self.error = "Exception during connection setup: %s - %s" % (e.__class__.__name__, e)
       self.conn_exc = e
       if self.session.console:
@@ -2776,8 +2778,8 @@ class Broker(Thread):
   def _v1Dispatch(self, msg):
     try:
       self._v1DispatchProtected(msg)
-    except Exception, e:
-      print "EXCEPTION in Broker._v1Cb:", e
+    except Exception as e:
+      print("EXCEPTION in Broker._v1Cb:", e)
       import traceback
       traceback.print_exc()
 
@@ -2850,8 +2852,8 @@ class Broker(Thread):
   def _v2Dispatch(self, msg):
     try:
       self._v2DispatchProtected(msg)
-    except Exception, e:
-      print "EXCEPTION in Broker._v2Cb:", e
+    except Exception as e:
+      print("EXCEPTION in Broker._v2Cb:", e)
       import traceback
       traceback.print_exc()
 
@@ -4017,38 +4019,37 @@ class SequenceManager:
 class DebugConsole(Console):
   """ """
   def brokerConnected(self, broker):
-    print "brokerConnected:", broker
+    print("brokerConnected:", broker)
 
   def brokerConnectionFailed(self, broker):
-    print "brokerConnectionFailed:", broker
+    print("brokerConnectionFailed:", broker)
 
   def brokerDisconnected(self, broker):
-    print "brokerDisconnected:", broker
+    print("brokerDisconnected:", broker)
 
   def newPackage(self, name):
-    print "newPackage:", name
+    print("newPackage:", name)
 
   def newClass(self, kind, classKey):
-    print "newClass:", kind, classKey
+    print("newClass:", kind, classKey)
 
   def newAgent(self, agent):
-    print "newAgent:", agent
+    print("newAgent:", agent)
 
   def delAgent(self, agent):
-    print "delAgent:", agent
+    print("delAgent:", agent)
 
   def objectProps(self, broker, record):
-    print "objectProps:", record
+    print("objectProps:", record)
 
   def objectStats(self, broker, record):
-    print "objectStats:", record
+    print("objectStats:", record)
 
   def event(self, broker, event):
-    print "event:", event
+    print("event:", event)
 
   def heartbeat(self, agent, timestamp):
-    print "heartbeat:", agent
+    print("heartbeat:", agent)
 
   def brokerInfo(self, broker):
-    print "brokerInfo:", broker
-
+    print("brokerInfo:", broker)

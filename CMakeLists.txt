@@ -62,7 +62,7 @@ set(qpidc_version ${QPID_VERSION_FULL})
 
 include(BuildInstallSettings.cmake)
 
-find_package(PythonInterp REQUIRED)
+find_package(PythonInterp 2.7 REQUIRED)
 
 enable_testing()
 include (CTest)
