@@ -27,7 +27,7 @@ def _message(error):
 ===============================================================================
 Error! {0}
 
-The tests require Qpid Python, version 1.33 or greater.  Make sure
+The tests require Qpid Python, version 1.35.0 or greater.  Make sure
 Qpid Python is installed and available on the Python path:
 
  - Linux distributions: Install 'python-qpid'
