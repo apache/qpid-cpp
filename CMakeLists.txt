@@ -160,7 +160,7 @@ if (CMAKE_CXX_COMPILER_ID STREQUAL GNU)
       set (CATCH_UNDEFINED "")
    endif (CMAKE_SYSTEM_NAME STREQUAL SunOS)
   set (NOSTRICT_ALIASING "-fno-strict-aliasing")
-  set (COMPILER_FLAGS "-fvisibility-inlines-hidden")
+  set (COMPILER_FLAGS "-fvisibility-inlines-hidden -std=gnu++03")
    # gcc 4.1.2 on RHEL 5 needs -Wno-attributes to avoid an error that's fixed
    # in later gcc versions.
    execute_process(COMMAND ${CMAKE_CXX_COMPILER} -dumpversion
