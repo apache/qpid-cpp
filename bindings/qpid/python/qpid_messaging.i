@@ -134,7 +134,7 @@ QPID_EXCEPTION(UnauthorizedAccess, SessionError)
     Py_END_ALLOW_THREADS;
     if (!error.empty()) {
         PyErr_SetString(pExceptionType, error.c_str());
-        return NULL;
+        SWIG_fail;
     }
 }
 
