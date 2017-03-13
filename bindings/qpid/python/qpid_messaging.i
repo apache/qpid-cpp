@@ -101,10 +101,12 @@ QPID_EXCEPTION(UnauthorizedAccess, SessionError)
 /* Define the general-purpose exception handling */
 %exception {
     PyObject * pExceptionType = NULL;
+    bool failed = true;
     std::string error;
     Py_BEGIN_ALLOW_THREADS;
     try {
         $action
+        failed = false;
     }
     /* Catch and translate exceptions. */
     TRANSLATE_EXCEPTION(qpid::messaging::NoMessageAvailable, Empty)
@@ -132,9 +134,11 @@ QPID_EXCEPTION(UnauthorizedAccess, SessionError)
     TRANSLATE_EXCEPTION(qpid::messaging::MessagingException, MessagingError)
     TRANSLATE_EXCEPTION(qpid::types::Exception, PyExc_RuntimeError)
     Py_END_ALLOW_THREADS;
-    if (!error.empty()) {
-        PyErr_SetString(pExceptionType, error.c_str());
-        return NULL;
+    if (failed) {
+        if (!error.empty()) {
+            PyErr_SetString(pExceptionType, error.c_str());
+        }
+        SWIG_fail;
     }
 }
 
