@@ -23,17 +23,21 @@
 
 /* Define the general-purpose exception handling */
 %exception {
+    bool failed = true;
     std::string error;
     Py_BEGIN_ALLOW_THREADS;
     try {
         $action
+        failed = false;
     } catch (qpid::types::Exception& ex) {
         error = ex.what();
     }
     Py_END_ALLOW_THREADS;
-    if (!error.empty()) {
-        PyErr_SetString(PyExc_RuntimeError, error.c_str());
-        return NULL;
+    if (failed) {
+        if (!error.empty()) {
+            PyErr_SetString(PyExc_RuntimeError, error.c_str());
+        }
+        SWIG_fail;
     }
 }
 
