@@ -26,7 +26,7 @@
 
 1. If needed, tag the RC bits with the final name/version.
 2. Commit the artifacts to dist release repo in https://dist.apache.org/repos/dist/release/qpid/cpp/${VERSION} dir:
-   - e.g: svn cp -m "add files for qpid-cpp-${VERSION}" https://dist.apache.org/repos/dist/dev/qpid/jms/${TAG}/ https://dist.apache.org/repos/dist/release/qpid/cpp/${VERSION}/
+   - e.g: svn cp -m "add files for qpid-cpp-${VERSION}" https://dist.apache.org/repos/dist/dev/qpid/cpp/${TAG}/ https://dist.apache.org/repos/dist/release/qpid/cpp/${VERSION}/
 3. Give the mirrors some time to distribute things. Usually 24hrs to be safe, less if needed.
    - https://www.apache.org/mirrors/ gives stats on mirror age + last check etc.
 4. Update the website with release content.
