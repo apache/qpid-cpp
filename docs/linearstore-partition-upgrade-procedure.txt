@@ -1,0 +1,273 @@
+Upgrading linearstore from pre-partition to post-partition versions
+===================================================================
+
+Introduction
+============
+
+Partitions were added to linearstore in QPID-5671, and linearstore was
+made the default store in QPID-6394. This change resulted in a changed
+directory structure. Any user wishing to preserve data through this update
+needs to update their directory structure.
+
+Initially, this was done automatically by the store, but the inability
+to roll back the change made it risky, and this was removed (QPID-6303)
+in favor of using mutually exclusive directory structures for the pre-
+and post-partition stores. This way, original data is not affected by
+running the new store, and similarly, if the older pre-partition store
+is run, it will continue using the old directory structure. However, if
+queues and data exist which must be migrated from the old to the new
+structure, then it must be done by hand as described below.
+
+Partitions
+==========
+
+Linearstore introduces the concept of store partitions. These allow different
+physical media (eg rotating magnetic media and solid state drives) to be
+mapped to different locations within the linearstore directory structure as
+partitions. Persistent queues may then be created and which can be directed
+to use a particular type of storage through directing which partition it is
+using for persistence. So it is possible, therefore, to have one queue using
+magnetic media (where it does not have high performance/low latency
+requirements, while another uses (for example) more expensive and limited
+capacity solid state drives.
+
+Each partition exists as a directory within the qls top-level store directory
+labeled "pNNN" where NNN is a zero-padded integer starting at
+001. p001 is the default partition and is on the same disk that the
+system is installed on. By mounting other drives/media to "qls/p002",
+"qls/p003", etc, other media may by used by some queues and not others.
+Each of these partition directories then contain the empty file pool
+used by the store.
+
+Changes to the store directory structure
+========================================
+
+Pre-partition
+-------------
+
+qls
+  ├─ dat (contains Berkeley DB database files)
+  ├─ jrnl
+  │    ├── <queue_name_1> (contains in-use journal files belonging to queue_name_1)
+  │    ├── <queue_name_2> (contains in-use journal files belonging to queue_name_2)
+  │    ├── <queue_name_3> (contains in-use journal files belonging to queue_name_3)
+  │    ...
+  ├─ tpl (contains in-use journal files belonging to the TPL)
+  └─ p001
+       └─ efp
+            └── 2028k (contains empty/returned journal files)
+
+Notes:
+1. Although directory p001 exists, it is only a partition placeholder
+   on the system disk (ie wherever the store directory qls is located)
+   and is the only partition used. No other partition directory will be
+   recognized or used.
+2. The "2048k" Empty File Pool (EFP) is the default 2048KiB file size
+   created when a new store is created. Other sizes may be set as the
+   default using the --efp-file-size parameter. Allowed sizes must be a
+   multiple of 4KiB (the minimum allowed journal file size).
+3. As journal files are needed for a queue, they are moved into the queue
+   directory ("qls/jrnl/<queue_name>"), and when they are no longer needed
+   (ie, all messages contained within the file are dequeued), then it is
+   returned to the correct efp directory.
+
+Post-partition
+--------------
+
+qls
+  ├─ dat2 (contains Berkeley DB database files)
+  ├─ jrnl2
+  │    ├─ <queue_name_1> (contains links to in-use journal files belonging to queue_name_1)
+  │    ├─ <queue_name_2> (contains links to in-use journal files belonging to queue_name_2)
+  │    ├─ <queue_name_3> (contains links to in-use journal files belonging to queue_name_3)
+  │    ...
+  ├─ tpl2 (contains in-use journal files belonging to the TPL)
+  ├─ p001
+  │    └─ efp
+  │         ├─ 2028k (contains empty/returned journal files)
+  │         │    ├─ in_use (contains in-use journal files belonging to all queues
+  │         │    │          using this partition and size)
+  │         │    └─ returned (future use, currently remains empty)
+  │         ├─ <size_1>k
+  │         │    ├─ in_use
+  │         │    └─ returned
+  │         ├─ <size_2>k
+  │         │    ├─ in_use
+  │         │    └─ returned
+  │         ...
+  ├─ p002
+  │    └─ efp
+  │         ├─ <size_1>k
+  │         │    ├─ in_use
+  │         │    └─ returned
+  │         ├─ <size_2>k
+  │         │    ├─ in_use
+  │         │    └─ returned
+  │         ...
+  ├─ p003
+  │    └─ efp
+  │         ├─ <size_1>k
+  │         │    ├─ in_use
+  │         │    └─ returned
+  │         ├─ <size_2>k
+  │         │    ├─ in_use
+  │         │    └─ returned
+  │         ...
+  ...
+
+Upgrade process
+===============
+
+IT IS RECOMMENDED THAT A CLEAN UPDATE BE PERFORMED. This means that all
+queues should be purged and deleted, and the broker restarted without
+any existing queues.
+
+If you have queues (with or without messages) which MUST be recovered, then
+it will be necessary to perform the following manual upgrade procedure. It
+may be error-prone if not done carefully, and could be tedious if there are
+many queues.
+
+Summary
+-------
+* Stop broker
+* BACK UP THE STORE (in case of disaster)
+* Create necessary directory structure
+* Copy the DB4 database files to the new location
+* For each queue (and the TPL):
+  * Copy journal files to default partition in-use dir
+  * Create links in new queue dirs to copied journal files
+* Upgrade broker
+* Restart broker
+
+1. Stop the broker
+------------------
+How this is done depends on the type and version of Linux the broker is
+installed on. For Fedora/RedHat:
+
+If running as a service:
+# service qpidd stop
+
+To stop a daemon:
+# qpidd -k
+
+or send a TERM signal to the qpidd process.
+
+2. Back up the (old) store
+--------------------------
+This can be achieved in any number of ways, but if your data/messages
+are important and cannot be lost, don't neglect to do this before
+attempting any changes to the store directory.
+
+A convenient way to store a backup on a thumb drive might be:
+# tar -czf /run/media/<userid>/<thub-drive-mount-name>/qls-<date/time>-backup.tar.gz <abs-path-to-store-dir>/qls
+
+3. Create necessary new directory structure
+-------------------------------------------
+Create the following directories under the qls directory:
+
+# mkdir <path-to-store-dir>/qls/dat2
+# mkdir <path-to-store-dir>/qls/jrnl2
+# mkdir <path-to-store-dir>/qls/tpl2
+
+The p001 directory itself remains unchanged, but add the following
+subdirectories to each efp/<size>k directory present:
+
+# mkdir <path-to-store-dir>/qls/p001/efp/<size>k/in-use
+# mkdir <path-to-store-dir>/qls/p001/efp/<size>k/returned
+
+4. Copy the DB4 database files to the new location
+--------------------------------------------------
+Other than the location of the database, these files have not changed in any
+way, so only a simple copy is needed:
+
+# cp <path-to-store-dir>/qls/dat/* <path-to-store-dir>/qls/dat2/
+
+5. Transfer the queues from the old directory structure to the new directory structure
+--------------------------------------------------------------------------------------
+NOTE: In this step, all journal files will be pooled in the in-use directory
+and symbolic links created to them in the jrnl2/<queue> directory. It is recommended
+that this procedure is completed one queue at a time so as not to confuse files when
+creating symbolic links.
+
+For each queue (<path-to-store-dir>/qls/jrnl/<queue-name>) directory:
+
+a. Make careful note of the file names in the queue directory. They are all
+   UUID names, so it is not easy to identify the queue to which they belong
+   outside of the directory that contains them.
+
+b. Copy all of the files into the appropriately sized EFP in_use directory.
+   By default, all the files should be from the 2014k-sized pool in p001, but
+   double-check both the file sizes and the available pools in the old
+   directory structure. If this is so:
+   
+   # cp <path-to-store-dir>/qls/jrnl/<queue-name>/*.jrnl <path-to-store-dir>/qls/p001/2048k/in_use/
+   
+   Make sure file owner/permissions are not changed.
+ 
+c. Create a new queue and create symbolic links to the journal files just
+   copied above:
+
+   # mkdir  <path-to-store-dir>/qls/jrnl/<queue-name>
+
+   For each copied file noted in step a. above:
+   
+   # ln -s <abs-path-to-store-dir>/qls/p001/2048k/in_use/<uuid_file_name.jrnl> <path-to-store-dir>/qls/jrnl/<queue-name>/
+   
+6. Transfer the TPL from the old directory structure to the new directory structure
+-----------------------------------------------------------------------------------
+NOTE: The TPL directory may not be present or empty in some cases where transactions
+are not in use. If this is so, this step may be skipped.
+
+If the TPL is present and contains journal files, then it should be transferred to
+the new structure. It is a special queue and is identical to any regular queue journal
+other than its location in the directory structure:
+
+a. Make careful note of the file names in the qls/tpl directory. They are all
+   UUID names, so it is not easy to identify the queue to which they belong
+   outside of the directory that contains them.
+
+b. Copy all of the files into the appropriately sized EFP in_use directory.
+   By default, all the files should be from the 2014k-sized pool in p001, but
+   double-check both the file sizes and the available pools in the old
+   directory structure. If this is so:
+   
+   # cp <path-to-store-dir>/qls/jrnl/tpl/*.jrnl <path-to-store-dir>/qls/p001/2048k/in_use/
+   
+   Make sure file owner/permissions are not changed.
+ 
+c. Create a new queue and create symbolic links to the journal files just
+   copied above:
+
+   For each copied file noted in step a. above:
+   
+   # ln -s <abs-path-to-store-dir>/qls/p001/2048k/in_use/<uuid_file_name.jrnl> <path-to-store-dir>/qls/tpl2/
+   
+7. Restore ownership, permissions and SELinux contexts to the new directories
+-----------------------------------------------------------------------------
+These commands can be run recursively to the entire qls directory:
+
+# chown -R qpidd:qpidd <abs-path-to-store-dir>/qls
+# restorecon -FvvR <abs-path-to-store-dir>/qls
+
+8. Upgrade the broker
+---------------------
+Perform the upgrade to the broker and store that will provide partition
+functionality. How this is done depends on the distribution of Linux, and
+will usually be achieved via the package manager for that distribution.
+
+9. Restart the broker
+---------------------
+At this point, the broker should recover all the queues from the new directory structure.
+The old (original) directories are no longer in use, and once the upgrade has been
+verified as successful, they may be deleted.
+
+NOTE: It might be helpful to use log level info+ when first starting the broker, as
+the linearstore uses this level to print a lot of recovery detail which might be helpful
+in troubleshooting if it should be necessary. This is done through the use of 
+qpidd command-line parameter "--log-enable info+" or an equivalent setting in the
+broker configuration file.
+
+10 Troubleshooting
+------------------
+If the upgrade was not successful, or errors occur upon broker restart, then
+  
