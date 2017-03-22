@@ -371,7 +371,7 @@ if (BUILD_SASL)
       qpid/sys/cyrus/CyrusSecurityLayer.h
       qpid/sys/cyrus/CyrusSecurityLayer.cpp
      )
-  include_directories (SYSTEM ${CYRUS_SASL_INCLUDE_DIR})
+  include_directories (${CYRUS_SASL_INCLUDE_DIR})
   set(sasl_LIB ${CYRUS_SASL_LIBRARY})
   set(HAVE_SASL 1)
 else (BUILD_SASL)
@@ -451,7 +451,7 @@ if (BUILD_SSL)
   # Add include directories and link directories for NSS
   # unfortunately this doesn't get done automatically for
   # libraries detected by FindPkgConfig
-  include_directories(SYSTEM ${ssl_INCLUDES})
+  include_directories(${ssl_INCLUDES})
   link_directories(${ssl_LIBDIRS})
 endif (BUILD_SSL)
 
