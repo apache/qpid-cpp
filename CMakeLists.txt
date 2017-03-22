@@ -147,7 +147,7 @@ if (CMAKE_CXX_COMPILER_ID STREQUAL GNU)
    # -Wunreachable-code -Wpadded -Winline
    # -Wshadow - warns about boost headers.
    set (WARNING_FLAGS
-     "-Werror -pedantic -Wall -Wextra -Wno-shadow -Wpointer-arith -Wcast-qual -Wcast-align -Wno-long-long -Wvolatile-register-var -Winvalid-pch -Wno-system-headers -Woverloaded-virtual -Wno-error=deprecated-declarations")
+     "-Werror -pedantic -Wall -Wextra -Wno-shadow -Wpointer-arith -Wcast-qual -Wcast-align -Wno-long-long -Wvolatile-register-var -Winvalid-pch -Wno-system-headers -Woverloaded-virtual -Wno-deprecated-declarations")
 
    if (CMAKE_CXX_COMPILER_VERSION VERSION_GREATER 7)
      message("FIXME FLAGGING")
@@ -160,7 +160,7 @@ if (CMAKE_CXX_COMPILER_ID STREQUAL GNU)
       set (CATCH_UNDEFINED "")
    endif (CMAKE_SYSTEM_NAME STREQUAL SunOS)
   set (NOSTRICT_ALIASING "-fno-strict-aliasing")
-  set (COMPILER_FLAGS "-fvisibility-inlines-hidden -std=gnu++03")
+  set (COMPILER_FLAGS "-fvisibility-inlines-hidden")
    # gcc 4.1.2 on RHEL 5 needs -Wno-attributes to avoid an error that's fixed
    # in later gcc versions.
    execute_process(COMMAND ${CMAKE_CXX_COMPILER} -dumpversion
