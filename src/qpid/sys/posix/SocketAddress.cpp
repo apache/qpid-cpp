@@ -322,7 +322,7 @@ void SocketAddress::firstAddress() const {
 }
 
 bool SocketAddress::nextAddress() const {
-    bool r = currentAddrInfo->ai_next != 0;
+    bool r = (currentAddrInfo) && (currentAddrInfo->ai_next != 0);
     if (r)
         currentAddrInfo = currentAddrInfo->ai_next;
     return r;
