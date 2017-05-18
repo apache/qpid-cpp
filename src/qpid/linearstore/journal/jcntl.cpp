@@ -145,7 +145,8 @@ void
 jcntl::delete_jrnl_files()
 {
     stop(true); // wait for AIO to complete
-    _linearFileController.purgeEmptyFilesToEfp();
+    _linearFileController.closeCurrentJournal();
+    _linearFileController.purgeEmptyFilesToEfp(true);
     _jdir.delete_dir();
 }
 

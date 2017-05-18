@@ -60,6 +60,7 @@ public:
                     EmptyFilePool* emptyFilePoolPtr,
                     uint64_t initialFileNumberVal);
     void finalize();
+    void closeCurrentJournal();
 
     void addJournalFile(JournalFile* journalFilePtr,
                         const uint32_t completedDblkCount,
@@ -71,7 +72,7 @@ public:
     uint64_t getNextRecordId();
     void removeFileToEfp(const std::string& fileName);
     void restoreEmptyFile(const std::string& fileName);
-    void purgeEmptyFilesToEfp();
+    void purgeEmptyFilesToEfp(bool force_all=false);
 
     // Functions for manipulating counts of non-current JournalFile instances in journalFileList_
     uint32_t getEnqueuedRecordCount(const uint64_t fileSeqNumber);

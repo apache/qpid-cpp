@@ -49,13 +49,17 @@ void LinearFileController::initialize(const std::string& journalDirectory,
 }
 
 void LinearFileController::finalize() {
-    if (currentJournalFilePtr_) {
-        currentJournalFilePtr_->close();
-        currentJournalFilePtr_ = 0;
-    }
+    closeCurrentJournal();
     while (!journalFileList_.empty()) {
         delete journalFileList_.front();
         journalFileList_.pop_front();
+    }
+}
+
+void LinearFileController::closeCurrentJournal() {
+    if (currentJournalFilePtr_) {
+        currentJournalFilePtr_->close();
+        currentJournalFilePtr_ = 0;
     }
 }
 
@@ -105,9 +109,10 @@ void LinearFileController::restoreEmptyFile(const std::string& fileName) {
     addJournalFile(fileName, emptyFilePoolPtr_->getIdentity(), getNextFileSeqNum(), 0);
 }
 
-void LinearFileController::purgeEmptyFilesToEfp() {
+void LinearFileController::purgeEmptyFilesToEfp(bool force_all) {
     slock l(journalFileListMutex_);
-    while (journalFileList_.front()->isNoEnqueuedRecordsRemaining() && journalFileList_.size() > 1) { // Can't purge last file, even if it has no enqueued records
+    while ((force_all && (journalFileList_.size() > 0)) || // when deleting the queue, remove really all journal files, otherwise ..
+          ((journalFileList_.size() > 1) && (journalFileList_.front()->isNoEnqueuedRecordsRemaining()))) { // .. dont purge last file, even if it has no enqueued records
         emptyFilePoolPtr_->returnEmptyFileSymlink(journalFileList_.front()->getFqFileName());
         delete journalFileList_.front();
         journalFileList_.pop_front();
