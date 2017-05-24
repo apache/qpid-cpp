@@ -17,7 +17,7 @@
 # under the License.
 #
 
-DIRS = src/cpp-broker src/programming
+DIRS = src/cpp-broker src/messaging-api
 
 
 .PHONY: all $(DIRS)

@@ -23,8 +23,8 @@ under the License.
 -->
 
 <book id="client-api-tutorial">
-  <title>Programming in Apache Qpid</title>
-  <subtitle>Cross-Platform AMQP Messaging in Java JMS, .NET, C++, and Python</subtitle>
+  <title>Using the Qpid Messaging API</title>
+  <subtitle>Cross-Platform AMQP Messaging</subtitle>
 
   <chapter>
     <title>Using the Qpid Messaging API</title>
