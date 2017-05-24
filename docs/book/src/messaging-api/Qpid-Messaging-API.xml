@@ -26,7 +26,7 @@ under the License.
   <title>Using the Qpid Messaging API</title>
   <subtitle>Cross-Platform AMQP Messaging</subtitle>
 
-  <chapter>
+  <chapter id="using-the-qpid-messaging-api">
     <title>Using the Qpid Messaging API</title>
 
     <para>The Qpid Messaging API is quite simple, consisting of only a
