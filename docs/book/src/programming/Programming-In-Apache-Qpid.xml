@@ -27,43 +27,6 @@ under the License.
   <subtitle>Cross-Platform AMQP Messaging in Java JMS, .NET, C++, and Python</subtitle>
 
   <chapter>
-    <title>Introduction</title>
-
-    <para>Apache Qpid is a reliable, asynchronous messaging system that
-    supports the AMQP messaging protocol in several common programming
-    languages. Qpid is supported on most common platforms.
-    </para>
-
-    <itemizedlist>
-      <listitem>
-	<para>
-	  On the Java platform, Qpid uses the
-	  established <ulink url="http://java.sun.com/products/jms/">Java JMS
-	  API</ulink>.
-	</para>
-      </listitem>
-      <listitem>
-	<para>
-	  For Python, C++, and .NET, Qpid defines its own messaging API, the
-	  <firstterm>Qpid Messaging API</firstterm>, which is
-	  conceptually similar in each.
-	</para>
-	<para>
-	  On the .NET platform, Qpid also provides a WCF binding.
-	</para>
-      </listitem>
-      <listitem>
-	<para>
-	  Ruby will also use the Qpid Messaging API, which will soon
-	  be implemented. (Ruby currently uses an API that is closely
-	  tied to the AMQP version).
-	</para>
-      </listitem>
-    </itemizedlist>
-
-  </chapter>
-
-  <chapter>
     <title>Using the Qpid Messaging API</title>
 
     <para>The Qpid Messaging API is quite simple, consisting of only a
