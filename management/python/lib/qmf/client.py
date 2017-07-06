@@ -27,8 +27,46 @@ which makes it more suitable for environments that may fork.
 """
 
 from proton import Message
-from proton.utils import BlockingConnection, IncomingMessageHandler
-import threading, struct
+from proton.utils import BlockingConnection, IncomingMessageHandler, ConnectionException
+import threading, struct, time
+
+class ReconnectDelays(object):
+    """
+    An iterable that returns a (possibly unlimited) sequence of delays to for
+    successive reconnect attempts.
+    """
+
+    def __init__(self, shortest, longest, repeat=True):
+        """
+        First delay is 0, then `shortest`. Successive delays are doubled up to a
+        maximum of `longest`. If `repeat` is a number > 0 then the `longest` value
+        is generated `repeat` more times.  If `repeat` is True, the longest
+        value is returned without limit.
+
+        For example: ReconnectDelays(.125, 1, True) will generate the following sequence:
+            0, .125, .25, .5, 1, 1, 1, 1, 1, 1 ... (forever)
+        """
+        if shortest <= 0 or shortest > longest or repeat < 0:
+            raise ValueError("invalid arguments for reconnect_delays()")
+        self.shortest, self.longest, self.repeat = shortest, longest, repeat
+
+    def _generate(self):
+        yield 0
+        delay = self.shortest
+        while delay < self.longest:
+            yield delay
+            delay *= 2
+        yield self.longest
+        if self.repeat is True:
+            while True:
+                yield self.longest
+        elif self.repeat:
+            for i in xrange(self.repeat):
+                yield self.longest
+
+    def __iter__(self):
+        return self._generate()
+
 
 class SyncRequestResponse(IncomingMessageHandler):
     """
@@ -48,15 +86,18 @@ class SyncRequestResponse(IncomingMessageHandler):
             Sucessive messages may have different addresses.
         """
         super(SyncRequestResponse, self).__init__()
-        self.connection = connection
         self.address = address
+        self.response = None
+        self._cid = 0
+        self.lock = threading.Lock()
+        self.reconnect(connection)
+
+    def reconnect(self, connection):
+        self.connection = connection
         self.sender = self.connection.create_sender(self.address)
         # dynamic=true generates a unique address dynamically for this receiver.
         # credit=1 because we want to receive 1 response message initially.
         self.receiver = self.connection.create_receiver(None, dynamic=True, credit=1, handler=self)
-        self.response = None
-        self._cid = 0
-        self.lock = threading.Lock()
 
     def _next(self):
         """Get the next correlation ID"""
@@ -109,6 +150,7 @@ class SyncRequestResponse(IncomingMessageHandler):
         self.response = event.message
         self.connection.container.yield_() # Wake up the wait() loop to handle the message.
 
+
 class BrokerAgent(object):
     """Proxy for a manageable Qpid broker"""
 
@@ -123,9 +165,17 @@ class BrokerAgent(object):
                                   password=str(sasl.password) if sasl else None)
 
     @staticmethod
-    def connect(url=None, timeout=10, ssl_domain=None, sasl=None):
-        """Return a BrokerAgent connected with the given parameters"""
-        return BrokerAgent(BrokerAgent.connection(url, timeout, ssl_domain, sasl))
+    def connect(url=None, timeout=10, ssl_domain=None, sasl=None, reconnect_delays=None):
+        """
+        Return a BrokerAgent connected with the given parameters.
+        @param reconnect_delays: iterable of delays for successive automatic re-connect attempts,
+        see class ReconnectDelays. If None there is no automatic re-connect
+        """
+        f = lambda: BrokerAgent.connection(url, timeout, ssl_domain, sasl)
+        ba = BrokerAgent(f())
+        ba.make_connection = f
+        ba.reconnect_delays = reconnect_delays or []
+        return ba
 
     def __init__(self, connection):
         """
@@ -135,6 +185,10 @@ class BrokerAgent(object):
         """
         path = connection.url.path or "qmf.default.direct"
         self._client = SyncRequestResponse(connection, path)
+        self.reconnect_delays = None
+
+    def reconnect(self, connection):
+        self._client.reconnect(connection)
 
     def close(self):
         """Shut down the node"""
@@ -144,6 +198,24 @@ class BrokerAgent(object):
 
     def __repr__(self):
         return "%s(%s)"%(self.__class__.__name__, self._client.connection.url)
+
+    def _reconnect(self):
+        for d in self.reconnect_delays:
+            time.sleep(d)
+            try:
+                self.reconnect(self.make_connection())
+                return True
+            except ConnectionException:
+                pass
+        return False
+
+    def _retry(self, f, *args, **kwargs):
+        while True:
+            try:
+                return f(*args, **kwargs)
+            except ConnectionException:
+                if not self._reconnect():
+                    raise
 
     def _request(self, opcode, content):
         props = {'method'             : 'request',
@@ -158,7 +230,7 @@ class BrokerAgent(object):
         content = {'_object_id'   : {'_object_name' : addr},
                    '_method_name' : method,
                    '_arguments'   : arguments or {}}
-        response = self._request('_method_request', content)
+        response = self._retry(self._request, '_method_request', content)
         if response.properties['qmf.opcode'] == '_exception':
             raise Exception("management error: %r" % response.body['_values'])
         if response.properties['qmf.opcode'] != '_method_response':
@@ -174,20 +246,24 @@ class BrokerAgent(object):
 
     def _classQuery(self, class_name):
         query = {'_what' : 'OBJECT', '_schema_id' : {'_class_name' : class_name}}
-        response = self._request('_query_request', query)
-        if response.properties['qmf.opcode'] != '_query_response':
-            raise Exception("bad response")
-        return self._gather(response)
+        def f():
+            response = self._request('_query_request', query)
+            if response.properties['qmf.opcode'] != '_query_response':
+                raise Exception("bad response")
+            return self._gather(response)
+        return self._retry(f)
 
     def _nameQuery(self, object_id):
         query = {'_what'      : 'OBJECT', '_object_id' : {'_object_name' : object_id}}
-        response = self._request('_query_request', query)
-        if response.properties['qmf.opcode'] != '_query_response':
-            raise Exception("bad response")
-        items = self._gather(response)
-        if len(items) == 1:
-            return items[0]
-        return None
+        def f():
+            response = self._request('_query_request', query)
+            if response.properties['qmf.opcode'] != '_query_response':
+                raise Exception("bad response")
+            items = self._gather(response)
+            if len(items) == 1:
+                return items[0]
+            return None
+        return self._retry(f)
 
     def _getAll(self, cls):
         return [cls(self, x) for x in self._classQuery(cls.__name__.lower())]
@@ -219,8 +295,8 @@ class BrokerAgent(object):
     def getMemory(self): return self._getSingle(Memory)
 
     def echo(self, sequence = 1, body = "Body"):
-      """Request a response to test the path to the management broker"""
-      return self._method('echo', {'sequence' : sequence, 'body' : body})
+        """Request a response to test the path to the management broker"""
+        return self._method('echo', {'sequence' : sequence, 'body' : body})
 
     def queueMoveMessages(self, srcQueue, destQueue, qty):
         """Move messages from one queue to another"""
@@ -344,7 +420,7 @@ class BrokerAgent(object):
 
     def list(self, _type):
         """List objects of the specified type"""
-        return [i["_values"] for i in self._doClassQuery(_type.lower())]
+        return [i["_values"] for i in self._classQuery(_type.lower())]
 
     def query(self, _type, oid):
         """Query the current state of an object"""
