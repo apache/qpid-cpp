@@ -1,0 +1,15 @@
+[Unit]
+Description=An AMQP message broker cluster primary daemon.
+Documentation=man:qpidd(1) http://qpid.apache.org/
+Requires=network.target
+After=network.target
+
+[Service]
+User=qpidd
+Group=qpidd
+Type=simple
+EnvironmentFile=/etc/sysconfig/qpidd
+ExecStart=/usr/sbin/qpid-ha -b localhost:$QPID_PORT promote
+
+[Install]
+WantedBy=multi-user.target

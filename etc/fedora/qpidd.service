@@ -1,0 +1,14 @@
+[Unit]
+Description=An AMQP message broker daemon.
+Documentation=man:qpidd(1) http://qpid.apache.org/
+Requires=network.target
+After=network.target
+
+[Service]
+User=qpidd
+Group=qpidd
+Type=simple
+ExecStart=/usr/sbin/qpidd --config /etc/qpid/qpidd.conf
+
+[Install]
+WantedBy=multi-user.target
