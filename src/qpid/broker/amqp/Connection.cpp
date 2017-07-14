@@ -446,6 +446,7 @@ void Connection::process()
             doSessionRemoteClose(pn_event_session(event));
             break;
         case PN_LINK_REMOTE_OPEN:
+            QPID_LOG(notice, "Got link open event");
             doLinkRemoteOpen(pn_event_link(event));
             break;
         case PN_LINK_REMOTE_DETACH:

@@ -955,13 +955,17 @@ void IncomingToExchange::handle(qpid::broker::Message& message, qpid::broker::Tx
 {
     if (exchange->isDestroyed())
         throw qpid::framing::ResourceDeletedException(QPID_MSG("Exchange " << exchange->getName() << " has been deleted."));
-    authorise.route(exchange, message);
-    DeliverableMessage deliverable(message, transaction);
-    exchange->route(deliverable);
-    if (!deliverable.delivered) {
-        if (exchange->getAlternate()) {
-            exchange->getAlternate()->route(deliverable);
+    try {
+        authorise.route(exchange, message);
+        DeliverableMessage deliverable(message, transaction);
+        exchange->route(deliverable);
+        if (!deliverable.delivered) {
+            if (exchange->getAlternate()) {
+                exchange->getAlternate()->route(deliverable);
+            }
         }
+    } catch (const qpid::SessionException& e) {
+        throw Exception(qpid::amqp::error_conditions::PRECONDITION_FAILED, e.what());
     }
 }
 
