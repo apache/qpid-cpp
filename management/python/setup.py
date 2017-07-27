@@ -45,16 +45,14 @@ scripts = [
     "bin/qpid-route",
     "bin/qpid-stat",
     "bin/qpid-tool",
+    "bin/qpid-config.bat",
+    "bin/qpid-ha.bat",
+    "bin/qpid-printevents.bat",
+    "bin/qpid-queue-stats.bat",
+    "bin/qpid-route.bat",
+    "bin/qpid-stat.bat",
+    "bin/qpid-tool.bat" 
 ]
-
-if platform.system() == "Windows":
-    scripts.append("bin/qpid-config.bat")
-    scripts.append("bin/qpid-ha.bat")
-    scripts.append("bin/qpid-printevents.bat")
-    scripts.append("bin/qpid-queue-stats.bat")
-    scripts.append("bin/qpid-route.bat")
-    scripts.append("bin/qpid-stat.bat")
-    scripts.append("bin/qpid-tool.bat")
 
 setup(name="qpid-tools",
       version="1.37.0",
