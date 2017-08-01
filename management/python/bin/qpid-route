@@ -337,7 +337,6 @@ class RouteManager:
 
         self.addLink(remoteBroker, interbroker_mechanism)
         link = self.getLink()
-        self.checkLink(link)
 
         bridges = self.agent.getObjects(_class="bridge")
         for bridge in bridges:
@@ -360,7 +359,6 @@ class RouteManager:
     def addQueueRoute(self, remoteBroker, interbroker_mechanism, exchange, queue ):
         self.addLink(remoteBroker, interbroker_mechanism)
         link = self.getLink()
-        self.checkLink(link)
 
         bridges = self.agent.getObjects(_class="bridge")
         for bridge in bridges:
