@@ -194,11 +194,12 @@ class RouteManager:
         return None
 
     def checkLink(self, link):
-        retry = 3
-        while link is None or (link.state in ("Waiting", "Connecting", "Closing") and retry > 0):
-            sleep(1)
-            link = self.getLink()
-            retry -= 1
+        if not config._quiet:
+            retry = 3
+            while link is None or (link.state in ("Waiting", "Connecting", "Closing") and retry > 0):
+                sleep(1)
+                link = self.getLink()
+                retry -= 1
 
         if link == None:
             raise Exception("Link failed to create")
