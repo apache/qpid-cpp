@@ -86,7 +86,7 @@ class MessageStoreImpl : public qpid::broker::MessageStore, public qpid::managem
         uint16_t efpPartition;
         uint64_t efpFileSizeKib;
         bool overwriteBeforeReturnFlag;
-        uint32_t journalFlushTimeoutMs;
+        qpid::sys::Duration journalFlushTimeout;
     };
 
   private:
@@ -113,7 +113,7 @@ class MessageStoreImpl : public qpid::broker::MessageStore, public qpid::managem
 
     // FIXME aconway 2010-03-09: was 10ms
     static const uint64_t defJournalGetEventsTimeoutNs =   1 * 1000000; // 1ms
-    static const uint64_t defJournalFlushTimeoutMs     = 500;
+    static const uint64_t defJournalFlushTimeoutNs     = 500 * 1000000; // 500ms
 
     std::list<db_ptr> dbs;
     dbEnv_ptr dbenv;
@@ -144,7 +144,7 @@ class MessageStoreImpl : public qpid::broker::MessageStore, public qpid::managem
     uint32_t tplWCachePgSizeSblks;
     uint16_t tplWCacheNumPages;
     uint64_t highestRid;
-    qpid::sys::Duration journalFlushTimeoutNs;
+    qpid::sys::Duration journalFlushTimeout;
     bool isInit;
     const char* envPath;
     qpid::broker::Broker* broker;
