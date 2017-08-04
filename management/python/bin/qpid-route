@@ -194,11 +194,12 @@ class RouteManager:
         return None
 
     def checkLink(self, link):
-        retry = 3
-        while link is None or (link.state in ("Waiting", "Connecting", "Closing") and retry > 0):
-            sleep(1)
-            link = self.getLink()
-            retry -= 1
+        if not config._quiet:
+            retry = 3
+            while link is None or (link.state in ("Waiting", "Connecting", "Closing") and retry > 0):
+                sleep(1)
+                link = self.getLink()
+                retry -= 1
 
         if link == None:
             raise Exception("Link failed to create")
@@ -417,9 +418,6 @@ class RouteManager:
                 if res.status != 0:
                     raise Exception("Error closing bridge: %d - %s" % (res.status, res.text))
                 if len(bridges) == 1 and config._dellink:
-                    link = self.getLink()
-                    if link == None:
-                        sys.exit(0)
                     if config._verbose:
                         print "Last bridge on link, closing link..."
                     res = link.close()
@@ -447,9 +445,6 @@ class RouteManager:
                 if res.status != 0:
                     raise Exception("Error closing bridge: %d - %s" % (res.status, res.text))
                 if len(bridges) == 1 and config._dellink:
-                    link = self.getLink()
-                    if link == None:
-                        sys.exit(0)
                     if config._verbose:
                         print "Last bridge on link, closing link..."
                     res = link.close()
