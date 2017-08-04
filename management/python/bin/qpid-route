@@ -344,7 +344,7 @@ class RouteManager:
         for bridge in bridges:
             if bridge.linkRef == link.getObjectId() and \
                     bridge.dest == dest and bridge.src == src and bridge.srcIsQueue == srcIsQueue and \
-                    bridge.srcIsLocal == srcIsLocal and bridge.dynamic == dynamic:
+                    bridge.key == key and bridge.srcIsLocal == srcIsLocal and bridge.dynamic == dynamic:
                 if not config._quiet:
                     raise Exception("Duplicate Route - ignoring: %s(%s)" % (dest, key or src))
                 sys.exit(0)
@@ -352,11 +352,13 @@ class RouteManager:
         if config._verbose:
             print "Creating inter-broker binding..."
 
-        name = "%s:%s:%s:%s" % (dest, key or src, srcIsQueue, srcIsLocal)
+        linkName = self.getLinkName(link)
+        # Don't put <linkName> first in the bridge name as the "qpid." prefix will be rejected by the broker
+        name = "%s:%s:%s:%s:%s" % (dest, key or src, linkName, srcIsQueue, srcIsLocal)
 
         brokers = self.agent.getObjects(_class="broker")
         broker = brokers[0]
-        properties = {"link" : self.getLinkName(link),
+        properties = {"link" : linkName,
                       "src"  : src,
                       "dest" : dest,
                       "key"  : key,
@@ -368,7 +370,8 @@ class RouteManager:
                       "dynamic"    : dynamic,
                       "sync"       : sync,
                       "credit"     : credit }
-        # Broker also decodes "queue" but this may be a mistake...? It's not a Bridge property in the QMF schema.
+        # Broker also decodes "queue", which is used by the bridge instead of creating a new one. However it is not a
+        # Bridge property in the QMF schema so is omitted here.
 
         res = broker.create("bridge", name, properties, False)
         if res.status != 0:
@@ -435,7 +438,7 @@ class RouteManager:
         bridges = self.agent.getObjects(_class="bridge")
         for bridge in bridges:
             if bridge.linkRef == link.getObjectId() and bridge.dest == exchange and bridge.key == routingKey \
-                    and bridge.dynamic == dynamic and bridge.srcIsLocal == config._srclocal:
+                    and not bridge.srcIsQueue and bridge.dynamic == dynamic and bridge.srcIsLocal == config._srclocal:
                 if config._verbose:
                     print "Closing bridge..."
                 res = bridge.close()
