@@ -123,9 +123,9 @@ namespace {
 const std::string EMPTY;
 }
 
-void Sasl::init(const std::string& mechanism, const std::string* response, const std::string* /*hostname*/)
+void Sasl::init(const std::string& mechanism, const std::string* response, const std::string* hostname)
 {
-    QPID_LOG_CAT(debug, protocol, id << " Received SASL-INIT(" << mechanism << ", " << (response ? *response : EMPTY) <<  ")");
+    QPID_LOG_CAT(debug, protocol, id << " Received SASL-INIT(" << mechanism << ", " << (response ? *response : EMPTY) << ", " << (hostname ? *hostname : EMPTY)<< ")");
     //TODO: what should we do with hostname here?
     std::string c;
     respond(authenticator->start(mechanism, response, c), c);
