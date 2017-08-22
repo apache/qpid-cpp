@@ -187,12 +187,19 @@ class RouteManager:
                 return link
         return None
 
+    def getLinkName(self, link):
+        for prop, value in link.getProperties():
+          if prop.name == "name":
+              return value
+        return None
+
     def checkLink(self, link):
-        retry = 3
-        while link is None or (link.state in ("Waiting", "Connecting", "Closing") and retry > 0):
-            sleep(1)
-            link = self.getLink()
-            retry -= 1
+        if not config._quiet:
+            retry = 3
+            while link is None or (link.state in ("Waiting", "Connecting", "Closing") and retry > 0):
+                sleep(1)
+                link = self.getLink()
+                retry -= 1
 
         if link == None:
             raise Exception("Link failed to create")
@@ -331,6 +338,47 @@ class RouteManager:
             if b[0] != self.local.name():
                 self.qmf.delBroker(b[1])
 
+    def addBridge(self, link, src, dest, key, tag, excludes, srcIsQueue, srcIsLocal,
+                  durable, dynamic, sync, credit):
+        bridges = self.agent.getObjects(_class="bridge")
+        for bridge in bridges:
+            if bridge.linkRef == link.getObjectId() and \
+                    bridge.dest == dest and bridge.src == src and bridge.srcIsQueue == srcIsQueue and \
+                    bridge.key == key and bridge.srcIsLocal == srcIsLocal and bridge.dynamic == dynamic:
+                if not config._quiet:
+                    raise Exception("Duplicate Route - ignoring: %s(%s)" % (dest, key or src))
+                sys.exit(0)
+
+        if config._verbose:
+            print "Creating inter-broker binding..."
+
+        linkName = self.getLinkName(link)
+        # Don't put <linkName> first in the bridge name as the "qpid." prefix will be rejected by the broker
+        name = "%s:%s:%s:%s:%s" % (dest, key or src, linkName, srcIsQueue, srcIsLocal)
+
+        brokers = self.agent.getObjects(_class="broker")
+        broker = brokers[0]
+        properties = {"link" : linkName,
+                      "src"  : src,
+                      "dest" : dest,
+                      "key"  : key,
+                      "tag"  : tag,
+                      "excludes"   : excludes,
+                      "srcIsQueue" : srcIsQueue,
+                      "srcIsLocal" : srcIsLocal,
+                      "durable"    : durable,
+                      "dynamic"    : dynamic,
+                      "sync"       : sync,
+                      "credit"     : credit }
+        # Broker also decodes "queue", which is used by the bridge instead of creating a new one. However it is not a
+        # Bridge property in the QMF schema so is omitted here.
+
+        res = broker.create("bridge", name, properties, False)
+        if res.status != 0:
+            raise Exception(res.text)
+        if config._verbose:
+            print "Bridge method returned:", res.status, res.text
+
     def addRoute(self, remoteBroker, exchange, routingKey, tag, excludes, interbroker_mechanism="", dynamic=False):
         if dynamic and config._srclocal:
             raise Exception("--src-local is not permitted on dynamic routes")
@@ -339,45 +387,17 @@ class RouteManager:
         link = self.getLink()
         self.checkLink(link)
 
-        bridges = self.agent.getObjects(_class="bridge")
-        for bridge in bridges:
-            if bridge.linkRef == link.getObjectId() and \
-                    bridge.dest == exchange and bridge.key == routingKey and not bridge.srcIsQueue:
-                if not config._quiet:
-                    raise Exception("Duplicate Route - ignoring: %s(%s)" % (exchange, routingKey))
-                sys.exit(0)
+        self.addBridge(link, exchange, exchange, routingKey, tag,
+                          excludes, False, config._srclocal, config._durable, dynamic,
+                          config._ack, config._credit)
 
-        if config._verbose:
-            print "Creating inter-broker binding..."
-        res = link.bridge(config._durable, exchange, exchange, routingKey, tag,
-                          excludes, False, config._srclocal, dynamic,
-                          config._ack, credit=config._credit)
-        if res.status != 0:
-            raise Exception(res.text)
-        if config._verbose:
-            print "Bridge method returned:", res.status, res.text
-
-    def addQueueRoute(self, remoteBroker, interbroker_mechanism, exchange, queue ):
+    def addQueueRoute(self, remoteBroker, interbroker_mechanism, exchange, queue):
         self.addLink(remoteBroker, interbroker_mechanism)
         link = self.getLink()
         self.checkLink(link)
 
-        bridges = self.agent.getObjects(_class="bridge")
-        for bridge in bridges:
-            if bridge.linkRef == link.getObjectId() and \
-                    bridge.dest == exchange and bridge.src == queue and bridge.srcIsQueue:
-                if not config._quiet:
-                    raise Exception("Duplicate Route - ignoring: %s(%s)" % (exchange, queue))
-                sys.exit(0)
-
-        if config._verbose:
-            print "Creating inter-broker binding..."
-        res = link.bridge(config._durable, queue, exchange, "", "", "", True,
-                          config._srclocal, False, config._ack, credit=config._credit)
-        if res.status != 0:
-            raise Exception(res.text)
-        if config._verbose:
-            print "Bridge method returned:", res.status, res.text
+        self.addBridge(link, queue, exchange, "", "", "", True, config._srclocal, config._durable, False,
+                       config._ack, config._credit)
 
     def delQueueRoute(self, remoteBroker, exchange, queue):
         self.remote = BrokerURL(remoteBroker)
@@ -390,16 +410,14 @@ class RouteManager:
         bridges = self.agent.getObjects(_class="bridge")
         for bridge in bridges:
             if bridge.linkRef == link.getObjectId() and \
-                    bridge.dest == exchange and bridge.src == queue and bridge.srcIsQueue:
+                    bridge.dest == exchange and bridge.src == queue and bridge.srcIsQueue and \
+                            bridge.srcIsLocal == config._srclocal:
                 if config._verbose:
                     print "Closing bridge..."
                 res = bridge.close()
                 if res.status != 0:
                     raise Exception("Error closing bridge: %d - %s" % (res.status, res.text))
                 if len(bridges) == 1 and config._dellink:
-                    link = self.getLink()
-                    if link == None:
-                        sys.exit(0)
                     if config._verbose:
                         print "Last bridge on link, closing link..."
                     res = link.close()
@@ -420,16 +438,13 @@ class RouteManager:
         bridges = self.agent.getObjects(_class="bridge")
         for bridge in bridges:
             if bridge.linkRef == link.getObjectId() and bridge.dest == exchange and bridge.key == routingKey \
-                    and bridge.dynamic == dynamic:
+                    and not bridge.srcIsQueue and bridge.dynamic == dynamic and bridge.srcIsLocal == config._srclocal:
                 if config._verbose:
                     print "Closing bridge..."
                 res = bridge.close()
                 if res.status != 0:
                     raise Exception("Error closing bridge: %d - %s" % (res.status, res.text))
                 if len(bridges) == 1 and config._dellink:
-                    link = self.getLink()
-                    if link == None:
-                        sys.exit(0)
                     if config._verbose:
                         print "Last bridge on link, closing link..."
                     res = link.close()
@@ -453,8 +468,9 @@ class RouteManager:
                 if bridge.dynamic:
                     keyText = "<dynamic>"
                 else:
-                    keyText = bridge.key
-                print "%s %s:%d %s %s" % (self.local.name(), myLink.host, myLink.port, bridge.dest, keyText)
+                    keyText = bridge.key or bridge.src
+                print "%s %s:%d %s %10s %s" % (self.local.name(), myLink.host, myLink.port, bridge.dest, keyText,
+                                             bridge.srcIsLocal)
 
     def clearAllRoutes(self):
         links   = self.qmf.getObjects(_class="link")
