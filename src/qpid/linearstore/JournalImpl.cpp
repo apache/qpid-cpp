@@ -32,13 +32,63 @@ namespace linearstore {
 
 InactivityFireEvent::InactivityFireEvent(JournalImpl* p,
                                          const ::qpid::sys::Duration timeout):
-        ::qpid::sys::TimerTask(timeout, "JournalInactive:"+p->id()), _parent(p) {}
+        ::qpid::sys::TimerTask(timeout, "JournalInactive:"+p->id()), _parent(p),
+         _state(NOT_ADDED)
+{}
+
+bool InactivityFireEvent::addToTimer() {
+    ::qpid::sys::Mutex::ScopedLock sl(_ifeStateLock);
+    if (_state == NOT_ADDED) {
+        _state = RUNNING;
+        return true;
+    }
+    return false;
+}
+
+bool InactivityFireEvent::resetIfNotRunning() {
+    ::qpid::sys::Mutex::ScopedLock sl(_ifeStateLock);
+    switch (_state) {
+    case NOT_ADDED: THROW_STORE_FULL_EXCEPTION("Called InactivityFireEvent::resetIfNotRunning() before being added to timer");
+    case FIRED :
+        setupNextFire();
+        _state = RUNNING;
+        return true;
+    case FLUSHED:
+        restart();
+        _state = RUNNING;
+        break;
+    default:; // ignore
+    }
+    return false;
+}
+
+void InactivityFireEvent::flushed() {
+   ::qpid::sys::Mutex::ScopedLock sl(_ifeStateLock);
+   if (_state == RUNNING) {
+       _state = FLUSHED;
+   }
+}
 
 void InactivityFireEvent::fire() {
-    ::qpid::sys::Mutex::ScopedLock sl(_ife_lock);
-    if (_parent) {
-        _parent->flushFire();
+    {
+        ::qpid::sys::Mutex::ScopedLock sl2(_ifeStateLock);
+        if (_state != RUNNING) {
+            return;
+        }
+        _state = FIRED;
     }
+    {
+        ::qpid::sys::Mutex::ScopedLock sl(_ifeParentLock);
+        if (_parent) {
+            _parent->flushFire();
+        }
+    }
+}
+
+void InactivityFireEvent::cancel() {
+    ::qpid::sys::TimerTask::cancel();
+    ::qpid::sys::Mutex::ScopedLock sl(_ifeParentLock);
+    _parent = 0;
 }
 
 GetEventsFireEvent::GetEventsFireEvent(JournalImpl* p,
@@ -65,16 +115,10 @@ JournalImpl::JournalImpl(::qpid::sys::Timer& timer_,
                          timer(timer_),
                          _journalLogRef(journalLogRef),
                          getEventsTimerSetFlag(false),
-                         writeActivityFlag(false),
-                         flushTriggeredFlag(true),
                          deleteCallback(onDelete)
 {
     getEventsFireEventsPtr = new GetEventsFireEvent(this, getEventsTimeout);
     inactivityFireEventPtr = new InactivityFireEvent(this, flushTimeout);
-    {
-        timer.start();
-        timer.add(inactivityFireEventPtr);
-    }
 
     initManagement(a);
 
@@ -383,9 +427,7 @@ JournalImpl::txn_commit(::qpid::linearstore::journal::data_tok* const dtokp,
 void
 JournalImpl::stop(bool block_till_aio_cmpl)
 {
-    InactivityFireEvent* ifep = dynamic_cast<InactivityFireEvent*>(inactivityFireEventPtr.get());
-    assert(ifep); // dynamic_cast can return null if the cast fails
-    ifep->cancel();
+    inactivityFireEventPtr->cancel();
     jcntl::stop(block_till_aio_cmpl);
 
     if (_mgmtObject.get() != 0) {
@@ -402,6 +444,7 @@ JournalImpl::flush(const bool block_till_aio_cmpl)
         ::qpid::sys::Mutex::ScopedLock sl(_getf_lock);
         if (_wmgr.get_aio_evt_rem() && !getEventsTimerSetFlag) { setGetEventTimer(); }
     }
+    inactivityFireEventPtr->flushed();
     return res;
 }
 
@@ -417,19 +460,7 @@ JournalImpl::getEventsFire()
 void
 JournalImpl::flushFire()
 {
-    if (writeActivityFlag) {
-        writeActivityFlag = false;
-        flushTriggeredFlag = false;
-    } else {
-        if (!flushTriggeredFlag) {
-            flush(false);
-            flushTriggeredFlag = true;
-        }
-    }
-    inactivityFireEventPtr->setupNextFire();
-    {
-        timer.add(inactivityFireEventPtr);
-    }
+    flush(false);
 }
 
 void
@@ -473,7 +504,14 @@ JournalImpl::createStore() {
 void
 JournalImpl::handleIoResult(const ::qpid::linearstore::journal::iores r)
 {
-    writeActivityFlag = true;
+    if (inactivityFireEventPtr->addToTimer()) {
+        timer.start();
+        timer.add(inactivityFireEventPtr);
+    } else {
+        if (inactivityFireEventPtr->resetIfNotRunning()) {
+            timer.add(inactivityFireEventPtr);
+        }
+    }
     switch (r)
     {
         case ::qpid::linearstore::journal::RHM_IORES_SUCCESS:

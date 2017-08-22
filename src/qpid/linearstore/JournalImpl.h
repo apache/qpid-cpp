@@ -47,14 +47,19 @@ class JournalLogImpl;
 class InactivityFireEvent : public ::qpid::sys::TimerTask
 {
     JournalImpl* _parent;
-    ::qpid::sys::Mutex _ife_lock;
+    ::qpid::sys::Mutex _ifeParentLock;
+    ::qpid::sys::Mutex _ifeStateLock;
+    enum {NOT_ADDED=0, RUNNING, FIRED, FLUSHED} _state;
 
   public:
     InactivityFireEvent(JournalImpl* p,
                         const ::qpid::sys::Duration timeout);
     virtual ~InactivityFireEvent() {}
+    bool addToTimer();
+    bool resetIfNotRunning();
+    void flushed();
     void fire();
-    inline void cancel() { ::qpid::sys::Mutex::ScopedLock sl(_ife_lock); _parent = 0; }
+    void cancel();
 };
 
 class GetEventsFireEvent : public ::qpid::sys::TimerTask
@@ -81,13 +86,11 @@ class JournalImpl : public ::qpid::broker::ExternalQueueStore,
     ::qpid::sys::Timer& timer;
     JournalLogImpl& _journalLogRef;
     bool getEventsTimerSetFlag;
-    boost::intrusive_ptr< ::qpid::sys::TimerTask> getEventsFireEventsPtr;
+    boost::intrusive_ptr<GetEventsFireEvent> getEventsFireEventsPtr;
     ::qpid::sys::Mutex _getf_lock;
     ::qpid::sys::Mutex _read_lock;
 
-    bool writeActivityFlag;
-    bool flushTriggeredFlag;
-    boost::intrusive_ptr< ::qpid::sys::TimerTask> inactivityFireEventPtr;
+    boost::intrusive_ptr<InactivityFireEvent> inactivityFireEventPtr;
 
     ::qpid::management::ManagementAgent* _agent;
     ::qmf::org::apache::qpid::linearstore::Journal::shared_ptr _mgmtObject;
