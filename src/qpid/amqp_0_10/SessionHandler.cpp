@@ -101,7 +101,15 @@ void SessionHandler::handleIn(AMQFrame& f) {
         if (getState()) commandId =  getState()->receiverGetCurrent();
         execution.exception(e.code, commandId, m ? m->amqpClassId() : 0, m ? m->amqpMethodId() : 0, 0, e.what(), FieldTable());
         detaching();
-        sendDetach();
+
+        // Only send detach if sending is viable, otherwise get out
+        if (sendReady) {
+            sendDetach();
+        }
+        else {
+            // Throw this session away
+            handleDetach();
+        }
     }
     catch(const ChannelException& e){
         channelException(e.code, e.what());
