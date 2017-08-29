@@ -55,8 +55,7 @@ class InactivityFireEvent : public ::qpid::sys::TimerTask
     InactivityFireEvent(JournalImpl* p,
                         const ::qpid::sys::Duration timeout);
     virtual ~InactivityFireEvent() {}
-    bool addToTimer();
-    bool resetIfNotRunning();
+    void reset(qpid::sys::Timer& timer);
     void flushed();
     void fire();
     void cancel();

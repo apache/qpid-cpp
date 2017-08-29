@@ -36,30 +36,22 @@ InactivityFireEvent::InactivityFireEvent(JournalImpl* p,
          _state(NOT_ADDED)
 {}
 
-bool InactivityFireEvent::addToTimer() {
-    ::qpid::sys::Mutex::ScopedLock sl(_ifeStateLock);
-    if (_state == NOT_ADDED) {
-        _state = RUNNING;
-        return true;
-    }
-    return false;
-}
-
-bool InactivityFireEvent::resetIfNotRunning() {
+void InactivityFireEvent::reset(qpid::sys::Timer& timer) {
     ::qpid::sys::Mutex::ScopedLock sl(_ifeStateLock);
     switch (_state) {
-    case NOT_ADDED: THROW_STORE_FULL_EXCEPTION("Called InactivityFireEvent::resetIfNotRunning() before being added to timer");
+    case NOT_ADDED:
+        timer.add(this);
+        break;
     case FIRED :
         setupNextFire();
-        _state = RUNNING;
-        return true;
+        timer.add(this);
+        break;
     case FLUSHED:
         restart();
-        _state = RUNNING;
         break;
     default:; // ignore
     }
-    return false;
+    _state = RUNNING;
 }
 
 void InactivityFireEvent::flushed() {
@@ -504,14 +496,7 @@ JournalImpl::createStore() {
 void
 JournalImpl::handleIoResult(const ::qpid::linearstore::journal::iores r)
 {
-    if (inactivityFireEventPtr->addToTimer()) {
-        timer.start();
-        timer.add(inactivityFireEventPtr);
-    } else {
-        if (inactivityFireEventPtr->resetIfNotRunning()) {
-            timer.add(inactivityFireEventPtr);
-        }
-    }
+    inactivityFireEventPtr->reset(timer);
     switch (r)
     {
         case ::qpid::linearstore::journal::RHM_IORES_SUCCESS:
