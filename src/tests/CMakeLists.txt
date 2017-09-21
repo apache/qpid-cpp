@@ -213,7 +213,8 @@ add_executable (unit_test unit_test
                 ${actual_unit_tests} ${platform_test_additions})
 target_link_libraries (unit_test
                        ${qpid_test_boost_libs}
-                       qpidmessaging qpidtypes qpidbroker qpidclient qpidcommon)
+                       qpidmessaging qpidtypes qpidbroker qpidclient qpidcommon
+                       pthread)
 
 endif (BUILD_TESTING_UNITTESTS)
 
