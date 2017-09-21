@@ -1036,7 +1036,7 @@ Expression* unaryArithExpression(Tokeniser& tokeniser)
 Expression* parseExactNumeric(const Token& token, bool negate)
 {
     int base = 0;
-    string s;
+    string s("");
     std::remove_copy(token.val.begin(), token.val.end(), std::back_inserter(s), '_');
     if (s[1]=='b' || s[1]=='B') {
         base = 2;
