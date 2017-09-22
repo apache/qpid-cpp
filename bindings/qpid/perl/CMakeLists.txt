@@ -28,7 +28,7 @@ list(APPEND SWIG_MODULE_cqpid_perl_EXTRA_DEPS
     ${CMAKE_CURRENT_SOURCE_DIR}/../../../include/qpid/qpid.i
     ${CMAKE_CURRENT_SOURCE_DIR}/../../../include/qpid/swig_perl_typemaps.i
 )
-swig_add_module(cqpid_perl perl ${CMAKE_CURRENT_SOURCE_DIR}/perl.i)
+swig_add_library(cqpid_perl LANGUAGE perl SOURCES ${CMAKE_CURRENT_SOURCE_DIR}/perl.i)
 swig_link_libraries(cqpid_perl qpidmessaging qpidtypes ${PERL_LIBRARY})
 set_source_files_properties(${swig_generated_file_fullname} PROPERTIES COMPILE_FLAGS "${NOSTRICT_ALIASING}")
 

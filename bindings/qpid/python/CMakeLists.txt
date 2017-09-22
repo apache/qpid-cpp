@@ -32,7 +32,7 @@ list(APPEND SWIG_MODULE_qpid_messaging_EXTRA_DEPS
     ${CMAKE_SOURCE_DIR}/include/qpid/qpid.i
     ${CMAKE_SOURCE_DIR}/include/qpid/swig_python_typemaps.i
 )
-swig_add_module(qpid_messaging python ${CMAKE_CURRENT_SOURCE_DIR}/qpid_messaging.i)
+swig_add_library(qpid_messaging LANGUAGE python SOURCES ${CMAKE_CURRENT_SOURCE_DIR}/qpid_messaging.i)
 swig_link_libraries(qpid_messaging qpidmessaging qpidtypes ${PYTHON_LIBRARIES})
 set_source_files_properties(${swig_generated_file_fullname} PROPERTIES COMPILE_FLAGS "${NOSTRICT_ALIASING}")
 
