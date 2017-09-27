@@ -335,7 +335,7 @@ class Broker : public sys::Runnable, public Plugin::Target,
     QPID_BROKER_EXTERN const std::vector<std::string>& getListenInterfaces() const;
     QPID_BROKER_EXTERN int getConnectionBacklog() const;
     uint32_t getMaxNegotiateTime() const;
-    size_t getSessionMaxUnacked() const;
+    QPID_BROKER_EXTERN size_t getSessionMaxUnacked() const;
     sys::Duration getLinkMaintenanceInterval() const;
     QPID_BROKER_EXTERN sys::Duration getLinkHeartbeatInterval() const;
     uint32_t getDtxMaxTimeout() const;
