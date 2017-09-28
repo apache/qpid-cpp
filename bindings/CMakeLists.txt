@@ -123,22 +123,28 @@ if (SWIG_FOUND)
 
   if (BUILD_BINDING_RUBY)
       message(STATUS "Building Ruby bindings")
-      execute_process(COMMAND ${RUBY_EXECUTABLE} -r rbconfig -e "puts RbConfig::CONFIG['prefix']"
-                      OUTPUT_VARIABLE RUBY_PREFIX
-                      OUTPUT_STRIP_TRAILING_WHITESPACE)
-      string(REPLACE ${RUBY_PREFIX} ${CMAKE_INSTALL_PREFIX} RUBY_PFX_ARCH_DIR ${RUBY_SITEARCH_DIR})
-#     string(REPLACE ${RUBY_PREFIX} ${CMAKE_INSTALL_PREFIX} RUBY_PFX_ARCH_DIR ${RUBY_ARCH_DIR})
+      if (NOT RUBY_PFX_ARCH_DIR)
+        execute_process(COMMAND ${RUBY_EXECUTABLE} -r rbconfig -e "puts RbConfig::CONFIG['prefix']"
+                        OUTPUT_VARIABLE RUBY_PREFIX
+                        OUTPUT_STRIP_TRAILING_WHITESPACE)
+        string(REPLACE ${RUBY_PREFIX} ${CMAKE_INSTALL_PREFIX} RUBY_PFX_ARCH_DIR ${RUBY_SITEARCH_DIR})
+      endif (NOT RUBY_PFX_ARCH_DIR)
+
       add_subdirectory(qpid/ruby)
       add_subdirectory(qmf2/ruby)
   endif (BUILD_BINDING_RUBY)
 
   if (BUILD_BINDING_PERL)
       message(STATUS "Building Perl bindings")
-      execute_process(COMMAND ${PERL_EXECUTABLE} "-V::prefix:"
-                      OUTPUT_VARIABLE QPERL_PREFIX
-                      OUTPUT_STRIP_TRAILING_WHITESPACE)
-      string(REGEX REPLACE "'(.*)'" "\\1" PERL_PREFIX ${QPERL_PREFIX})
-      string(REPLACE ${PERL_PREFIX} ${CMAKE_INSTALL_PREFIX} PERL_PFX_ARCHLIB ${PERL_ARCHLIB})
+      if (NOT PERL_PFX_ARCHLIB)
+        execute_process(COMMAND ${PERL_EXECUTABLE} "-V::prefix:"
+                        OUTPUT_VARIABLE QPERL_PREFIX
+                        OUTPUT_STRIP_TRAILING_WHITESPACE)
+        string(REGEX REPLACE "'(.*)'" "\\1" PERL_PREFIX ${QPERL_PREFIX})
+        string(REPLACE ${PERL_PREFIX} ${CMAKE_INSTALL_PREFIX} PERL_PFX_ARCHLIB ${PERL_ARCHLIB})
+      else (NOT PERL_PFX_ARCHLIB)
+        message(STATUS "*** Using Perl language directory: ${PERL_PFX_ARCHLIB}")
+      endif (NOT PERL_PFX_ARCHLIB)
 
       add_subdirectory(qpid/perl)
   endif (BUILD_BINDING_PERL)

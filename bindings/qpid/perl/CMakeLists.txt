@@ -43,13 +43,18 @@ include_directories(${PERL_INCLUDE_PATH}
 # it's coming from a version of Cmake < 2.8
 install(TARGETS ${SWIG_MODULE_cqpid_perl_REAL_NAME}
         RENAME cqpid_perl.so
-        DESTINATION ${PERL_PFX_ARCHLIB}
+        DESTINATION ${PERL_PFX_ARCHLIB}/auto/cqpid_perl
         COMPONENT ${QPID_COMPONENT_CLIENT}
 )
 
 install(FILES ${CMAKE_CURRENT_BINARY_DIR}/cqpid_perl.pm
-              ${CMAKE_CURRENT_SOURCE_DIR}/LICENSE
-              ${CMAKE_CURRENT_SOURCE_DIR}/Makefile.PL
+              ${CMAKE_CURRENT_SOURCE_DIR}/lib/qpid_messaging.pm
+              ${CMAKE_CURRENT_SOURCE_DIR}/lib/qpid.pm
         DESTINATION ${PERL_PFX_ARCHLIB}
         COMPONENT ${QPID_COMPONENT_CLIENT}
         )
+
+install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/lib/qpid
+  DESTINATION ${PERL_PFX_ARCHLIB}
+  COMPONENT ${QPID_COMPONENT_CLIENT}
+  )

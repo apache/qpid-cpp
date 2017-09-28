@@ -59,6 +59,11 @@ install(TARGETS ${SWIG_MODULE_cqpid_ruby_REAL_NAME}
       COMPONENT ${QPID_COMPONENT_CLIENT}
 )
 
+install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/lib
+        DESTINATION ${RUBY_PFX_ARCH_DIR}
+        COMPONENT ${QPID_COMPONENT_CLIENT}
+        )
+
 add_custom_command(OUTPUT ${GEM_BINDINGS_SOURCE_FILE}
                    COMMAND cp ${swig_generated_file_fullname} ${GEM_BINDINGS_SOURCE_FILE}
                    DEPENDS ${swig_generated_file_fullname}
