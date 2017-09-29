@@ -67,13 +67,13 @@ void InactivityFireEvent::fire() {
         if (_state != RUNNING) {
             return;
         }
-        _state = FIRED;
-    }
-    {
-        ::qpid::sys::Mutex::ScopedLock sl(_ifeParentLock);
-        if (_parent) {
-            _parent->flushFire();
+        {
+            ::qpid::sys::Mutex::ScopedLock sl(_ifeParentLock);
+            if (_parent) {
+                _parent->flushFire();
+            }
         }
+        _state = FIRED;
     }
 }
 
