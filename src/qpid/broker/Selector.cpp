@@ -108,7 +108,7 @@ MessageSelectorEnv::MessageSelectorEnv(const Message& m) :
 
 const Value MessageSelectorEnv::specialValue(const string& id) const
 {
-    Value v = Value();
+    Value v;
     // TODO: Just use a simple if chain for now - improve this later
     if ( id=="delivery_mode" ) {
         v = msg.getEncoding().isPersistent() ? PERSISTENT : NON_PERSISTENT;
