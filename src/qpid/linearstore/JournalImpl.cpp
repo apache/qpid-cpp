@@ -49,38 +49,41 @@ void InactivityFireEvent::reset(qpid::sys::Timer& timer) {
     case FLUSHED:
         restart();
         break;
+    case CANCELLED:
+        return;
     default:; // ignore
     }
     _state = RUNNING;
 }
 
-void InactivityFireEvent::flushed() {
-   ::qpid::sys::Mutex::ScopedLock sl(_ifeStateLock);
-   if (_state == RUNNING) {
-       _state = FLUSHED;
-   }
+::qpid::linearstore::journal::iores InactivityFireEvent::flush(bool blockFlag) {
+    ::qpid::sys::Mutex::ScopedLock sl(_ifeStateLock);
+    if (_state == RUNNING) {
+        ::qpid::linearstore::journal::iores res = _parent->do_flush(blockFlag);
+        _state = FLUSHED;
+        return res;
+    }
+    return ::qpid::linearstore::journal::iores::RHM_IORES_SUCCESS;
 }
 
 void InactivityFireEvent::fire() {
-    {
-        ::qpid::sys::Mutex::ScopedLock sl2(_ifeStateLock);
-        if (_state != RUNNING) {
-            return;
-        }
-        {
-            ::qpid::sys::Mutex::ScopedLock sl(_ifeParentLock);
-            if (_parent) {
-                _parent->flushFire();
-            }
-        }
+    ::qpid::sys::Mutex::ScopedLock sl(_ifeStateLock);
+    switch (_state) {
+    case RUNNING:
+        _parent->do_flush(false);
         _state = FIRED;
+        break;
+    case FLUSHED:
+        _state = FIRED;
+        break;
+    default:; // ignore
     }
 }
 
 void InactivityFireEvent::cancel() {
+    ::qpid::sys::Mutex::ScopedLock sl(_ifeStateLock);
     ::qpid::sys::TimerTask::cancel();
-    ::qpid::sys::Mutex::ScopedLock sl(_ifeParentLock);
-    _parent = 0;
+    _state = CANCELLED;
 }
 
 GetEventsFireEvent::GetEventsFireEvent(JournalImpl* p,
@@ -431,12 +434,20 @@ JournalImpl::stop(bool block_till_aio_cmpl)
 ::qpid::linearstore::journal::iores
 JournalImpl::flush(const bool block_till_aio_cmpl)
 {
+    return inactivityFireEventPtr->flush(block_till_aio_cmpl);
+}
+
+// This flush call is accessed via the InactivityFireEvent::flush() and
+// InactivityFireEvent::fire() calls only.
+::qpid::linearstore::journal::iores
+ JournalImpl::do_flush(const bool block_till_aio_cmpl) {
     const ::qpid::linearstore::journal::iores res = jcntl::flush(block_till_aio_cmpl);
     {
         ::qpid::sys::Mutex::ScopedLock sl(_getf_lock);
-        if (_wmgr.get_aio_evt_rem() && !getEventsTimerSetFlag) { setGetEventTimer(); }
+        if (_wmgr.get_aio_evt_rem() && !getEventsTimerSetFlag) {
+            setGetEventTimer();
+        }
     }
-    inactivityFireEventPtr->flushed();
     return res;
 }
 
@@ -447,12 +458,6 @@ JournalImpl::getEventsFire()
     getEventsTimerSetFlag = false;
     if (_wmgr.get_aio_evt_rem()) { jcntl::get_wr_events(0); }
     if (_wmgr.get_aio_evt_rem()) { setGetEventTimer(); }
-}
-
-void
-JournalImpl::flushFire()
-{
-    flush(false);
 }
 
 void

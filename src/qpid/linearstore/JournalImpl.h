@@ -47,16 +47,15 @@ class JournalLogImpl;
 class InactivityFireEvent : public ::qpid::sys::TimerTask
 {
     JournalImpl* _parent;
-    ::qpid::sys::Mutex _ifeParentLock;
+    enum {NOT_ADDED=0, RUNNING, FIRED, FLUSHED, CANCELLED} _state;
     ::qpid::sys::Mutex _ifeStateLock;
-    enum {NOT_ADDED=0, RUNNING, FIRED, FLUSHED} _state;
 
   public:
     InactivityFireEvent(JournalImpl* p,
                         const ::qpid::sys::Duration timeout);
     virtual ~InactivityFireEvent() {}
     void reset(qpid::sys::Timer& timer);
-    void flushed();
+    ::qpid::linearstore::journal::iores flush(bool blockFlag);
     void fire();
     void cancel();
 };
@@ -184,10 +183,10 @@ class JournalImpl : public ::qpid::broker::ExternalQueueStore,
 
     // Overrides for get_events timer
     ::qpid::linearstore::journal::iores flush(const bool block_till_aio_cmpl);
+    ::qpid::linearstore::journal::iores do_flush(const bool block_till_aio_cmpl);
 
     // TimerTask callback
     void getEventsFire();
-    void flushFire();
 
     // AIO callbacks
     virtual void wr_aio_cb(std::vector< ::qpid::linearstore::journal::data_tok*>& dtokl);
