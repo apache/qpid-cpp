@@ -63,7 +63,7 @@ void InactivityFireEvent::reset(qpid::sys::Timer& timer) {
         _state = FLUSHED;
         return res;
     }
-    return ::qpid::linearstore::journal::iores::RHM_IORES_SUCCESS;
+    return ::qpid::linearstore::journal::RHM_IORES_SUCCESS;
 }
 
 void InactivityFireEvent::fire() {
