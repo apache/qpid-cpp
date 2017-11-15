@@ -22,6 +22,7 @@
  *
  */
 
+#include <memory>
 #include <string>
 #include <windows.h>
 #include <clfsw32.h>
