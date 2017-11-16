@@ -23,6 +23,7 @@
 
 source env.sh
 set -e                          # Fail on any un-checked error
+
 trap stop_brokers EXIT
 
 CONFIG=$(dirname $0)/qpidd-empty.conf
@@ -48,12 +49,12 @@ error() { echo $*; RET=$((RET + 1)); } # Contine with other tests but fail the s
 expect_pass() {
     line=$1; shift;
     echo "expect pass: $*"
-    "$@" || error "$0:$line: failed"
+    OUT=$("$@" 2>&1) || error -e "$OUT\n$0:$line: failed"
 }
 expect_fail() {
     line=$1; shift;
     echo "expect fail: $*"
-    if "$@"; then /dev/null 2>&1 && error "$0:$line: unexpected pass"; else true; fi
+    if "$@" > /dev/null 2>&1; then error "$0:$line: unexpected pass"; else true; fi
 }
 
 # create the test certificate database
@@ -79,13 +80,13 @@ create_certs() {
     #
     certutil -R -d ${CERT_DB} -s "${CERT_SUBJECT}" -o ${TEST_CERT_DIR}/server.req -f ${CERT_PW_FILE} -z /bin/sh > /dev/null 2>&1
     certutil -C -d ${CERT_DB} -c "Test-CA" -8 "${CERT_SAN}" -i ${TEST_CERT_DIR}/server.req -o ${TEST_CERT_DIR}/server.crt -f ${CERT_PW_FILE} -m ${RANDOM}
-    certutil -A -d ${CERT_DB} -n ${TEST_HOSTNAME} -i ${TEST_CERT_DIR}/server.crt -t "Pu,,"
+    certutil -A -d ${CERT_DB} -n ${TEST_HOSTNAME} -i ${TEST_CERT_DIR}/server.crt -t "Pu,,"  >/dev/null 2>&1
 
     # create a certificate to identify the client
     #
     certutil -R -d ${CERT_DB} -s "CN=${TEST_CLIENT_CERT}" -o ${TEST_CERT_DIR}/client.req -f ${CERT_PW_FILE} -z /bin/sh > /dev/null 2>&1
     certutil -C -d ${CERT_DB} -c "Test-CA" -8 "*.client.com" -i ${TEST_CERT_DIR}/client.req -o ${TEST_CERT_DIR}/client.crt -f ${CERT_PW_FILE} -m ${RANDOM}
-    certutil -A -d ${CERT_DB} -n ${TEST_CLIENT_CERT} -i ${TEST_CERT_DIR}/client.crt -t "Pu,,"
+    certutil -A -d ${CERT_DB} -n ${TEST_CLIENT_CERT} -i ${TEST_CERT_DIR}/client.crt -t "Pu,,"  >/dev/null 2>&1
     ###
     #certutil -N -d ${SERVER_CERT_DIR} -f ${CERT_PW_FILE}
     #certutil -S -d ${SERVER_CERT_DIR} -n ${TEST_HOSTNAME} -s "CN=${TEST_HOSTNAME}" -t "CT,," -x -f ${CERT_PW_FILE} -z /usr/bin/certutil
