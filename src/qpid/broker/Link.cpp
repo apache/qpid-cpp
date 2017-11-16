@@ -458,14 +458,16 @@ void Link::ioThreadProcessing()
 
     // check for bridge session errors and recover
     if (!active.empty()) {
+        for (Bridges::iterator i = active.begin(); i != active.end(); ++i) {
+            Bridge::shared_ptr  bridge = *i;
+            if (bridge->isDetached()) {
+                bridge->closed();
+                bridge->cancel(*connection);
+                created.push_back(bridge);
+            }
+        }
         Bridges::iterator removed = std::remove_if(
             active.begin(), active.end(), boost::bind(&Bridge::isDetached, _1));
-        for (Bridges::iterator i = removed; i != active.end(); ++i) {
-            Bridge::shared_ptr  bridge = *i;
-            bridge->closed();
-            bridge->cancel(*connection);
-            created.push_back(bridge);
-        }
         active.erase(removed, active.end());
     }
 
