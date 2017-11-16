@@ -22,8 +22,8 @@
 # Run a simple test over SSL
 
 source env.sh
-
-#set -x
+set -e                          # Fail on any un-checked error
+trap stop_brokers EXIT
 
 CONFIG=$(dirname $0)/qpidd-empty.conf
 TEST_CERT_DIR=`pwd`/test_cert_dir
@@ -41,9 +41,20 @@ if [[ -a $AMQP_LIB ]] ; then
     MODULES="--load-module $AMQP_LIB"
 fi
 
-trap cleanup EXIT
+RET=0                           # Return value for script
+fatal() { echo $*; exit 1; }
+error() { echo $*; RET=$((RET + 1)); } # Contine with other tests but fail the script
 
-error() { echo $*; exit 1; }
+expect_pass() {
+    line=$1; shift;
+    echo "expect pass: $*"
+    "$@" || error "$0:$line: failed"
+}
+expect_fail() {
+    line=$1; shift;
+    echo "expect fail: $*"
+    if "$@"; then /dev/null 2>&1 && error "$0:$line: unexpected pass"; else true; fi
+}
 
 # create the test certificate database
 #    $1 = string used as Subject in server's certificate
@@ -105,7 +116,7 @@ COMMON_OPTS="--daemon --config $CONFIG --ssl-cert-db $CERT_DB --ssl-cert-passwor
 start_brokers() {
     local -a ports
     for (( i=0; $i<$1; i++)) do
-    ports[$i]=$(qpidd --port 0 --interface 127.0.0.1 $COMMON_OPTS $2) || error "Could not start broker $i"
+    ports[$i]=$(qpidd --port 0 --interface 127.0.0.1 $COMMON_OPTS $2) || fatal "Could not start broker $i"
     done
     PORTS=( ${PORTS[@]} ${ports[@]} )
 }
@@ -120,9 +131,8 @@ stop_broker() {
 }
 
 stop_brokers() {
-    for port in "${PORTS[@]}";
-    do
-        qpidd -qp $port
+    for port in "${PORTS[@]}"; do
+        qpidd -qp $port || true
     done
     PORTS=()
 }
@@ -132,12 +142,6 @@ pick_port() {
     PICK=`qpidd --no-module-dir --listen-disable ssl -dp0`
     qpidd --no-module-dir -qp $PICK
     echo $PICK
-}
-
-cleanup() {
-    stop_brokers
-    delete_certs
-    rm -f ${CERT_PW_FILE}
 }
 
 start_ssl_broker() {
@@ -165,14 +169,14 @@ ssl_cluster_broker() {		# $1 = port
 CERTUTIL=$(type -p certutil)
 if [[ !(-x $CERTUTIL) ]] ; then
     echo "No certutil, skipping ssl test";
-    exit 0;
+    exit $RET
 fi
 
 if [[ !(-e ${CERT_PW_FILE}) ]] ;  then
     echo password > ${CERT_PW_FILE}
 fi
 delete_certs
-create_certs || error "Could not create test certificate database"
+create_certs || fatal "Could not create test certificate database"
 
 start_ssl_broker
 PORT=${PORTS[0]}
@@ -207,7 +211,7 @@ test "$MSG" = "hello again" || { echo "receive failed '$MSG' != 'hello again'"; 
 if test -d $PYTHON_DIR; then
     echo "Testing Non-Authenticating with Python Client..."
     URL=amqps://$TEST_HOSTNAME:$PORT
-    if `$PY_PING_BROKER -b $URL`; then echo "    Passed"; else { echo "    Failed"; exit 1; }; fi
+    expect_pass $LINENO $PY_PING_BROKER -b $URL
 else
     echo "Skipping python part of ssl_test, no python dir."
 fi
@@ -225,22 +229,20 @@ MSG2=`qpid-receive -b $URL  --connection-options "{ssl-cert-name: $TEST_CLIENT_C
 test "$MSG2" = "hello" || { echo "receive failed '$MSG2' != 'hello'"; exit 1; }
 
 ## Make sure that connect fails with an invalid SSL cert-name
-qpid-send -b $URL --connection-options "{ssl-cert-name: pignose }" --content-string=hello -a "baz;{create:always}" 2>/dev/null 1>/dev/null
-MSG3=`qpid-receive -b $URL  --connection-options "{ssl-cert-name: pignose }" -a "baz;{create:always}" --messages 1 2>/dev/null`
-test "$MSG3" = "" || { echo "receive succeeded without valid ssl cert '$MSG3' != ''"; exit 1; }
-
+expect_fail $LINENO  qpid-send -b $URL --connection-options "{ssl-cert-name: pignose }" --content-string=hello -a "baz;{create:always}"
+expect_fail $LINENO qpid-receive -b $URL  --connection-options "{ssl-cert-name: pignose }" -a "baz;{create:always}" --messages 1
 stop_brokers
 
 # Test ssl muxed with plain TCP on the same connection
 
 # Test a specified port number - since tcp/ssl are the same port don't need to specify --transport ssl
 PORT=`pick_port`
-start_ssl_mux_broker $PORT || error "Could not start broker"
+start_ssl_mux_broker $PORT || fatal "Could not start broker"
 echo "Running SSL/TCP mux test on fixed port $PORT"
 
 ## Test connection via connection settings
-qpid-perftest --count ${COUNT} --port ${PORT} -P ssl -b $TEST_HOSTNAME --summary || error "SSL connection failed!"
-qpid-perftest --count ${COUNT} --port ${PORT} -P tcp -b $TEST_HOSTNAME --summary || error "TCP connection failed!"
+qpid-perftest --count ${COUNT} --port ${PORT} -P ssl -b $TEST_HOSTNAME --summary || fatal "SSL connection failed!"
+qpid-perftest --count ${COUNT} --port ${PORT} -P tcp -b $TEST_HOSTNAME --summary || fatal "TCP connection failed!"
 
 # Test a broker chosen port - since ssl chooses port need to use --transport ssl here
 start_ssl_broker
@@ -248,8 +250,8 @@ PORT=${PORTS[0]}
 echo "Running SSL/TCP mux test on random port $PORT"
 
 ## Test connection via connection settings
-qpid-perftest --count ${COUNT} --port ${PORT} -P ssl -b $TEST_HOSTNAME --summary || error "SSL connection failed!"
-qpid-perftest --count ${COUNT} --port ${PORT} -P tcp -b $TEST_HOSTNAME --summary || error "TCP connection failed!"
+qpid-perftest --count ${COUNT} --port ${PORT} -P ssl -b $TEST_HOSTNAME --summary || fatal "SSL connection failed!"
+qpid-perftest --count ${COUNT} --port ${PORT} -P tcp -b $TEST_HOSTNAME --summary || fatal "TCP connection failed!"
 
 stop_brokers
 
@@ -258,20 +260,20 @@ stop_brokers
 PK12UTIL=$(type -p pk12util)
 if [[ !(-x $PK12UTIL) ]] ; then
     echo >&2 "'pk12util' command not available, skipping remaining tests"
-    exit 0
+    exit $RET
 fi
 
 OPENSSL=$(type -p openssl)
 if [[ !(-x $OPENSSL) ]] ; then
     echo >&2 "'openssl' command not available, skipping remaining tests"
-    exit 0
+    exit $RET
 fi
 
 ## verify python version > 2.5 (only 2.6+ does certificate checking)
 PY_VERSION=$(python -c "import sys; print hex(sys.hexversion)")
 if (( PY_VERSION < 0x02060000 )); then
     echo >&2 "Detected python version < 2.6 - skipping certificate verification tests"
-    exit 0
+    exit $RET
 fi
 
 echo "Testing Certificate validation and Authentication with the Python Client..."
@@ -284,26 +286,26 @@ get_ca_certs() {
     $OPENSSL pkcs12 -in ${TEST_CERT_DIR}/other_CA_pk12.out -out ${OTHER_CA_PEM_FILE} -nokeys -passin file:${CERT_PW_FILE} >/dev/null
 }
 
-get_ca_certs || error "Could not extract CA certificates as PEM files"
+get_ca_certs || fatal "Could not extract CA certificates as PEM files"
 start_ssl_broker
 PORT=${PORTS[0]}
 URL=amqps://$TEST_HOSTNAME:$PORT
 # verify the python client can authenticate the broker using the CA
-if `${PY_PING_BROKER} -b $URL --ssl-trustfile=${CA_PEM_FILE}`; then echo "    Passed"; else { echo "    Failed"; exit 1; }; fi
+expect_pass $LINENO ${PY_PING_BROKER} -b $URL --ssl-trustfile=${CA_PEM_FILE}
 # verify the python client fails to authenticate the broker when using the other CA
-if `${PY_PING_BROKER} -b $URL --ssl-trustfile=${OTHER_CA_PEM_FILE} > /dev/null 2>&1`; then { echo "    Failed"; exit 1; }; else echo "    Passed"; fi
+expect_fail $LINENO ${PY_PING_BROKER} -b $URL --ssl-trustfile=${OTHER_CA_PEM_FILE}
 stop_brokers
 
 # create a certificate without matching TEST_HOSTNAME, should fail to verify
 
-create_certs "O=MyCo" "*.${TEST_HOSTNAME}.com" || error "Could not create server test certificate"
-get_ca_certs || error "Could not extract CA certificates as PEM files"
+create_certs "O=MyCo" "*.${TEST_HOSTNAME}.com" || fatal "Could not create server test certificate"
+get_ca_certs || fatal "Could not extract CA certificates as PEM files"
 start_ssl_broker
 PORT=${PORTS[0]}
 URL=amqps://$TEST_HOSTNAME:$PORT
-if `${PY_PING_BROKER} -b $URL --ssl-trustfile=${CA_PEM_FILE} > /dev/null 2>&1`; then { echo "    Failed"; exit 1; }; else echo "    Passed"; fi
+expect_fail $LINENO ${PY_PING_BROKER} -b $URL --ssl-trustfile=${CA_PEM_FILE}
 # but disabling the check for the hostname should pass
-if `${PY_PING_BROKER} -b $URL --ssl-trustfile=${CA_PEM_FILE} --ssl-skip-hostname-check`; then echo "    Passed"; else { echo "    Failed"; exit 1; }; fi
+expect_pass $LINENO ${PY_PING_BROKER} -b $URL --ssl-trustfile=${CA_PEM_FILE} --ssl-skip-hostname-check
 stop_brokers
 
 # test SubjectAltName parsing
@@ -311,19 +313,21 @@ stop_brokers
 if (( PY_VERSION >= 0x02070300 )); then
 # python 2.7.3+ supports SubjectAltName extraction
 # create a certificate with TEST_HOSTNAME only in SAN, should verify OK
-    create_certs "O=MyCo" "*.foo.com,${TEST_HOSTNAME},*xyz.com" || error "Could not create server test certificate"
-    get_ca_certs || error "Could not extract CA certificates as PEM files"
+    create_certs "O=MyCo" "*.foo.com,${TEST_HOSTNAME},*xyz.com" || fatal "Could not create server test certificate"
+    get_ca_certs || fatal "Could not extract CA certificates as PEM files"
     start_ssl_broker
     PORT=${PORTS[0]}
     URL=amqps://$TEST_HOSTNAME:$PORT
-    if `${PY_PING_BROKER} -b $URL --ssl-trustfile=${CA_PEM_FILE}`; then echo "    Passed"; else { echo "    Failed"; exit 1; }; fi
+    expect_pass $LINENO ${PY_PING_BROKER} -b $URL --ssl-trustfile=${CA_PEM_FILE}
     stop_brokers
 
-    create_certs "O=MyCo" "*${TEST_HOSTNAME}" || error "Could not create server test certificate"
-    get_ca_certs || error "Could not extract CA certificates as PEM files"
+    create_certs "O=MyCo" "*${TEST_HOSTNAME}" || fatal "Could not create server test certificate"
+    get_ca_certs || fatal "Could not extract CA certificates as PEM files"
     start_ssl_broker
     PORT=${PORTS[0]}
     URL=amqps://$TEST_HOSTNAME:$PORT
-    if `${PY_PING_BROKER} -b $URL --ssl-trustfile=${CA_PEM_FILE}`; then echo "    Passed"; else { echo "    Failed"; exit 1; }; fi
+    expect_pass $LINENO ${PY_PING_BROKER} -b $URL --ssl-trustfile=${CA_PEM_FILE}
     stop_brokers
 fi
+
+exit $RET

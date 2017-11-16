@@ -320,7 +320,7 @@ else (CMAKE_SYSTEM_NAME STREQUAL Windows)
         add_test(NAME sasl_tests COMMAND run_sasl_tests)
 
         if (BUILD_SSL)
-            add_test(NAME ssl_tests COMMAND run_ssl_tests)
+            add_test(NAME ssl_tests COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/run_ssl_tests)
         endif (BUILD_SSL)
     endif (BUILD_SASL)
 endif (CMAKE_SYSTEM_NAME STREQUAL Windows)

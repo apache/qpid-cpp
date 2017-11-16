@@ -150,7 +150,6 @@ if (CMAKE_CXX_COMPILER_ID STREQUAL GNU)
      "-Werror -pedantic -Wall -Wextra -Wno-shadow -Wpointer-arith -Wcast-qual -Wcast-align -Wno-long-long -Wvolatile-register-var -Winvalid-pch -Wno-system-headers -Woverloaded-virtual -Wno-deprecated-declarations")
 
    if (CMAKE_CXX_COMPILER_VERSION VERSION_GREATER 7)
-     message("FIXME FLAGGING")
      set(WARNING_FLAGS "${WARNING_FLAGS} -Wno-implicit-fallthrough")
    endif()
 
