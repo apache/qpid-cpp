@@ -95,6 +95,10 @@ class QPID_MESSAGING_CLASS_EXTERN Connection : public qpid::messaging::Handle<Co
      *               authentication of the server to the client (and should
      *               be used only as a last resort)
      *
+     * When AMQP 0-10 is used, the following options apply:
+     *
+     * - virtualhost: The name of the virtual host to work with.
+     *
      * When AMQP 1.0 is used, the following options apply:
      *
      * - container_id: sets the container id to use for the connection

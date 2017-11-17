@@ -191,6 +191,8 @@ void ConnectionImpl::setOption(const std::string& name, const Variant& value)
         amqp_0_10::translate(value.asMap(), settings.clientProperties);
     } else if (name == "disable-auto-decode" || name == "disable_auto_decode") {
         disableAutoDecode = value;
+    } else if (name == "virtualhost") {
+        settings.virtualhost = value.asString();
     } else {
         throw qpid::messaging::MessagingException(QPID_MSG("Invalid option: " << name << " not recognised"));
     }
