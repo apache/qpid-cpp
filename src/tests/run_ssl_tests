@@ -72,7 +72,7 @@ create_certs() {
     #
     mkdir -p ${CERT_DB}
     certutil -N -d ${CERT_DB} -f ${CERT_PW_FILE}
-    certutil -S -d ${CERT_DB} -n "Test-CA" -s "CN=Test-CA,O=MyCo,ST=Massachusetts,C=US" -t "CT,," -x -f ${CERT_PW_FILE} -z /bin/sh >/dev/null 2>&1
+    certutil -S -d ${CERT_DB} -n "Test-CA" -s "CN=Test-CA,O=MyCo,ST=Massachusetts,C=US" -t "CT,," -x -f ${CERT_PW_FILE} -z /bin/sh --keyUsage certSigning >/dev/null 2>&1
     certutil -L -d ${CERT_DB} -n "Test-CA" -a -o ${CERT_DB}/rootca.crt -f ${CERT_PW_FILE}
     #certutil -L -d ${CERT_DB} -f ${CERT_PW_FILE}
 
