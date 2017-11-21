@@ -22,7 +22,7 @@
 # Run a simple test over SSL
 
 source env.sh
-set -e                          # Fail on any un-checked error
+set -e                          # Fail on any un-checked error. Relaxed at points below.
 
 trap stop_brokers EXIT
 
@@ -167,7 +167,9 @@ ssl_cluster_broker() {		# $1 = port
     qpid-ping -Pssl -b $TEST_HOSTNAME:$1 -q || { echo "Cannot connect to broker on $1"; exit 1; }
 }
 
+set +e
 CERTUTIL=$(type -p certutil)
+set -e
 if [[ !(-x $CERTUTIL) ]] ; then
     echo "No certutil, skipping ssl test";
     exit $RET
@@ -176,6 +178,7 @@ fi
 if [[ !(-e ${CERT_PW_FILE}) ]] ;  then
     echo password > ${CERT_PW_FILE}
 fi
+
 delete_certs
 create_certs || fatal "Could not create test certificate database"
 
@@ -258,6 +261,7 @@ stop_brokers
 
 ### Additional tests that require 'openssl' and 'pk12util' to be installed (optional)
 
+set +e
 PK12UTIL=$(type -p pk12util)
 if [[ !(-x $PK12UTIL) ]] ; then
     echo >&2 "'pk12util' command not available, skipping remaining tests"
@@ -276,6 +280,7 @@ if (( PY_VERSION < 0x02060000 )); then
     echo >&2 "Detected python version < 2.6 - skipping certificate verification tests"
     exit $RET
 fi
+set -e
 
 echo "Testing Certificate validation and Authentication with the Python Client..."
 
