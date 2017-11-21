@@ -55,7 +55,7 @@ scripts = [
 ]
 
 setup(name="qpid-tools",
-      version="1.37.0",
+      version="1.38.0",
       author="Apache Qpid",
       author_email="users@qpid.apache.org",
       package_dir={'' : 'lib'},
