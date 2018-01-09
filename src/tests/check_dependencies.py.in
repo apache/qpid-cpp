@@ -30,7 +30,7 @@ Error! {0}
 The tests require Qpid Python, version 1.35.0 or greater.  Make sure
 Qpid Python is installed and available on the Python path:
 
- - Linux distributions: Install 'python-qpid'
+ - Linux distributions: Install 'python-qpid' and 'qpid-tests'
  - Other: Install qpid-python from source and update PYTHONPATH
 
 See the Qpid website for more information:
