@@ -218,28 +218,28 @@ class BrokerAgent(object):
                     raise
 
     def _request(self, opcode, content):
-        props = {'method'             : 'request',
-                 'qmf.opcode'         : opcode,
-                 'x-amqp-0-10.app-id' : 'qmf2'}
+        props = {u'method'             : u'request',
+                 u'qmf.opcode'         : opcode,
+                 u'x-amqp-0-10.app-id' : u'qmf2'}
         return self._client.call(Message(body=content, properties=props, subject="broker"))
 
     def _method(self, method, arguments=None, addr="org.apache.qpid.broker:broker:amqp-broker"):
         """
-        Make a L{proton.Message} containining a QMF method request.
+        Make a L{proton.Message} containing a QMF method request.
         """
         content = {'_object_id'   : {'_object_name' : addr},
                    '_method_name' : method,
                    '_arguments'   : arguments or {}}
-        response = self._retry(self._request, '_method_request', content)
-        if response.properties['qmf.opcode'] == '_exception':
+        response = self._retry(self._request, u'_method_request', content)
+        if response.properties[u'qmf.opcode'] == u'_exception':
             raise Exception("management error: %r" % response.body['_values'])
-        if response.properties['qmf.opcode'] != '_method_response':
+        if response.properties[u'qmf.opcode'] != u'_method_response':
             raise Exception("bad response: %r" % response.properties)
         return response.body['_arguments']
 
     def _gather(self, response):
         items = response.body
-        while 'partial' in response.properties:
+        while u'partial' in response.properties:
             response = self._client.wait()
             items += self._client.wait(response.correlation_id).body
         return items
@@ -247,8 +247,8 @@ class BrokerAgent(object):
     def _classQuery(self, class_name):
         query = {'_what' : 'OBJECT', '_schema_id' : {'_class_name' : class_name}}
         def f():
-            response = self._request('_query_request', query)
-            if response.properties['qmf.opcode'] != '_query_response':
+            response = self._request(u'_query_request', query)
+            if response.properties[u'qmf.opcode'] != u'_query_response':
                 raise Exception("bad response")
             return self._gather(response)
         return self._retry(f)
@@ -256,8 +256,8 @@ class BrokerAgent(object):
     def _nameQuery(self, object_id):
         query = {'_what'      : 'OBJECT', '_object_id' : {'_object_name' : object_id}}
         def f():
-            response = self._request('_query_request', query)
-            if response.properties['qmf.opcode'] != '_query_response':
+            response = self._request(u'_query_request', query)
+            if response.properties[u'qmf.opcode'] != u'_query_response':
                 raise Exception("bad response")
             items = self._gather(response)
             if len(items) == 1:
