@@ -45,8 +45,11 @@ namespace Rdma {
     
     // This is moderately inefficient so don't use in a critical path
     int deviceCount() {
+        struct ibv_device **list;
         int count;
-        ::ibv_free_device_list(::ibv_get_device_list(&count));
+
+        if ((list = ::ibv_get_device_list(&count)))
+           ::ibv_free_device_list(list);
         return count;
     }
 
