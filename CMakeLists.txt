@@ -147,7 +147,7 @@ if (CMAKE_CXX_COMPILER_ID STREQUAL GNU)
    # -Wunreachable-code -Wpadded -Winline
    # -Wshadow - warns about boost headers.
    set (WARNING_FLAGS
-     "-Werror -pedantic -Wall -Wextra -Wno-shadow -Wpointer-arith -Wcast-qual -Wcast-align -Wno-long-long -Wvolatile-register-var -Winvalid-pch -Wno-system-headers -Woverloaded-virtual -Wno-deprecated-declarations")
+     "-pedantic -Wall -Wextra -Wno-shadow -Wpointer-arith -Wcast-qual -Wcast-align -Wno-long-long -Wvolatile-register-var -Winvalid-pch -Wno-system-headers -Woverloaded-virtual -Wno-deprecated-declarations")
 
    if (CMAKE_CXX_COMPILER_VERSION VERSION_GREATER 7)
      set(WARNING_FLAGS "${WARNING_FLAGS} -Wno-implicit-fallthrough")
