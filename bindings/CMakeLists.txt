@@ -118,7 +118,6 @@ if (SWIG_FOUND)
                       OUTPUT_STRIP_TRAILING_WHITESPACE)
 
       add_subdirectory(qpid/python)
-      add_subdirectory(qmf2/python)
   endif (BUILD_BINDING_PYTHON)
 
   if (BUILD_BINDING_RUBY)
@@ -131,7 +130,6 @@ if (SWIG_FOUND)
       endif (NOT RUBY_PFX_ARCH_DIR)
 
       add_subdirectory(qpid/ruby)
-      add_subdirectory(qmf2/ruby)
   endif (BUILD_BINDING_RUBY)
 
   if (BUILD_BINDING_PERL)
