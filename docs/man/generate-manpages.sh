@@ -17,11 +17,24 @@
 # specific language governing permissions and limitations
 # under the License.
 #
+#
+# Assumes all tools are installed
+#
+ver="($(qpidd --version | cut -d"(" -f2)"
+#
+help2man --no-info --include=qpidd.x --output=qpidd.1 --version-option="--version" qpidd
+#
+man_pages="qpid-tool qmf-gen qpid-config qpid-ha qpid-printevents qpid-queue-stats qpid-route qpid-stat"
+for page in ${man_pages} 
+do
+  help2man --no-info --include=${page}.x --output=${page}.1 --version-string=" $ver" $page
+done
+#
+man_pages="qpid-receive qpid-send"
+for page in ${man_pages} 
+do
+  help2man --no-info --include=${page}.x --output=${page}.1 --version-string=" $ver" --no-discard-stderr $page
+done
 
-test -n "$3" || { echo "Usage: $0 <source> <qpidd> <output>"; exit 1; }
+exit
 
-$2 --help --no-module-dir | grep -v 'Usage: ' | sed -f $(dirname $0)/groffify_options.sed > .temp.options.groff
-cat $1 | sed -f $(dirname $0)/groffify_template.sed | sed -e '/^\.PP$/ r .temp.options.groff' -e "/^.SH NAME/ i\
-.TH QPIDD \"1\" \"$(date +'%B %Y')\" \"$($2 -v)\" \"User Commands\"
-" > $3
-rm .temp.options.groff

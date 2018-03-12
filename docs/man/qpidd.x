@@ -23,7 +23,7 @@ qpidd \- the Qpid AMQP Message Broker Daemon
 
 [SYNOPSIS]
 
-qpidd [-p port] [--config config_file] [--data-dir directory]
+qpidd [OPTIONS]
 
 [DESCRIPTION]
 

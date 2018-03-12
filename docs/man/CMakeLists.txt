@@ -17,6 +17,6 @@
 # under the License.
 #
 
-INSTALL (FILES qpidd.1
+install (FILES qpidd.1 qmf-gen.1 qpid-printevents.1 qpid-receive.1 qpid-send.1 qpid-tool.1
+               qpid-config.1 qpid-ha.1 qpid-queue-stats.1 qpid-route.1 qpid-stat.1
          DESTINATION ${QPID_INSTALL_MANDIR}/man1)
-
