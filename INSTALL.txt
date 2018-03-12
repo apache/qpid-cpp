@@ -29,6 +29,11 @@ section 5. below and/or check the output from running cmake for any errors.
 
 As of Qpid 0.26 cmake (versions 2.6 or 2.8) is the only way to build Qpid.
 
+As an alternative to building from source, you can if you like use the
+packages available for some OS distributions.
+
+ * Fedora packages: https://apps.fedoraproject.org/packages/qpid-cpp
+ * Ubuntu packages: https://launchpad.net/~qpid
 
 2. How to Build and Install Qpid from a Source Distribution
 ===========================================================
