@@ -18,7 +18,6 @@
 #
 
 if (UNIX)
-
   # Use absolute paths as these are substituted into init scripts.
   set_absolute_install_path (bindir ${QPID_INSTALL_BINDIR})
   set_absolute_install_path (sysconfdir ${SYSCONF_INSTALL_DIR})
@@ -26,18 +25,13 @@ if (UNIX)
   set_absolute_install_path (initdir ${QPID_INSTALL_INITDDIR})
   set_absolute_install_path (confdir ${QPID_INSTALL_CONFDIR})
 
-  configure_file(qpidd.in
-    ${CMAKE_CURRENT_BINARY_DIR}/qpidd
+  configure_file(fedora/qpidd.in
+    ${CMAKE_CURRENT_BINARY_DIR}/fedora/qpidd
     @ONLY)
 
-  configure_file(qpidd-primary.in
-    ${CMAKE_CURRENT_BINARY_DIR}/qpidd-primary
+  configure_file(fedora/qpidd-primary.in
+    ${CMAKE_CURRENT_BINARY_DIR}/fedora/qpidd-primary
     @ONLY)
-
-install(FILES ${CMAKE_CURRENT_BINARY_DIR}/qpidd ${CMAKE_CURRENT_BINARY_DIR}/qpidd-primary
-        PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE GROUP_READ GROUP_EXECUTE WORLD_READ WORLD_EXECUTE
-        DESTINATION ${QPID_INSTALL_INITDDIR}
-        COMPONENT ${QPID_COMPONENT_BROKER})
 endif (UNIX)
 
 install(FILES qpidc.conf
