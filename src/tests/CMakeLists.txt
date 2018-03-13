@@ -107,14 +107,14 @@ if (BUILD_TESTING)
 
 if (CMAKE_SYSTEM_NAME STREQUAL Windows)
     # Windows
-  
+
     set(ENV{OUTDIR} ${EXECUTABLE_OUTPUT_PATH})
 
     configure_file(${CMAKE_CURRENT_SOURCE_DIR}/env.ps1.in
                    ${CMAKE_CURRENT_BINARY_DIR}/env.ps1 @ONLY)
 else (CMAKE_SYSTEM_NAME STREQUAL Windows)
     # Posix
-  
+
     configure_file(${CMAKE_CURRENT_SOURCE_DIR}/env.sh.in
                    ${CMAKE_CURRENT_BINARY_DIR}/env.sh @ONLY)
 endif (CMAKE_SYSTEM_NAME STREQUAL Windows)
@@ -124,14 +124,33 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/check_dependencies.py.in
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/env.py.in
                ${CMAKE_CURRENT_BINARY_DIR}/env.py @ONLY)
 
-file(COPY .
-     DESTINATION .
-     PATTERN "*.cmake" EXCLUDE
-     PATTERN "*.in" EXCLUDE
-     PATTERN "*.c" EXCLUDE
-     PATTERN "*.h" EXCLUDE
-     PATTERN "*.cpp" EXCLUDE)
-       
+file(GLOB_RECURSE copied_files "*.ps1", "*.py" "*.sh" "*.xml" "run_*")
+
+foreach (copied_file ${copied_files})
+  file (RELATIVE_PATH file_name ${CMAKE_CURRENT_SOURCE_DIR} ${copied_file})
+  configure_file (${copied_file} ${file_name} COPYONLY)
+endforeach ()
+
+configure_file(.valgrind.supp .valgrind.supp COPYONLY)
+configure_file(dynamic_log_hires_timestamp dynamic_log_hires_timestamp COPYONLY)
+configure_file(dynamic_log_level_test dynamic_log_level_test COPYONLY)
+configure_file(failing-amqp0-10-python-tests failing-amqp0-10-python-tests COPYONLY)
+configure_file(failing-amqp1.0-python-tests failing-amqp1.0-python-tests COPYONLY)
+configure_file(federated_topic_test federated_topic_test COPYONLY)
+configure_file(perfdist perfdist COPYONLY)
+configure_file(ping_broker ping_broker COPYONLY)
+configure_file(policy.acl policy.acl COPYONLY)
+configure_file(qpid-analyze-trace qpid-analyze-trace COPYONLY)
+configure_file(qpid-cpp-benchmark qpid-cpp-benchmark COPYONLY)
+configure_file(qpid-ctrl qpid-ctrl COPYONLY)
+configure_file(qpidd-empty.conf qpidd-empty.conf COPYONLY)
+configure_file(qpidd-p0 qpidd-p0 COPYONLY)
+configure_file(ring_queue_test ring_queue_test COPYONLY)
+configure_file(sasl_fed sasl_fed COPYONLY)
+configure_file(sasl_fed_ex sasl_fed_ex COPYONLY)
+configure_file(sasl_no_dir sasl_no_dir COPYONLY)
+configure_file(topictest topictest COPYONLY)
+
 if (BUILD_TESTING_UNITTESTS)
 
 # Unit test program
