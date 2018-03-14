@@ -83,10 +83,10 @@ QPID_AUTO_TEST_CASE(parse)
     ra.parse("ALL");
     BOOST_CHECK_EQUAL(ra.val(), read_arg::ALL);
     BOOST_CHECK_EQUAL(ra.str(), "ALL");
-    BOOST_CHECK_THROW(ra.parse(""), po::invalid_option_value)
+    BOOST_CHECK_THROW(ra.parse(""), po::invalid_option_value);
     BOOST_CHECK_EQUAL(ra.val(), read_arg::ALL);
     BOOST_CHECK_EQUAL(ra.str(), "ALL");
-    BOOST_CHECK_THROW(ra.parse("abc123"), po::invalid_option_value)
+    BOOST_CHECK_THROW(ra.parse("abc123"), po::invalid_option_value);
     BOOST_CHECK_EQUAL(ra.val(), read_arg::ALL);
     BOOST_CHECK_EQUAL(ra.str(), "ALL");
     ra.parse("NONE");

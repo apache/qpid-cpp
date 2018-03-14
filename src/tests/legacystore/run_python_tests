@@ -37,6 +37,10 @@ from common import *
 
 ENV["PYTHONPATH"] = "{0}:{1}".format(store_tests_dir, ENV["PYTHONPATH"])
 
+# Add location of qpid-store-resize to the executable path
+
+ENV["PATH"] = "{0}:{1}".format(join(SOURCE_DIR, "management", "python", "bin"), ENV["PATH"])
+
 # To debug a test, add the following options to the end of the following line:
 # -v DEBUG -c qpid.messaging.io.ops [*.testName]
 
