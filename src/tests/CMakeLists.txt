@@ -124,7 +124,7 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/check_dependencies.py.in
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/env.py.in
                ${CMAKE_CURRENT_BINARY_DIR}/env.py @ONLY)
 
-file(GLOB_RECURSE copied_files "*.ps1", "*.py" "*.sh" "*.xml" "run_*")
+file(GLOB_RECURSE copied_files "*.ps1" "*.py" "*.sh" "*.xml" "run_*")
 
 foreach (copied_file ${copied_files})
   file (RELATIVE_PATH file_name ${CMAKE_CURRENT_SOURCE_DIR} ${copied_file})
