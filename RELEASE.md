@@ -12,10 +12,9 @@
   - Run: 'git commit -m "update versions for ${TAG}"'
   - Run: 'git tag -m "tag ${TAG}" ${TAG}'
 5. Run: "bin/export.sh $PWD ${TAG}" to create the qpid-cpp-${VERSION}.tar.gz release archive.
-6. Create signature and checksums for the archive:
+6. Create signature and checksum files for the archive:
   - e.g "gpg --detach-sign --armor qpid-cpp-${VERSION}.tar.gz"
   - e.g "sha512sum qpid-cpp-${VERSION}.tar.gz > qpid-cpp-${VERSION}.tar.gz.sha512"
-  - e.g "md5sum qpid-cpp-${VERSION}.tar.gz > qpid-cpp-${VERSION}.tar.gz.md5"
 7. Push branch changes and tag.
   - Also update versions to the applicable snapshot version for future work on it.
 8. Commit artifacts to dist dev repo in https://dist.apache.org/repos/dist/dev/qpid/cpp/${TAG} dir.
