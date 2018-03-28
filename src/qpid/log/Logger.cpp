@@ -45,12 +45,12 @@ inline void Logger::enable_unlocked(Statement* s) {
 }
 
 namespace {
-sys::PODMutex loggerLock = QPID_MUTEX_INITIALIZER;
+sys::GlobalMutex loggerLock QPID_MUTEX_INITIALIZER;
 std::auto_ptr<Logger> logger;
 }
 
 Logger& Logger::instance() {
-    sys::PODMutex::ScopedLock l(loggerLock);
+    sys::GlobalMutex::ScopedLock l(loggerLock);
     if (!logger.get()) logger.reset(new Logger);
     return *logger;
 }

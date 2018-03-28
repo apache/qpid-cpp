@@ -46,7 +46,7 @@ class Mutex : private boost::noncopyable {
 public:
     typedef ::qpid::sys::ScopedLock<Mutex> ScopedLock;
     typedef ::qpid::sys::ScopedUnlock<Mutex> ScopedUnlock;
-     
+
     inline Mutex();
     inline ~Mutex();
     inline void lock();  
@@ -85,34 +85,17 @@ protected:
 
 
 /**
- * PODMutex is a POD, can be static-initialized with
- * PODMutex m = QPID_MUTEX_INITIALIZER
+ * GlobalMutex must be declared like this for portabiliity:
+ * GlobalMutex m QPID_MUTEX_INITIALIZER;
+ *
+ * boost::recursive_mutex can be safely used as a global variable so QPID_MUTEX_INITIALIZER
+ * is empty.
  */
-struct PODMutex 
-{
-    typedef ::qpid::sys::ScopedLock<PODMutex> ScopedLock;
-
-    inline void lock();  
-    inline void unlock();
-    inline bool trylock();  
-
-    // Must be public to be a POD:
-    boost::recursive_mutex mutex;
+struct GlobalMutex : public boost::recursive_mutex {
+    typedef ::qpid::sys::ScopedLock<GlobalMutex> ScopedLock;
 };
 
-#define QPID_MUTEX_INITIALIZER 0
-
-void PODMutex::lock() {
-    mutex.lock();
-}
-
-void PODMutex::unlock() {
-    mutex.unlock();
-}
-
-bool PODMutex::trylock() {
-    return mutex.try_lock();
-}
+#define QPID_MUTEX_INITIALIZER
 
 Mutex::Mutex() {
 }

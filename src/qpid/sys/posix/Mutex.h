@@ -75,32 +75,32 @@ protected:
 
 
 /**
- * PODMutex is a POD, can be static-initialized with
- * PODMutex m = QPID_MUTEX_INITIALIZER
+ * GlobalMutex is a POD and must be static-initialized as follows so:
+ * GlobalMutex m QPID_MUTEX_INITIALIZER;
  */
-struct PODMutex
+struct GlobalMutex
 {
-    typedef ::qpid::sys::ScopedLock<PODMutex> ScopedLock;
+    typedef ::qpid::sys::ScopedLock<GlobalMutex> ScopedLock;
 
     inline void lock();
     inline void unlock();
     inline bool trylock();
 
-    // Must be public to be a POD:
+    // Must be public to be a Global:
     pthread_mutex_t mutex;
 };
 
-#define QPID_MUTEX_INITIALIZER { PTHREAD_MUTEX_INITIALIZER }
+#define QPID_MUTEX_INITIALIZER = { PTHREAD_MUTEX_INITIALIZER }
 
-void PODMutex::lock() {
+void GlobalMutex::lock() {
     QPID_POSIX_ASSERT_THROW_IF(pthread_mutex_lock(&mutex));
 }
 
-void PODMutex::unlock() {
+void GlobalMutex::unlock() {
     QPID_POSIX_ASSERT_THROW_IF(pthread_mutex_unlock(&mutex));
 }
 
-bool PODMutex::trylock() {
+bool GlobalMutex::trylock() {
     return pthread_mutex_trylock(&mutex) == 0;
 }
 
