@@ -392,12 +392,13 @@ void RecoveryManager::analyzeJournalFileHeaders(efpIdentity_t& efpIdentity) {
             // Read symlink, find efp directory name which is efp size in KiB
             // TODO: place this bit into a common function as it is also used in EmptyFilePool.cpp::deleteSymlink()
             char buff[1024];
-            ssize_t len = ::readlink((*i).c_str(), buff, 1024);
+            ssize_t len = ::readlink((*i).c_str(), buff, 1023);
             if (len < 0) {
                 std::ostringstream oss;
                 oss << "symlink=\"" << (*i) << "\"" << FORMAT_SYSERR(errno);
                 throw jexception(jerrno::JERR__SYMLINK, oss.str(), "RecoveryManager", "analyzeJournalFileHeaders");
             }
+            buff[len] = '\0'; // ::readlink() does not terminate the string
             // Find second and third '/' from back of string, which contains the EFP directory name
             *(::strrchr(buff, '/')) = '\0';
             *(::strrchr(buff, '/')) = '\0';
