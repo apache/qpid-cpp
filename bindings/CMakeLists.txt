@@ -159,5 +159,3 @@ if (BUILD_BINDING_DOTNET)
     message(STATUS "Building Dotnet bindings")
     add_subdirectory(qpid/dotnet)
 endif (BUILD_BINDING_DOTNET)
-
-add_subdirectory(qmf2/examples/cpp)
