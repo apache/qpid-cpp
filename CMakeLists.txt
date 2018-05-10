@@ -101,7 +101,7 @@ install(FILES  include/qmf/qmf2.i
         DESTINATION ${QPID_INSTALL_INCLUDEDIR}/qmf)
 
 if (WIN32)
-   set (CMAKE_DEBUG_POSTFIX "d")
+  set (CMAKE_DEBUG_POSTFIX "d")
 endif (WIN32)
 
 # set(CMAKE_INCLUDE_CURRENT_DIR ON)
@@ -139,46 +139,46 @@ if (DEFINED CMAKE_VERSION AND NOT CMAKE_VERSION VERSION_LESS "2.8.12")
 endif (DEFINED CMAKE_VERSION AND NOT CMAKE_VERSION VERSION_LESS "2.8.12")
 
 if (CMAKE_CXX_COMPILER_ID STREQUAL GNU)
-   # Warnings: Enable as many as possible, keep the code clean. Please
-   # do not disable warnings or remove -Werror without discussing on
-   # qpid-dev list.
-   #
-   # The following warnings are deliberately omitted, they warn on valid code.
-   # -Wunreachable-code -Wpadded -Winline
-   # -Wshadow - warns about boost headers.
-   set (WARNING_FLAGS
+  # Warnings: Enable as many as possible, keep the code clean. Please
+  # do not disable warnings or remove -Werror without discussing on
+  # qpid-dev list.
+  #
+  # The following warnings are deliberately omitted, they warn on valid code.
+  # -Wunreachable-code -Wpadded -Winline
+  # -Wshadow - warns about boost headers.
+  set (WARNING_FLAGS
      "-pedantic -Wall -Wextra -Wno-shadow -Wpointer-arith -Wcast-qual -Wcast-align -Wno-long-long -Wvolatile-register-var -Winvalid-pch -Wno-system-headers -Woverloaded-virtual -Wno-deprecated-declarations")
 
-   if (CMAKE_CXX_COMPILER_VERSION VERSION_GREATER 7)
-     set(WARNING_FLAGS "${WARNING_FLAGS} -Wno-implicit-fallthrough")
-   endif()
+  if (CMAKE_CXX_COMPILER_VERSION VERSION_GREATER 7)
+    set(WARNING_FLAGS "${WARNING_FLAGS} -Wno-implicit-fallthrough")
+  endif()
 
-   set (CATCH_UNDEFINED "-Wl,--no-undefined")
-   # gcc on SunOS uses native linker whose "-z defs" is too fussy
-   if (CMAKE_SYSTEM_NAME STREQUAL SunOS)
-      set (CATCH_UNDEFINED "")
-   endif (CMAKE_SYSTEM_NAME STREQUAL SunOS)
+  set (CATCH_UNDEFINED "-Wl,--no-undefined")
+  # gcc on SunOS uses native linker whose "-z defs" is too fussy
+  if (CMAKE_SYSTEM_NAME STREQUAL SunOS)
+    set (CATCH_UNDEFINED "")
+  endif (CMAKE_SYSTEM_NAME STREQUAL SunOS)
   set (NOSTRICT_ALIASING "-fno-strict-aliasing")
   set (COMPILER_FLAGS "-fvisibility-inlines-hidden")
-   # gcc 4.1.2 on RHEL 5 needs -Wno-attributes to avoid an error that's fixed
-   # in later gcc versions.
-   execute_process(COMMAND ${CMAKE_CXX_COMPILER} -dumpversion
+  # gcc 4.1.2 on RHEL 5 needs -Wno-attributes to avoid an error that's fixed
+  # in later gcc versions.
+  execute_process(COMMAND ${CMAKE_CXX_COMPILER} -dumpversion
                    OUTPUT_VARIABLE GCC_VERSION)
-   if (GCC_VERSION VERSION_EQUAL 4.1.2)
-     message (STATUS "Cannot restrict library symbol export on gcc 4.1.2")
-     set (HIDE_SYMBOL_FLAGS "-fno-visibility-inlines-hidden")
-   else (GCC_VERSION VERSION_EQUAL 4.1.2)
-     set (HIDE_SYMBOL_FLAGS "-fno-visibility-inlines-hidden -fvisibility=hidden")
-     set (QPID_LINKMAP ${CMAKE_CURRENT_SOURCE_DIR}/src/qpid.linkmap)
-     set (LINK_VERSION_SCRIPT_FLAG "-Wl,--version-script=${QPID_LINKMAP}")
-   endif (GCC_VERSION VERSION_EQUAL 4.1.2)
+  if (GCC_VERSION VERSION_EQUAL 4.1.2)
+    message (STATUS "Cannot restrict library symbol export on gcc 4.1.2")
+    set (HIDE_SYMBOL_FLAGS "-fno-visibility-inlines-hidden")
+  else (GCC_VERSION VERSION_EQUAL 4.1.2)
+    set (HIDE_SYMBOL_FLAGS "-fno-visibility-inlines-hidden -fvisibility=hidden")
+    set (QPID_LINKMAP ${CMAKE_CURRENT_SOURCE_DIR}/src/qpid.linkmap)
+    set (LINK_VERSION_SCRIPT_FLAG "-Wl,--version-script=${QPID_LINKMAP}")
+  endif (GCC_VERSION VERSION_EQUAL 4.1.2)
 
-   if (NOT CMAKE_SYSTEM_NAME STREQUAL Windows)
-     add_definitions(-pthread)
-     set (CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -pthread")
-     set (CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} ${CATCH_UNDEFINED} -pthread")
-     set (CMAKE_MODULE_LINKER_FLAGS "${CMAKE_MODULE_LINKER_FLAGS} ${CATCH_UNDEFINED} -pthread")
-   endif (NOT CMAKE_SYSTEM_NAME STREQUAL Windows)
+  if (NOT CMAKE_SYSTEM_NAME STREQUAL Windows)
+    add_definitions(-pthread)
+    set (CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -pthread")
+    set (CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} ${CATCH_UNDEFINED} -pthread")
+    set (CMAKE_MODULE_LINKER_FLAGS "${CMAKE_MODULE_LINKER_FLAGS} ${CATCH_UNDEFINED} -pthread")
+  endif (NOT CMAKE_SYSTEM_NAME STREQUAL Windows)
 endif (CMAKE_CXX_COMPILER_ID STREQUAL GNU)
 
 if (CMAKE_CXX_COMPILER_ID STREQUAL SunPro)
