@@ -205,11 +205,11 @@ bool SocketAddress::isComparable(const SocketAddress& hiPeer) const {
                 return false;
             }
             return true;
-        } catch (Exception) {
+        } catch (const Exception&) {
             // failed to resolve hi
             return false;
         }
-    } catch (Exception) {
+    } catch (const Exception&) {
         // failed to resolve lo
         return false;
     }

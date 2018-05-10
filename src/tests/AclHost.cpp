@@ -39,14 +39,14 @@ QPID_AUTO_TEST_SUITE(AclHostTestSuite)
   try { \
     sys::SocketAddress sa("1.1.1.1", ""); \
     sa.firstAddress(); \
-} catch (qpid::Exception) { \
+} catch (const qpid::Exception&) { \
     haveIPv4 = false; \
 } \
   bool haveIPv6(true); \
   try { \
     sys::SocketAddress sa("::1", ""); \
     sa.firstAddress(); \
-} catch (qpid::Exception) { \
+} catch (const qpid::Exception&) { \
     haveIPv6 = false; \
 } \
 (void) haveIPv4; \
