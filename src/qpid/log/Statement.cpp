@@ -118,7 +118,7 @@ Category CategoryFileNameHints::categoryOf(const char* const fName) {
            it  = filenameHints.hintList.begin();
            it != filenameHints.hintList.end();
          ++it) {
-        if (strstr(fName, (const char* const)it->first) != 0) {
+        if (strstr(fName, it->first) != 0) {
             return it->second;
         }
     }
