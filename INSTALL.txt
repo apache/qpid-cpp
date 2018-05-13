@@ -268,7 +268,7 @@ package management tool. For example on Fedora:
 
 For SASL and SSL, include:
 
- # yum install cyrus-sasl-devel nss-devel nspr-devel
+ # yum install cyrus-sasl-devel cyrus-sasl-md5 cyrus-sasl-plain nss-devel nspr-devel
 
 For the XML exchange, include:
 
