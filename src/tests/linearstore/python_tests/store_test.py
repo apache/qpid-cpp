@@ -17,7 +17,9 @@
 # under the License.
 #
 
+import os
 import re
+import struct
 from brokertest import BrokerTest
 from qpid.messaging import Empty
 from qmf.console import Session
@@ -345,6 +347,50 @@ class StoreTest(BrokerTest):
                 ssn.commit()
             return ssn
 
+    # Functions for manipulating linearstore journal files and directories
+
+    def add_invalid_efp_directories(self, qls_dir):
+        """Add some invalid efp directories to the default partition"""
+        for invalid_dir_name in ['p010', 'p1hello', 'world']:
+            invalid_dir_path = os.path.join(qls_dir, invalid_dir_name)
+            if not os.path.exists(invalid_dir_path):
+                os.makedirs(invalid_dir_path)
+
+    def alter_journal_header(self, qls_dir, queue_name, partition=None, data_size=None):
+        """Change the first journal in queue queue_name to have the supplied partition and data_size (ds)"""
+        #print(os.listdir(qls_dir))
+        jfh = None
+        try:
+            jrnl2_dir = os.path.join(qls_dir, 'jrnl2')
+            queue_list = os.listdir(jrnl2_dir)
+            if queue_name in queue_list:
+                queue_dir = os.path.join(jrnl2_dir, queue_name)
+                jrnl_link_list = os.listdir(queue_dir)
+                if len(jrnl_link_list) > 0:
+                    jrnl_link = os.path.join(queue_dir, jrnl_link_list[0])
+                    jrnl_file = os.readlink(jrnl_link)
+                    if os.path.getsize(jrnl_file) == 0x201000:
+                        jfh = open(jrnl_file, 'r+b')
+                        file_header = jfh.read(72) # Read 72-byte file header
+                        hdr_list = list(struct.unpack('IHHQQHHIQQQQQ', file_header))
+                        if partition:
+                            hdr_list[6] = partition
+                        if data_size:
+                            hdr_list[8] = data_size
+                        file_hdr = struct.pack('IHHQQHHIQQQQQ', *hdr_list)
+                        jfh.seek(0)
+                        jfh.write(file_hdr)
+                    else:
+                        self.fail('Journal file is invalid size: 0x%x bytes, expected 0x201000 bytes' % os.path.getsize(jrnl_file))
+                else:
+                    self.fail('Queue "%s" is empty')
+            else:
+                self.fail('Queue "%s" not found in directory %s, dir found: %s' % (queue_name, jrnl2_dir, queue_list))
+        except (IOError, OSError) as e:
+            self.fail(e)
+        finally:
+            if jfh and not jfh.closed:
+                jfh.close()
 
     # Functions for finding strings in the broker log file (or other files)
 

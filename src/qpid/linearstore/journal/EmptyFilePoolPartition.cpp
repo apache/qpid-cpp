@@ -164,21 +164,10 @@ EmptyFilePool* EmptyFilePoolPartition::createEmptyFilePool(const efpDataSize_kib
 
 EmptyFilePool* EmptyFilePoolPartition::createEmptyFilePool(const std::string fqEfpDirectoryName) {
     EmptyFilePool* efpp = 0;
-    try {
-        efpp = new EmptyFilePool(fqEfpDirectoryName, this, overwriteBeforeReturnFlag_, truncateFlag_, journalLogRef_);
-        {
-            slock l(efpMapMutex_);
-            efpMap_[efpp->dataSize_kib()] = efpp;
-        }
-    }
-    catch (const std::exception& e) {
-        if (efpp != 0) {
-            delete efpp;
-            efpp = 0;
-        }
-        std::ostringstream oss;
-        oss << "EmptyFilePool create failed: " << e.what();
-        journalLogRef_.log(JournalLog::LOG_WARN, oss.str());
+    efpp = new EmptyFilePool(fqEfpDirectoryName, this, overwriteBeforeReturnFlag_, truncateFlag_, journalLogRef_);
+    {
+        slock l(efpMapMutex_);
+        efpMap_[efpp->dataSize_kib()] = efpp;
     }
     if (efpp != 0) {
         efpp->initialize();

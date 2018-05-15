@@ -19,7 +19,7 @@
 
 import os
 
-from brokertest import EXPECT_EXIT_OK
+from brokertest import EXPECT_EXIT_OK, EXPECT_EXIT_FAIL
 from store_test import StoreTest, Qmf, store_args
 from qpid.messaging import *
 
@@ -236,4 +236,48 @@ class RedeliveredTests(StoreTest):
         rcv_msg = broker.get_message("testQueue")
         self.assertEqual(msg_content, rcv_msg.content)
         self.assertTrue(rcv_msg.redelivered)
+
+class LinearstorePartitionTests(StoreTest):
+    """
+    Test the linearstore partition and EFP size during recovery
+    """
+
+    def test_invalid_efp_dirs(self):
+        """Test invalid EFP sizes are ignored"""
+        broker = self.broker(store_args(), name="test_invalid_efp_dirs", expect=EXPECT_EXIT_OK)
+        msg_content = "xyz"*100
+        msg = Message(msg_content, durable=True)
+        broker.send_message("testQueue", msg)
+        broker.terminate()
+
+        qls_dir = os.path.join(broker.datadir, 'qls')
+        self.add_invalid_efp_directories(qls_dir)
+
+        self.broker(store_args(), name="test_invalid_efp_dirs", expect=EXPECT_EXIT_FAIL)
+
+    def test_invalid_partition_in_header(self):
+        """Test invalid partition number in journal header causes broker shutdown"""
+        broker = self.broker(store_args(), name="test_invalid_partition_in_header", expect=EXPECT_EXIT_OK)
+        msg_content = "xyz"*100
+        msg = Message(msg_content, durable=True)
+        broker.send_message("testQueue", msg)
+        broker.terminate()
+
+        qls_dir = os.path.join(broker.datadir, 'qls')
+        self.alter_journal_header(qls_dir, "testQueue", partition=5)
+
+        self.broker(store_args(), name="test_invalid_partition_in_header", expect=EXPECT_EXIT_FAIL)
+
+    def test_invalid_data_size_in_header(self):
+        """Test invalid data size in journal header causes broker shutdown"""
+        broker = self.broker(store_args(), name="test_invalid_data_size_in_header", expect=EXPECT_EXIT_OK)
+        msg_content = "xyz"*100
+        msg = Message(msg_content, durable=True)
+        broker.send_message("testQueue", msg)
+        broker.terminate()
+
+        qls_dir = os.path.join(broker.datadir, 'qls')
+        self.alter_journal_header(qls_dir, "testQueue", data_size=123)
+
+        self.broker(store_args(), name="test_invalid_data_size_in_header", expect=EXPECT_EXIT_FAIL)
         

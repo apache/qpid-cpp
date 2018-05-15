@@ -326,7 +326,8 @@ class Broker(Popen):
         self._host = "127.0.0.1"
         self._agent = None
 
-        log.debug("Started broker %s" % self)
+        if expect != EXPECT_EXIT_FAIL:
+            log.debug("Started broker %s" % self)
 
     def host(self): return self._host
 
@@ -555,6 +556,8 @@ class BrokerTest(TestCase):
         if (wait):
             try: b.ready()
             except Exception, e:
+                if expect == EXPECT_EXIT_FAIL:
+                    return None
                 raise RethrownException("Failed to start broker %s(%s): %s" % (b.name, b.log, e))
         return b
 

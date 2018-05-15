@@ -119,7 +119,7 @@ protected:
     static bool isSymlink(const std::string& fqName);
     static bool moveFile(const std::string& fromFqPath,
                          const std::string& toFqPath);
-    static void initializeStaticBuffers();
+    static bool initializeStaticBuffers();
 };
 
 }}}

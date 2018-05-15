@@ -48,7 +48,7 @@ unsigned char EmptyFilePool::s_fhdr_buff_[FHDR_BUFF_SIZE];
 smutex EmptyFilePool::s_fhdr_buff_mutex_;
 size_t EmptyFilePool::s_zero_buff_size_ = ZERO_BUFF_SIZE;
 unsigned char EmptyFilePool::s_zero_buff_[ZERO_BUFF_SIZE];
-bool EmptyFilePool::s_static_initializer_flag_ = false;
+bool EmptyFilePool::s_static_initializer_flag_ = initializeStaticBuffers();
 
 
 EmptyFilePool::EmptyFilePool(const std::string& efpDirectory,
@@ -62,12 +62,7 @@ EmptyFilePool::EmptyFilePool(const std::string& efpDirectory,
                 overwriteBeforeReturnFlag_(overwriteBeforeReturnFlag),
                 truncateFlag_(truncateFlag),
                 journalLogRef_(journalLogRef)
-{
-    if (!s_static_initializer_flag_) {
-        initializeStaticBuffers();
-        s_static_initializer_flag_ = true;
-    }
-}
+{}
 
 EmptyFilePool::~EmptyFilePool() {}
 
@@ -201,7 +196,7 @@ efpDataSize_kib_t EmptyFilePool::dataSizeFromDirName_kib(const std::string& dirN
     efpDataSize_kib_t s = ::atol(n.c_str());
     if (!valid || s == 0 || s % QLS_SBLK_SIZE_KIB != 0) {
         std::ostringstream oss;
-        oss << "Partition: " << partitionNumber << "; EFP directory: \'" << n << "\'";
+        oss << "Partition: " << partitionNumber << "; EFP directory: \'" << dirName << "\'";
         throw jexception(jerrno::JERR_EFP_BADEFPDIRNAME, oss.str(), "EmptyFilePool", "fileSizeKbFromDirName");
     }
     return s;
@@ -499,10 +494,11 @@ bool EmptyFilePool::moveFile(const std::string& from,
 }
 
 //static
-void EmptyFilePool::initializeStaticBuffers() {
+bool EmptyFilePool::initializeStaticBuffers() {
     // Overwrite buffers with zeros
     ::memset(s_fhdr_buff_, 0, s_fhdr_buff_size_);
     ::memset(s_zero_buff_, 0, s_zero_buff_size_);
+    return true;
 }
 
 }}}
