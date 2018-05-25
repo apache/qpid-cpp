@@ -70,7 +70,6 @@ public:
         JournalFile* _jfp;          ///< Journal file for incrementing compl counts
         void* _pbuff;               ///< Page buffer
 
-        page_cb(uint16_t index);   ///< Convenience constructor
         const char* state_str() const; ///< Return state as string for this pcb
     };
 
