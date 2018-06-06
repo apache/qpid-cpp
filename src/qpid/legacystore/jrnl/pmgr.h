@@ -93,7 +93,6 @@ namespace journal
             fcntl* _rfh;                ///< File handle for incrementing read compl counts
             void* _pbuff;               ///< Page buffer
 
-            page_cb(u_int16_t index);   ///< Convenience constructor
             const char* state_str() const; ///< Return state as string for this pcb
         };
 

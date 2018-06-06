@@ -46,17 +46,6 @@ namespace mrg
 namespace journal
 {
 
-pmgr::page_cb::page_cb(u_int16_t index):
-        _index(index),
-        _state(UNUSED),
-        _wdblks(0),
-        _rdblks(0),
-        _pdtokl(0),
-        _wfh(0),
-        _rfh(0),
-        _pbuff(0)
-{}
-
 const char*
 pmgr::page_cb::state_str() const
 {

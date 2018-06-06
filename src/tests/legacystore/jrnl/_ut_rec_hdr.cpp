@@ -63,7 +63,7 @@ QPID_AUTO_TEST_CASE(hdr_class)
 #else
     BOOST_CHECK_EQUAL(h2._eflag, RHM_BENDIAN_FLAG);
 #endif
-    BOOST_CHECK_EQUAL(h2._uflag, (const u_int16_t)rec_hdr::HDR_OVERWRITE_INDICATOR_MASK);
+    BOOST_CHECK_EQUAL(h2._uflag, rec_hdr::HDR_OVERWRITE_INDICATOR_MASK);
     BOOST_CHECK_EQUAL(h2._rid, rid);
     BOOST_CHECK_EQUAL(h2.get_owi(), owi);
     h2._uflag = uflag;
@@ -73,7 +73,7 @@ QPID_AUTO_TEST_CASE(hdr_class)
     BOOST_CHECK_EQUAL(h2._uflag, uflag);
     h2.set_owi(false);
     BOOST_CHECK(!h2.get_owi());
-    BOOST_CHECK_EQUAL(h2._uflag, (uflag & ~(const u_int16_t)rec_hdr::HDR_OVERWRITE_INDICATOR_MASK));
+    BOOST_CHECK_EQUAL(h2._uflag, (uflag & ~rec_hdr::HDR_OVERWRITE_INDICATOR_MASK));
     h2.set_owi(true);
     BOOST_CHECK(h2.get_owi());
     BOOST_CHECK_EQUAL(h2._uflag, uflag);
@@ -170,7 +170,7 @@ QPID_AUTO_TEST_CASE(file_hdr_class)
 #else
         BOOST_CHECK_EQUAL(fh2._eflag, RHM_BENDIAN_FLAG);
 #endif
-        BOOST_CHECK_EQUAL(fh2._uflag, (const u_int16_t)rec_hdr::HDR_OVERWRITE_INDICATOR_MASK);
+        BOOST_CHECK_EQUAL(fh2._uflag, rec_hdr::HDR_OVERWRITE_INDICATOR_MASK);
         BOOST_CHECK_EQUAL(fh2._rid, rid);
         BOOST_CHECK_EQUAL(fh2._pfid, pfid );
         BOOST_CHECK_EQUAL(fh2._lfid, lfid);
@@ -189,7 +189,7 @@ QPID_AUTO_TEST_CASE(file_hdr_class)
         fh2.set_owi(false);
         BOOST_CHECK(!fh2.get_owi());
         BOOST_CHECK_EQUAL(fh2._uflag,
-                (uflag & ~(const u_int16_t)rec_hdr::HDR_OVERWRITE_INDICATOR_MASK));
+                (uflag & ~rec_hdr::HDR_OVERWRITE_INDICATOR_MASK));
 
         fh2.set_owi(true);
         BOOST_CHECK(fh2.get_owi());
@@ -205,7 +205,7 @@ QPID_AUTO_TEST_CASE(file_hdr_class)
 #else
         BOOST_CHECK_EQUAL(fh3._eflag, RHM_BENDIAN_FLAG);
 #endif
-        BOOST_CHECK_EQUAL(fh3._uflag, (const u_int16_t)rec_hdr::HDR_OVERWRITE_INDICATOR_MASK);
+        BOOST_CHECK_EQUAL(fh3._uflag, rec_hdr::HDR_OVERWRITE_INDICATOR_MASK);
         BOOST_CHECK_EQUAL(fh3._rid, rid);
         BOOST_CHECK_EQUAL(fh3._pfid, pfid);
         BOOST_CHECK_EQUAL(fh3._lfid, lfid);
@@ -252,7 +252,7 @@ QPID_AUTO_TEST_CASE(enq_hdr_class)
 #else
         BOOST_CHECK_EQUAL(eh2._eflag, RHM_BENDIAN_FLAG);
 #endif
-        BOOST_CHECK_EQUAL(eh2._uflag, (const u_int16_t)rec_hdr::HDR_OVERWRITE_INDICATOR_MASK);
+        BOOST_CHECK_EQUAL(eh2._uflag, rec_hdr::HDR_OVERWRITE_INDICATOR_MASK);
         BOOST_CHECK_EQUAL(eh2._rid, rid);
         BOOST_CHECK_EQUAL(eh2._xidsize, xidsize);
         BOOST_CHECK_EQUAL(eh2._dsize, dsize);
@@ -270,7 +270,7 @@ QPID_AUTO_TEST_CASE(enq_hdr_class)
         BOOST_CHECK(eh2.is_transient());
         BOOST_CHECK(eh2.is_external());
         BOOST_CHECK_EQUAL(eh2._uflag,
-                (uflag & ~(const u_int16_t)rec_hdr::HDR_OVERWRITE_INDICATOR_MASK));
+                (uflag & ~rec_hdr::HDR_OVERWRITE_INDICATOR_MASK));
 
         eh2.set_owi(true);
         BOOST_CHECK(eh2.get_owi());
@@ -282,7 +282,7 @@ QPID_AUTO_TEST_CASE(enq_hdr_class)
         BOOST_CHECK(eh2.get_owi());
         BOOST_CHECK(!eh2.is_transient());
         BOOST_CHECK(eh2.is_external());
-        BOOST_CHECK_EQUAL(eh2._uflag, uflag & ~(const u_int16_t)enq_hdr::ENQ_HDR_TRANSIENT_MASK);
+        BOOST_CHECK_EQUAL(eh2._uflag, uflag & ~enq_hdr::ENQ_HDR_TRANSIENT_MASK);
 
         eh2.set_transient(true);
         BOOST_CHECK(eh2.get_owi());
@@ -294,7 +294,7 @@ QPID_AUTO_TEST_CASE(enq_hdr_class)
         BOOST_CHECK(eh2.get_owi());
         BOOST_CHECK(eh2.is_transient());
         BOOST_CHECK(!eh2.is_external());
-        BOOST_CHECK_EQUAL(eh2._uflag, uflag & ~(const u_int16_t)enq_hdr::ENQ_HDR_EXTERNAL_MASK);
+        BOOST_CHECK_EQUAL(eh2._uflag, uflag & ~enq_hdr::ENQ_HDR_EXTERNAL_MASK);
 
         eh2.set_external(true);
         BOOST_CHECK(eh2.get_owi());
@@ -312,8 +312,8 @@ QPID_AUTO_TEST_CASE(enq_hdr_class)
 #else
         BOOST_CHECK_EQUAL(eh3._eflag, RHM_BENDIAN_FLAG);
 #endif
-        BOOST_CHECK_EQUAL(eh3._uflag, (const u_int16_t)enq_hdr::ENQ_HDR_TRANSIENT_MASK |
-                (const u_int16_t)rec_hdr::HDR_OVERWRITE_INDICATOR_MASK);
+        BOOST_CHECK_EQUAL(eh3._uflag, enq_hdr::ENQ_HDR_TRANSIENT_MASK |
+                rec_hdr::HDR_OVERWRITE_INDICATOR_MASK);
         BOOST_CHECK_EQUAL(eh3._rid, rid);
         BOOST_CHECK_EQUAL(eh3._xidsize, xidsize);
         BOOST_CHECK_EQUAL(eh3._dsize, dsize);
@@ -360,7 +360,7 @@ QPID_AUTO_TEST_CASE(deq_hdr_class)
 #else
         BOOST_CHECK_EQUAL(dh2._eflag, RHM_BENDIAN_FLAG);
 #endif
-        BOOST_CHECK_EQUAL(dh2._uflag, (const u_int16_t)rec_hdr::HDR_OVERWRITE_INDICATOR_MASK);
+        BOOST_CHECK_EQUAL(dh2._uflag, rec_hdr::HDR_OVERWRITE_INDICATOR_MASK);
         BOOST_CHECK_EQUAL(dh2._rid, rid);
         BOOST_CHECK_EQUAL(dh2._deq_rid, drid);
         BOOST_CHECK_EQUAL(dh2._xidsize, xidsize);
@@ -372,7 +372,7 @@ QPID_AUTO_TEST_CASE(deq_hdr_class)
         dh2.set_owi(false);
         BOOST_CHECK(!dh2.get_owi());
         BOOST_CHECK_EQUAL(dh2._uflag,
-                (uflag & ~(const u_int16_t)rec_hdr::HDR_OVERWRITE_INDICATOR_MASK));
+                (uflag & ~rec_hdr::HDR_OVERWRITE_INDICATOR_MASK));
 
         dh2.set_owi(true);
         BOOST_CHECK(dh2.get_owi());
@@ -415,7 +415,7 @@ QPID_AUTO_TEST_CASE(txn_hdr_class)
 #else
         BOOST_CHECK_EQUAL(th2._eflag, RHM_BENDIAN_FLAG);
 #endif
-        BOOST_CHECK_EQUAL(th2._uflag, (const u_int16_t)rec_hdr::HDR_OVERWRITE_INDICATOR_MASK);
+        BOOST_CHECK_EQUAL(th2._uflag, rec_hdr::HDR_OVERWRITE_INDICATOR_MASK);
         BOOST_CHECK_EQUAL(th2._rid, rid);
         BOOST_CHECK_EQUAL(th2._xidsize, xidsize);
         BOOST_CHECK(th2.get_owi());
@@ -426,7 +426,7 @@ QPID_AUTO_TEST_CASE(txn_hdr_class)
         th2.set_owi(false);
         BOOST_CHECK(!th2.get_owi());
         BOOST_CHECK_EQUAL(th2._uflag,
-                (uflag & ~(const u_int16_t)rec_hdr::HDR_OVERWRITE_INDICATOR_MASK));
+                (uflag & ~rec_hdr::HDR_OVERWRITE_INDICATOR_MASK));
 
         th2.set_owi(true);
         BOOST_CHECK(th2.get_owi());

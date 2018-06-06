@@ -51,7 +51,7 @@ target_link_libraries (${testname}
 if ("${ARGV1}" STREQUAL "LONG")
   set_target_properties(${testname} PROPERTIES COMPILE_DEFINITIONS LONG_TEST)
 endif ()
-add_test (NAME ${testname} COMMAND ${CMAKE_BINARY_DIR}/src/tests/run.sh $<TARGET_FILE:${testname}>)
+add_test (NAME ${testname} COMMAND ${CMAKE_BINARY_DIR}/src/tests/run.py $<TARGET_FILE:${testname}>)
 unset (testname)
 ENDMACRO (define_journal_test)
 

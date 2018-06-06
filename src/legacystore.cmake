@@ -89,6 +89,7 @@ if (BUILD_LEGACYSTORE)
         qpid/legacystore/jrnl/lp_map.cpp
         qpid/legacystore/jrnl/lpmgr.cpp
         qpid/legacystore/jrnl/pmgr.cpp
+        qpid/legacystore/jrnl/rec_hdr.cpp
         qpid/legacystore/jrnl/rmgr.cpp
         qpid/legacystore/jrnl/rfc.cpp
         qpid/legacystore/jrnl/rrfc.cpp
