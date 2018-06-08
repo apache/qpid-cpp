@@ -81,9 +81,11 @@ void InactivityFireEvent::fire() {
 }
 
 void InactivityFireEvent::cancel() {
-    ::qpid::sys::Mutex::ScopedLock sl(_ifeStateLock);
     ::qpid::sys::TimerTask::cancel();
-    _state = CANCELLED;
+    {
+        ::qpid::sys::Mutex::ScopedLock sl(_ifeStateLock);
+        _state = CANCELLED;
+    }
 }
 
 GetEventsFireEvent::GetEventsFireEvent(JournalImpl* p,
