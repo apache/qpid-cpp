@@ -279,6 +279,7 @@ bool MessageStoreImpl::init(const std::string& dir,
     else
         init();
 
+    QPID_LOG(warning, "DEPRECATION NOTICE: Legacystore is deprecated, and may be removed in the near future. Please use Linearstore instead.");
     QPID_LOG(notice, "Store module initialized; store-dir=" << dir);
     QPID_LOG(info,   "> Default files per journal: " << jfiles);
 // TODO: Uncomment these lines when auto-expand is enabled.
