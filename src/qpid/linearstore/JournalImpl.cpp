@@ -32,7 +32,7 @@ namespace linearstore {
 
 InactivityFireEvent::InactivityFireEvent(JournalImpl* p,
                                          const ::qpid::sys::Duration timeout):
-        ::qpid::sys::TimerTask(timeout, "JournalInactive:"+p->id()), _parent(p),
+        ::qpid::sys::TimerTask(timeout, p->id()), _parent(p),
          _state(NOT_ADDED)
 {}
 
@@ -43,7 +43,7 @@ void InactivityFireEvent::reset(qpid::sys::Timer& timer) {
         timer.add(this);
         break;
     case FIRED :
-        setupNextFire();
+        restart();
         timer.add(this);
         break;
     case FLUSHED:
