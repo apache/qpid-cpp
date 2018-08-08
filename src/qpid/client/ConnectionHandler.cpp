@@ -148,7 +148,16 @@ void ConnectionHandler::outgoing(AMQFrame& frame)
 
 void ConnectionHandler::waitForOpen()
 {
-    waitFor(ESTABLISHED);
+    if (ConnectionSettings::connectTimeout) {
+        if (!waitFor(ESTABLISHED, qpid::sys::Duration(ConnectionSettings::connectTimeout * qpid::sys::TIME_SEC))) {
+            errorText = "Connection open timed out";
+            QPID_LOG(warning, errorText);
+            setState(FAILED);
+        }
+    } else {
+        waitFor(ESTABLISHED);//ESTABLISHED = OPEN, CLOSED or FAILED
+    }
+
     if (getState() == FAILED) {
         throw TransportFailure(errorText);
     } else if (getState() == CLOSED) {

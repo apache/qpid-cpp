@@ -138,6 +138,12 @@ struct QPID_CLIENT_CLASS_EXTERN ConnectionSettings {
      * If using SSL, connect regardless of hostname verification failure.
      */
     bool sslIgnoreHostnameVerificationFailure;
+
+    /**
+     * Timeout period (in seconds) to wait for a connection to broker to open.
+     * 0 means wait forever.
+     */
+    uint16_t connectTimeout;
 };
 
 }} // namespace qpid::client

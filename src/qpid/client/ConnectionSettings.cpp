@@ -42,7 +42,8 @@ ConnectionSettings::ConnectionSettings() :
     minSsf(0),
     maxSsf(256),
     sslCertName(""),
-    sslIgnoreHostnameVerificationFailure(false)
+    sslIgnoreHostnameVerificationFailure(false),
+    connectTimeout(0)
 {}
 
 ConnectionSettings::~ConnectionSettings() {}
