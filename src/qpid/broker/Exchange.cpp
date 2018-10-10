@@ -489,6 +489,10 @@ void Exchange::destroy()
         QPID_LOG(debug, "Exchange::destroy() notifying " << i->first);
         if (i->second) i->second();
     }
+    if (mgmtExchange != 0) {
+        mgmtExchange->resourceDestroy ();
+        mgmtExchange = 0;
+    }
 }
 bool Exchange::isDestroyed() const
 {
