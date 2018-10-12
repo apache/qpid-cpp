@@ -491,7 +491,7 @@ void Exchange::destroy()
     }
     if (mgmtExchange != 0) {
         mgmtExchange->resourceDestroy ();
-        mgmtExchange = 0;
+        mgmtExchange.reset();
     }
 }
 bool Exchange::isDestroyed() const
