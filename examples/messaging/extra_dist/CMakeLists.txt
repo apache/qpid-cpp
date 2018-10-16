@@ -51,6 +51,7 @@ add_messaging_example(map_sender)
 
 add_messaging_example(client)
 add_messaging_example(server)
+add_messaging_example(server_reconnect)
 
 # These don't need Boost or OptionParser
 add_executable(hello_world hello_world.cpp)
