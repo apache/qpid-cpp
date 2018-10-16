@@ -302,7 +302,6 @@ endif (BUILD_SASL)
 
 add_test(NAME unit_tests COMMAND ${PYTHON_EXECUTABLE} run_unit_tests)
 
-add_test(NAME acl_tests COMMAND ${PYTHON_EXECUTABLE} run_acl_tests)
 add_test(NAME cli_tests COMMAND ${PYTHON_EXECUTABLE} run_cli_tests)
 add_test(NAME client_tests COMMAND ${PYTHON_EXECUTABLE} run_client_tests)
 add_test(NAME federation_tests COMMAND ${PYTHON_EXECUTABLE} run_federation_tests)
@@ -338,13 +337,14 @@ else (CMAKE_SYSTEM_NAME STREQUAL Windows)
         add_test(NAME interlink_tests COMMAND ${PYTHON_EXECUTABLE} run_interlink_tests)
     endif (BUILD_AMQP)
 
-    if (BUILD_SASL)
+    if (BUILD_SASL AND SASLPASSWD2_EXECUTABLE)
+        add_test(NAME acl_tests COMMAND ${PYTHON_EXECUTABLE} run_acl_tests)
         add_test(NAME sasl_tests COMMAND run_sasl_tests)
 
         if (BUILD_SSL)
             add_test(NAME ssl_tests COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/run_ssl_tests)
         endif (BUILD_SSL)
-    endif (BUILD_SASL)
+    endif (BUILD_SASL AND SASLPASSWD2_EXECUTABLE)
 endif (CMAKE_SYSTEM_NAME STREQUAL Windows)
 
 endif (BUILD_TESTING)
