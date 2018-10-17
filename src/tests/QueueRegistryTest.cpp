@@ -77,7 +77,7 @@ QPID_AUTO_TEST_CASE(testDestroy)
     std::pair<Queue::shared_ptr,  bool> qc;
 
     qc = reg.declare(foo, QueueSettings());
-    reg.destroy(foo);
+    reg.destroy(qc.first);
     // Queue is gone from the registry.
     BOOST_CHECK(reg.find(foo) == 0);
     // Queue is not actually destroyed till we drop our reference.

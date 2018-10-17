@@ -363,7 +363,7 @@ void Queue::release(const QueueCursor& position, bool markRedelivered)
     QueueListeners::NotificationSet copy;
     {
         Mutex::ScopedLock locker(messageLock);
-        if (!deleted) {
+        if (!isDeleted()) {
             Message* message = messages->release(position);
             if (message) {
                 if (!markRedelivered) message->undeliver();
@@ -873,7 +873,7 @@ uint32_t Queue::getConsumerCount() const
 bool Queue::canAutoDelete() const
 {
     Mutex::ScopedLock locker(messageLock);
-    return !deleted && checkAutoDelete(locker);
+    return !isDeleted() && checkAutoDelete(locker);
 }
 
 bool Queue::checkAutoDelete(const Mutex::ScopedLock& lock) const
@@ -1191,7 +1191,6 @@ void Queue::notifyDeleted()
     QueueListeners::ListenerSet set;
     {
         Mutex::ScopedLock locker(messageLock);
-        deleted = true;
         listeners.snapshot(set);
     }
     set.notifyAll();
@@ -1346,17 +1345,13 @@ void Queue::tryAutoDelete(long expectedVersion)
     bool proceed(false);
     {
         Mutex::ScopedLock locker(messageLock);
-        if (!deleted && checkAutoDelete(locker)) {
+        if (!isDeleted() && checkAutoDelete(locker)) {
             proceed = true;
         }
     }
 
     if (proceed) {
-        if (broker->getQueues().destroyIfUntouched(name, expectedVersion)) {
-            {
-                Mutex::ScopedLock locker(messageLock);
-                deleted = true;
-            }
+        if (broker->getQueues().destroyIfUntouched(shared_from_this(), expectedVersion)) {
             if (broker->getAcl())
                 broker->getAcl()->recordDestroyQueue(name);
 
@@ -1577,14 +1572,15 @@ void Queue::observeEnqueue(const Message& m, const Mutex::ScopedLock& l)
 
 bool Queue::checkNotDeleted(const Consumer::shared_ptr& c)
 {
-    if (deleted && !c->hideDeletedError())
+    bool isDel = isDeleted();
+    if (isDel && !c->hideDeletedError())
         throw ResourceDeletedException(QPID_MSG("Queue " << getName() << " has been deleted."));
-    return !deleted;
+    return !isDel;
 }
 
 bool Queue::isDeleted() const
 {
-    Mutex::ScopedLock lock(messageLock);
+    Mutex::ScopedLock lock(deletionLock);
     return deleted;
 }
 
@@ -1703,7 +1699,7 @@ Queue::UsageBarrier::UsageBarrier(Queue& q) : parent(q), count(0) {}
 bool Queue::UsageBarrier::acquire()
 {
     Monitor::ScopedLock l(usageLock);
-    if (parent.deleted) {
+    if (parent.isDeleted()) {
         return false;
     } else {
         ++count;
@@ -1719,8 +1715,8 @@ void Queue::UsageBarrier::release()
 
 void Queue::UsageBarrier::destroy()
 {
+    assert(parent.isDeleted());
     Monitor::ScopedLock l(usageLock);
-    parent.deleted = true;
     while (count) usageLock.wait();
 }
 

@@ -279,6 +279,12 @@ class Broker : public sys::Runnable, public Plugin::Target,
         const std::string& userId,
         const std::string& connectionId);
 
+    void deleteQueue(
+        boost::shared_ptr<Queue> queue,
+        const std::string& userId,
+        const std::string& connectionId,
+        QueueFunctor check = QueueFunctor());
+
     QPID_BROKER_EXTERN void deleteQueue(
         const std::string& name,
         const std::string& userId,

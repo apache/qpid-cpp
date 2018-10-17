@@ -90,15 +90,19 @@ QueueRegistry::declare(const string& name, const QueueSettings& settings,
 }
 
 void QueueRegistry::destroy(
-    const string& name, const string& connectionId, const string& userId)
+    Queue::shared_ptr targetQ, const string& connectionId, const string& userId)
 {
     Queue::shared_ptr q;
     {
         qpid::sys::RWlock::ScopedWlock locker(lock);
-        QueueMap::iterator i = queues.find(name);
-        if (i != queues.end()) {
+        QueueMap::iterator i = queues.find(targetQ->name);
+        if (i != queues.end() && i->second == targetQ) {
             q = i->second;
-            eraseLH(i, q, name, connectionId, userId);
+            {
+                Mutex::ScopedLock delLocker(q->deletionLock);
+                q->deleted = true;
+            }
+            eraseLH(i, q, q->name, connectionId, userId);
         }
     }
     // Destroy management object, store record etc. The Queue will not
@@ -125,17 +129,21 @@ void QueueRegistry::eraseLH(QueueMap::iterator i, Queue::shared_ptr q, const str
 }
 
 
-bool QueueRegistry::destroyIfUntouched(const string& name, long version,
+bool QueueRegistry::destroyIfUntouched(Queue::shared_ptr targetQ, long version,
                                        const string& connectionId, const string& userId)
 {
     Queue::shared_ptr q;
     {
         qpid::sys::RWlock::ScopedWlock locker(lock);
-        QueueMap::iterator i = queues.find(name);
+        QueueMap::iterator i = queues.find(targetQ->name);
         if (i != queues.end()) {
-            if (i->second->version == version) {
+            if (i->second == targetQ && i->second->version == version) {
                 q = i->second;
-                eraseLH(i, q, name, connectionId, userId);
+                {
+                    Mutex::ScopedLock delLocker(q->deletionLock);
+                    q->deleted = true;
+                }
+                eraseLH(i, q, q->name, connectionId, userId);
             }
         }
     }

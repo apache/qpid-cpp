@@ -33,7 +33,7 @@ SelfDestructQueue::SelfDestructQueue(const std::string& n, const QueueSettings& 
 bool SelfDestructQueue::checkDepth(const QueueDepth& increment, const Message&)
 {
     if (settings.maxDepth && (settings.maxDepth - current < increment)) {
-        broker->getQueues().destroy(name);
+        broker->getQueues().destroy(shared_from_this());
         if (broker->getAcl())
             broker->getAcl()->recordDestroyQueue(name);
         QPID_LOG_CAT(debug, model, "Queue " << name << " deleted itself due to reaching limit: " << current << " (policy is " << settings.maxDepth << ")");

@@ -215,7 +215,8 @@ class Queue : public boost::enable_shared_from_this<Queue>,
     MessageInterceptors interceptors;
     std::string seqNoKey;
     Broker* broker;
-    bool deleted;
+    bool deleted;                           // Set exactly once by QueueRegistry
+    mutable qpid::sys::Mutex deletionLock;  // Short duration lock specific to "deleted".
     UsageBarrier barrier;
     boost::intrusive_ptr<qpid::sys::TimerTask> autoDeleteTask;
     boost::shared_ptr<MessageDistributor> allocator;

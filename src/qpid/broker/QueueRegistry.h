@@ -76,11 +76,11 @@ class QueueRegistry : private QueueFactory {
      *
      */
     QPID_BROKER_EXTERN void destroy(
-        const std::string& name,
+        boost::shared_ptr<Queue> targetQ,
         const std::string& connectionId=std::string(),
         const std::string& userId=std::string());
 
-    QPID_BROKER_EXTERN bool destroyIfUntouched(const std::string& name, long version,
+    QPID_BROKER_EXTERN bool destroyIfUntouched(boost::shared_ptr<Queue> targetQ, long version,
                                                const std::string& connectionId=std::string(),
                                                const std::string& userId=std::string());
 

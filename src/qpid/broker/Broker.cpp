@@ -1473,36 +1473,44 @@ std::pair<boost::shared_ptr<Queue>, bool> Broker::createQueue(
     return result;
 }
 
-void Broker::deleteQueue(const std::string& name, const std::string& userId,
+void Broker::deleteQueue(boost::shared_ptr<Queue> queue, const std::string& userId,
                          const std::string& connectionId, QueueFunctor check)
 {
+    const std::string& name = queue->getName();
     QPID_LOG_CAT(debug, model, "Deleting queue. name:" << name
                  << " user:" << userId
                  << " rhost:" << connectionId
     );
+    if (acl) {
+        std::map<acl::Property, std::string> params;
+        boost::shared_ptr<Exchange> altEx = queue->getAlternateExchange();
+        params.insert(make_pair(acl::PROP_ALTERNATE, (altEx) ? altEx->getName() : "" ));
+        params.insert(make_pair(acl::PROP_DURABLE, queue->isDurable() ? _TRUE : _FALSE));
+        params.insert(make_pair(acl::PROP_EXCLUSIVE, queue->hasExclusiveOwner() ? _TRUE : _FALSE));
+        params.insert(make_pair(acl::PROP_AUTODELETE, queue->isAutoDelete() ? _TRUE : _FALSE));
+        params.insert(make_pair(acl::PROP_POLICYTYPE, queue->getSettings().getLimitPolicy()));
+
+        if (!acl->authorise(userId,acl::ACT_DELETE,acl::OBJ_QUEUE,name,&params) )
+            throw framing::UnauthorizedAccessException(QPID_MSG("ACL denied queue delete request from " << userId));
+    }
+    if (check) check(queue);
+    if (acl)
+        acl->recordDestroyQueue(name);
+    Queue::shared_ptr peerQ(queue->getRedirectPeer());
+    if (peerQ)
+        queueRedirectDestroy(queue->isRedirectSource() ? queue : peerQ,
+                             queue->isRedirectSource() ? peerQ : queue,
+                             false);
+    queues.destroy(queue, connectionId, userId);
+
+}
+
+void Broker::deleteQueue(const std::string& name, const std::string& userId,
+                         const std::string& connectionId, QueueFunctor check)
+{
     Queue::shared_ptr queue = queues.find(name);
     if (queue) {
-        if (acl) {
-            std::map<acl::Property, std::string> params;
-            boost::shared_ptr<Exchange> altEx = queue->getAlternateExchange();
-            params.insert(make_pair(acl::PROP_ALTERNATE, (altEx) ? altEx->getName() : "" ));
-            params.insert(make_pair(acl::PROP_DURABLE, queue->isDurable() ? _TRUE : _FALSE));
-            params.insert(make_pair(acl::PROP_EXCLUSIVE, queue->hasExclusiveOwner() ? _TRUE : _FALSE));
-            params.insert(make_pair(acl::PROP_AUTODELETE, queue->isAutoDelete() ? _TRUE : _FALSE));
-            params.insert(make_pair(acl::PROP_POLICYTYPE, queue->getSettings().getLimitPolicy()));
-
-            if (!acl->authorise(userId,acl::ACT_DELETE,acl::OBJ_QUEUE,name,&params) )
-                throw framing::UnauthorizedAccessException(QPID_MSG("ACL denied queue delete request from " << userId));
-        }
-        if (check) check(queue);
-        if (acl)
-            acl->recordDestroyQueue(name);
-        Queue::shared_ptr peerQ(queue->getRedirectPeer());
-        if (peerQ)
-            queueRedirectDestroy(queue->isRedirectSource() ? queue : peerQ,
-                                 queue->isRedirectSource() ? peerQ : queue,
-                                 false);
-        queues.destroy(name, connectionId, userId);
+        deleteQueue(queue, userId, connectionId, check);
     } else {
         throw framing::NotFoundException(QPID_MSG("Delete failed. No such queue: " << name));
     }
