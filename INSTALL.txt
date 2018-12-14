@@ -165,9 +165,10 @@ Qpid test suite.
 
 3. Building a Repository Working Copy
 =====================================
-To get the source code from the subversion repository (trunk) do:
+Developers interested in building master, e.g to test ahead of release, can
+get the source code from the git repository using:
 
- # git clone https://git-wip-us.apache.org/repos/asf/qpid-cpp.git
+ # git clone https://gitbox.apache.org/repos/asf/qpid-cpp.git
 
 To build, cd to the new qpid-cpp directory and then follow the instructions for building
 from a Source Distribution in step (2).
