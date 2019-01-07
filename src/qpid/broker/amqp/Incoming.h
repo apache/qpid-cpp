@@ -80,6 +80,7 @@ class DecodingIncoming : public Incoming
   private:
     boost::shared_ptr<Session> sessionPtr;
     boost::intrusive_ptr<Message> partial;
+    const bool isTimestamping;
 };
 
 }}} // namespace qpid::broker::amqp
