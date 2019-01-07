@@ -28,6 +28,7 @@
 #include "qpid/broker/Message.h"
 #include "qpid/broker/Broker.h"
 #include "qpid/log/Statement.h"
+#include "qpid/sys/Time.h"
 
 namespace qpid {
 namespace broker {
@@ -146,6 +147,8 @@ void DecodingIncoming::readable(pn_delivery_t* delivery)
 void DecodingIncoming::deliver(boost::intrusive_ptr<qpid::broker::amqp::Message> received, pn_delivery_t* delivery)
 {
     qpid::broker::Message message(received, received);
+    qpid::sys::Duration d(qpid::sys::AbsTime::epoch(), qpid::sys::AbsTime::now());
+    message.addAnnotation("x-opt-ingress-timestamp", (int64_t)d);	
     userid.verify(message.getUserId());
     received->begin();
     handle(message, session.getTransaction(delivery));
