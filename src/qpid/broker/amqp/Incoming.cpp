@@ -109,10 +109,7 @@ namespace {
 }
 
 DecodingIncoming::DecodingIncoming(pn_link_t* link, Broker& broker, Session& parent, const std::string& source, const std::string& target, const std::string& name)
-    : Incoming(link, broker, parent, source, target, name), sessionPtr(parent.shared_from_this())
-{
-    isTimestamping = broker.isTimestamping();
-}
+    : Incoming(link, broker, parent, source, target, name), sessionPtr(parent.shared_from_this()), isTimestamping(broker.isTimestamping()) {}
 
 DecodingIncoming::~DecodingIncoming() {}
 
