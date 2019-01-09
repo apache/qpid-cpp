@@ -152,8 +152,8 @@ void DecodingIncoming::deliver(boost::intrusive_ptr<qpid::broker::amqp::Message>
 {
     qpid::broker::Message message(received, received);
     if (isTimestamping) {
-    qpid::sys::Duration d(qpid::sys::AbsTime::epoch(), qpid::sys::AbsTime::now());
-    message.addAnnotation("x-opt-ingress-timestamp",(int64_t)d);
+        qpid::sys::Duration d(qpid::sys::AbsTime::epoch(), qpid::sys::AbsTime::now());
+        message.addAnnotation("x-opt-ingress-timestamp",(int64_t)d);
     }	
     userid.verify(message.getUserId());
     received->begin();
