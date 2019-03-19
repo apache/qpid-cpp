@@ -196,6 +196,7 @@ class Connection : public sys::ConnectionInputHandler, public qpid::broker::Conn
     std::vector<Url> knownHosts;
     std::string userName;
     bool isDefaultRealm;
+    bool hasSignalledClosed;
 
     typedef boost::ptr_map<framing::ChannelId, SessionHandler> ChannelMap;
 

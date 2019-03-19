@@ -139,6 +139,7 @@ Connection::Connection(ConnectionOutputHandler* out_,
     heartbeat(0),
     heartbeatmax(120),
     isDefaultRealm(false),
+    hasSignalledClosed(false),
     securitySettings(external),
     link(link_),
     adapter(*this, link),
@@ -180,7 +181,10 @@ Connection::~Connection()
             << " rhost:" << mgmtId );
         mgmtObject->resourceDestroy();
     }
-    broker.getConnectionObservers().closed(*this);
+    if (!hasSignalledClosed) {
+        broker.getConnectionObservers().closed(*this);
+        hasSignalledClosed = true;
+    }
 
     if (heartbeatTimer)
         heartbeatTimer->cancel();
@@ -375,6 +379,10 @@ void Connection::closed(){ // Physically closed, suspend open sessions.
     } catch(std::exception& e) {
         QPID_LOG(error, QPID_MSG("While closing connection: " << e.what()));
         assert(0);
+    }
+    if (!hasSignalledClosed) {
+        broker.getConnectionObservers().closed(*this);
+        hasSignalledClosed = true;
     }
 }
 
