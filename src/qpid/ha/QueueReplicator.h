@@ -46,6 +46,7 @@ class ExchangeRegistry;
 
 namespace ha {
 class HaBroker;
+class QueueSnapshot;
 class Settings;
 
 /**
@@ -130,6 +131,7 @@ class QueueReplicator : public broker::Exchange,
     class QueueObserver;
 
     void initializeBridge(broker::Bridge& bridge, broker::SessionHandler& sessionHandler);
+    boost::shared_ptr<QueueSnapshot> getSnapshot();
 
     // Dispatch functions
     void dequeueEvent(const std::string& data, sys::Mutex::ScopedLock&);

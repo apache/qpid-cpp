@@ -241,12 +241,28 @@ void QueueReplicator::destroy(Mutex::ScopedLock&) {
     getBroker()->getExchanges().destroy(getName());
 }
 
+boost::shared_ptr<QueueSnapshot> QueueReplicator::getSnapshot()
+{
+    boost::shared_ptr<broker::Queue> q;
+    {
+        Mutex::ScopedLock l(lock);
+        if (queue) {
+            q = queue;
+        } else {
+            return boost::shared_ptr<QueueSnapshot>();
+        }
+    }
+    return q->getObservers().findType<QueueSnapshot>();
+}
+
 
 // Called in a broker connection thread when the bridge is created.
 // Note: called with the Link lock held.
 void QueueReplicator::initializeBridge(Bridge& bridge, SessionHandler& sessionHandler_) {
+    boost::shared_ptr<QueueSnapshot> qs = getSnapshot();//do outside the lock
     Mutex::ScopedLock l(lock);
     if (!queue) return;         // Already destroyed
+
     sessionHandler = &sessionHandler_;
     if (sessionHandler->getSession()) {
         // Don't overwrite the exchange property set on the primary.
@@ -258,7 +274,6 @@ void QueueReplicator::initializeBridge(Bridge& bridge, SessionHandler& sessionHa
     arguments.setString(ReplicatingSubscription::QPID_REPLICATING_SUBSCRIPTION, getType());
     arguments.setInt(QPID_SYNC_FREQUENCY, 1); // TODO aconway 2012-05-22: optimize?
     arguments.setTable(ReplicatingSubscription::QPID_BROKER_INFO, brokerInfo.asFieldTable());
-    boost::shared_ptr<QueueSnapshot> qs = queue->getObservers().findType<QueueSnapshot>();
     ReplicationIdSet snapshot;
     if (qs) {
         snapshot = qs->getSnapshot();
@@ -307,6 +322,7 @@ void QueueReplicator::dequeueEvent(const string& data, Mutex::ScopedLock&) {
             if (j == positions.end()) continue;
             position = j->second;
         }
+        Mutex::ScopedUnlock u(lock);//this method is called under lock, so need to release
         queue->dequeueMessageAt(position); // Outside lock, will call dequeued().
         // positions will be cleaned up in dequeued()
     }
