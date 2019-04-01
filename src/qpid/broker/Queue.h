@@ -226,6 +226,7 @@ class Queue : public boost::enable_shared_from_this<Queue>,
     // Redirect source and target refer to each other. Only one is source.
     Queue::shared_ptr redirectPeer;
     bool redirectSource;
+    const uint32_t maxPurgeBatch;
 
     bool checkAutoDelete(const qpid::sys::Mutex::ScopedLock&) const;
     bool isUnused(const qpid::sys::Mutex::ScopedLock&) const;

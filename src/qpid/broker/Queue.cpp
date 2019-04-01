@@ -205,7 +205,8 @@ Queue::Queue(const string& _name, const QueueSettings& _settings,
     deleted(false),
     barrier(*this),
     allocator(new FifoDistributor( *messages )),
-    redirectSource(false)
+    redirectSource(false),
+    maxPurgeBatch(broker ? broker->getMaxPurgeBatch() : 1000)
 {
     current.setCount(0);//always track depth in messages
     if (settings.maxDepth.getSize()) current.setSize(0);//track depth in bytes only if policy requires it
@@ -664,17 +665,20 @@ void Queue::purgeExpired(sys::Duration lapse) {
     int seconds = int64_t(lapse)/qpid::sys::TIME_SEC;
     if (seconds == 0 || count / seconds < 1) {
         sys::AbsTime time = sys::AbsTime::now();
-        uint32_t count = remove(0, boost::bind(&isExpired, name, _1, time), 0, CONSUMER, settings.autodelete);
-        QPID_LOG(debug, "Purged " << count << " expired messages from " << getName());
-        //
-        // Report the count of discarded-by-ttl messages
-        //
-        if (mgmtObject && count) {
-            mgmtObject->inc_discardsTtl(count);
-            if (brokerMgmtObject) {
-                brokerMgmtObject->inc_discardsTtl(count);
+        uint32_t removed;
+        do {
+            removed = remove(maxPurgeBatch, boost::bind(&isExpired, name, _1, time), 0, CONSUMER, settings.autodelete);
+            QPID_LOG(debug, "Purged " << removed << " expired messages from " << getName());
+            //
+            // Report the count of discarded-by-ttl messages
+            //
+            if (mgmtObject && removed) {
+                mgmtObject->inc_discardsTtl(removed);
+                if (brokerMgmtObject) {
+                    brokerMgmtObject->inc_discardsTtl(removed);
+                }
             }
-        }
+        } while(maxPurgeBatch && removed == maxPurgeBatch);//if we hit the limit, there may be more to purge
     }
 }
 

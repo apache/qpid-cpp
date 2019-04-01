@@ -79,6 +79,7 @@ struct BrokerOptions : public qpid::Options
     uint32_t maxNegotiateTime;  // Max time in ms for connection with no negotiation
     size_t sessionMaxUnacked;   // Max un-acknowledged outgoing messages per session
     std::string fedTag;
+    uint32_t maxPurgeBatch;
 
 private:
     std::string getHome();

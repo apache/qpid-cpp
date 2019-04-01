@@ -168,6 +168,7 @@ class Broker : public sys::Runnable, public Plugin::Target,
     mutable sys::Mutex linkClientPropertiesLock;
     framing::FieldTable linkClientProperties;
     bool timestampRcvMsgs;
+    const uint32_t maxPurgeBatch;
 
   public:
     QPID_BROKER_EXTERN virtual ~Broker();
@@ -347,6 +348,7 @@ class Broker : public sys::Runnable, public Plugin::Target,
     uint32_t getDtxMaxTimeout() const;
     uint16_t getQueueThresholdEventRatio() const;
     uint getQueueLimit() const;
+    uint32_t getMaxPurgeBatch() const;
 
     /** Information identifying this system */
     boost::shared_ptr<const System> getSystem() const { return systemObject; }

@@ -151,7 +151,8 @@ BrokerOptions::BrokerOptions(const std::string& name) :
     dtxDefaultTimeout(60),      // 60s
     dtxMaxTimeout(3600),        // 3600s
     maxNegotiateTime(10000),    // 10s
-    sessionMaxUnacked(5000) 
+    sessionMaxUnacked(5000),
+    maxPurgeBatch(1000)
 {
     int c = sys::SystemInfo::concurrency();
     workerThreads=c+1;
@@ -180,6 +181,7 @@ BrokerOptions::BrokerOptions(const std::string& name) :
         ("mgmt-pub-interval", optValue(mgmtPubInterval, "SECONDS"), "Management Publish Interval")
         ("queue-purge-interval", optValue(queueCleanInterval, "SECONDS"),
          "Interval between attempts to purge any expired messages from queues")
+        ("max-purge-batch", optValue(maxPurgeBatch, "MESSAGES"), "maximum number of expired messages queue clenear will purge in one batch (controls impact on other threads)")
         ("auth", optValue(auth, "yes|no"), "Enable authentication, if disabled all incoming connections will be trusted")
         ("realm", optValue(realm, "REALM"), "Use the given realm when performing authentication")
         ("sasl-service-name", optValue(saslServiceName, "NAME"), "The service name to specify for SASL")
@@ -248,6 +250,7 @@ Broker::Broker(const BrokerOptions& conf) :
     recoveryInProgress(false),
     protocolRegistry(std::set<std::string>(conf.protocols.begin(), conf.protocols.end()), this),
     timestampRcvMsgs(conf.timestampRcvMsgs),
+    maxPurgeBatch(conf.maxPurgeBatch),
     getKnownBrokers(boost::bind(&Broker::getKnownBrokersImpl, this))
 {
     if (!dataDir.isEnabled()) {
@@ -1693,6 +1696,12 @@ void Broker::setLinkClientProperties(const framing::FieldTable& ft) {
     sys::Mutex::ScopedLock l(linkClientPropertiesLock);
     linkClientProperties = ft;
 }
+
+uint32_t Broker::getMaxPurgeBatch() const
+{
+    return maxPurgeBatch;
+}
+
 
 }} // namespace qpid::broker
 
