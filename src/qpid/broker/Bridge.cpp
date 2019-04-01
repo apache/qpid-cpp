@@ -435,24 +435,28 @@ const string& Bridge::getLocalTag() const
 void Bridge::connectionException(
     framing::connection::CloseCode code, const std::string& msg)
 {
+    detached = true;
     if (errorListener) errorListener->connectionException(code, msg);
 }
 
 void Bridge::channelException(
     framing::session::DetachCode code, const std::string& msg)
 {
+    detached = true;
     if (errorListener) errorListener->channelException(code, msg);
 }
 
 void Bridge::executionException(
     framing::execution::ErrorCode code, const std::string& msg)
 {
+    detached = true;
     if (errorListener) errorListener->executionException(code, msg);
 }
 
 void Bridge::incomingExecutionException(
     framing::execution::ErrorCode code, const std::string& msg)
 {
+    detached = true;
     if (errorListener) errorListener->incomingExecutionException(code, msg);
 }
 
