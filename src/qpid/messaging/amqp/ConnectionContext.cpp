@@ -1361,6 +1361,9 @@ void ConnectionContext::rollback(boost::shared_ptr<SessionContext> session) {
 void ConnectionContext::configureConnection()
 {
     pn_connection_set_container(connection, identifier.c_str());
+    if (virtualhost.size()) {
+        pn_connection_set_hostname(connection, virtualhost.c_str());
+    }
     setProperties();
     if (heartbeat) {
         // fail an idle connection at 2 x heartbeat (in msecs)

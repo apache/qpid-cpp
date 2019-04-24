@@ -136,6 +136,8 @@ void ConnectionOptions::set(const std::string& name, const qpid::types::Variant&
         redeliveryTimeout = timeValue(value);
     } else if (name == "properties" || name == "client-properties" || name == "client_properties") {
         properties = value.asMap();
+    } else if (name == "virtualhost") {
+        virtualhost = value.asString();
     } else {
         throw qpid::messaging::MessagingException(QPID_MSG("Invalid option: " << name << " not recognised"));
     }
