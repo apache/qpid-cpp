@@ -541,7 +541,7 @@ void Session::setupOutgoing(pn_link_t* link, pn_terminus_t* source, const std::s
         authorise.access(node.exchange);//do separate access check before trying to create the queue
         bool shared = is_capability_requested(SHARED, pn_terminus_capabilities(source));
         bool durable = pn_terminus_get_durability(source);
-        bool autodelete = !durable && pn_link_remote_snd_settle_mode(link) != PN_SND_UNSETTLED;
+        bool autodelete = pn_terminus_get_expiry_policy(source) != PN_EXPIRE_NEVER;
         QueueSettings settings(durable, autodelete);
         std::string altExchange;
         if (node.topic) {
