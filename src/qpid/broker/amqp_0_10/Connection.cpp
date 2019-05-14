@@ -333,6 +333,15 @@ void Connection::raiseConnectEvent() {
         << " rhost:" << mgmtId );
 }
 
+std::string truncate(const std::string& in, size_t length)
+{
+    if (in.size() < length) {
+        return in;
+    } else {
+        return in.substr(0, length);
+    }
+}
+
 void Connection::close(connection::CloseCode code, const string& text)
 {
     QPID_LOG_IF(error, code != connection::CLOSE_CODE_NORMAL, "Connection " << mgmtId << " closed by error: " << text << "(" << code << ")");
@@ -343,7 +352,7 @@ void Connection::close(connection::CloseCode code, const string& text)
     if (linkHeartbeatTimer) {
         linkHeartbeatTimer->cancel();
     }
-    adapter.close(code, text);
+    adapter.close(code, truncate(text, 128));
     //make sure we delete dangling pointers from outputTasks before deleting sessions
     outputTasks.removeAll();
     channels.clear();
