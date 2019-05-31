@@ -792,7 +792,10 @@ uint32_t Queue::remove(const uint32_t maxCount, MessagePredicate p, MessageFunct
         }
     }
     for (std::deque<Message>::iterator i = removed.begin(); i != removed.end(); ++i) {
-        if (f) f(*i);//ERROR? need to clear old persistent context?
+        if (f) {
+            (*i).getSharedState().setPublisher(0);  // clear scopedManagementContext
+            f(*i);//ERROR? need to clear other old persistent context?
+        }
         if (i->isPersistent()) dequeueFromStore(i->getPersistentContext());//do this outside of lock and after any re-routing
     }
     return removed.size();
