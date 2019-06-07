@@ -298,18 +298,16 @@ void RecoveryManager::recoveryComplete() {
 void RecoveryManager::setLinearFileControllerJournals(lfcAddJournalFileFn fnPtr,
                                                       LinearFileController* lfcPtr) {
     if (journalEmptyFlag_) {
-        if (uninitFileList_.size() > 0) {
-            // TODO: Handle case if uninitFileList_.size() > 1, but this should not happen in normal operation. Here we assume only one item in the list.
-            std::string uninitFile = uninitFileList_.back();
-            uninitFileList_.pop_back();
-            lfcPtr->restoreEmptyFile(uninitFile);
-        }
+        restoreEmptyFile(lfcPtr);
     } else {
         if (initial_fid_ == 0) {
             throw jexception(jerrno::JERR_RCVM_NULLFID, "RecoveryManager", "setLinearFileControllerJournals");
         }
         for (fileNumberMapConstItr_t i = fileNumberMap_.begin(); i != fileNumberMap_.end(); ++i) {
             (lfcPtr->*fnPtr)(i->second->journalFilePtr_, i->second->completedDblkCount_, i->first == initial_fid_);
+        }
+        if (lastFileFullFlag_) {
+            restoreEmptyFile(lfcPtr);
         }
     }
 
@@ -325,6 +323,16 @@ void RecoveryManager::setLinearFileControllerJournals(lfcAddJournalFileFn fnPtr,
     }
     if (logFlag) {
         journalLogRef_.log(JournalLog::LOG_NOTICE, queueName_, oss.str());
+    }
+}
+
+void RecoveryManager::restoreEmptyFile(LinearFileController* lfcPtr) {
+    if (uninitFileList_.size() > 0) {
+        std::string uninitFile = uninitFileList_.back();
+        uninitFileList_.pop_back();
+        lfcPtr->restoreEmptyFile(uninitFile);
+        lastFileFullFlag_ = false;
+        endOffset_ = 0;
     }
 }
 
@@ -389,6 +397,7 @@ void RecoveryManager::analyzeJournalFileHeaders(efpIdentity_t& efpIdentity) {
             oss << "Journal file " << (*i) << " is corrupted or invalid";
             journalLogRef_.log(JournalLog::LOG_WARN, queueName_, oss.str());
         } else if (hdrEmpty) {
+/* This seems unnecessary, as the data size is encoded in the file_hdr_t::_data_size_kib, even for reset file headers
             // Read symlink, find efp directory name which is efp size in KiB
             // TODO: place this bit into a common function as it is also used in EmptyFilePool.cpp::deleteSymlink()
             char buff[1024];
@@ -406,6 +415,10 @@ void RecoveryManager::analyzeJournalFileHeaders(efpIdentity_t& efpIdentity) {
             uninitFileList_.push_back(*i);
             efpIdentity.pn_ = fileHeader._efp_partition;
             efpIdentity.ds_ = efpDataSize_kib;
+*/
+            efpIdentity.pn_ = fileHeader._efp_partition;
+            efpIdentity.ds_ = fileHeader._data_size_kib;
+            uninitFileList_.push_back(*i);
         } else if (headerQueueName.compare(queueName_) != 0) {
             std::ostringstream oss;
             oss << "Journal file " << (*i) << " belongs to queue \"" << headerQueueName << "\": ignoring";
@@ -945,6 +958,13 @@ void RecoveryManager::removeEmptyFiles(EmptyFilePool* emptyFilePoolPtr) {
         delete rfdp;
         fileNumberMap_.erase(fileNumberMap_.begin()->first);
     }
+}
+
+void RecoveryManager::removeUninitFiles(EmptyFilePool* emptyFilePoolPtr) {
+    while (uninitFileList_.size() > 0) {
+        emptyFilePoolPtr->returnEmptyFileSymlink(uninitFileList_.back());
+        uninitFileList_.pop_back();
+    };
 }
 
 }}}

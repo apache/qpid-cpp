@@ -122,6 +122,7 @@ jcntl::recover(EmptyFilePoolManager* efpmp,
     _jrnl_log.log(/*LOG_DEBUG*/JournalLog::LOG_INFO, _jid, _recoveryManager.toString(_jid, 5U));
     _linearFileController.initialize(_jdir.dirname(), _emptyFilePoolPtr, _recoveryManager.getHighestFileNumber());
     _recoveryManager.setLinearFileControllerJournals(&qpid::linearstore::journal::LinearFileController::addJournalFile, &_linearFileController);
+    _recoveryManager.removeUninitFiles(_emptyFilePoolPtr);
     if (_recoveryManager.isLastFileFull()) {
         _linearFileController.getNextJournalFile();
     }

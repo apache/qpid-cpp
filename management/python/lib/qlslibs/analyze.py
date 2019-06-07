@@ -505,7 +505,7 @@ class Journal(object):
             self.statistics.filler_record_count += 1
             ok_flag = True
             if self.args.show_all_recs:
-                print '0x%x:%s' % (start_journal_file.file_header.file_num, this_record)
+                print '0x%x:%s' % (start_journal_file.file_header.file_num, this_record.to_rh_string())
         qlslibs.utils.skip(self.current_journal_file.file_header.file_handle, qlslibs.utils.DEFAULT_DBLK_SIZE)
         return ok_flag
     def _handle_enqueue_record(self, enqueue_record, start_journal_file):
