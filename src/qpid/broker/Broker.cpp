@@ -558,11 +558,11 @@ Broker::~Broker() {
     QPID_LOG(info, logPrefix << "shutting down");
     if (mgmtObject != 0)
         mgmtObject->debugStats("destroying");
+    timer->stop();
     shutdown();
     finalize();                 // Finalize any plugins.
     if (config.auth)
         SaslAuthenticator::fini();
-    timer->stop();
     managementAgent.reset();
 }
 
