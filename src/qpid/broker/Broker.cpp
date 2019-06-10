@@ -833,7 +833,7 @@ struct InvalidParameter : public qpid::Exception
 };
 
 void Broker::createObject(const std::string& type, const std::string& name,
-                          const Variant::Map& properties, bool /*strict*/, const Connection* context)
+                          const Variant::Map& properties, bool /*strict*/, const ConnectionIdentity* context)
 {
     std::string userId;
     std::string connectionId;
@@ -1026,7 +1026,7 @@ void Broker::createObject(const std::string& type, const std::string& name,
 }
 
 void Broker::deleteObject(const std::string& type, const std::string& name,
-                          const Variant::Map& options, const Connection* context)
+                          const Variant::Map& options, const ConnectionIdentity* context)
 {
     std::string userId;
     std::string connectionId;
@@ -1080,7 +1080,7 @@ void Broker::checkDeleteQueue(Queue::shared_ptr queue, bool ifUnused, bool ifEmp
 Manageable::status_t Broker::queryObject(const std::string& type,
                                          const std::string& name,
                                          Variant::Map& results,
-                                         const Connection* context)
+                                         const ConnectionIdentity* context)
 {
     std::string userId;
     std::string connectionId;
@@ -1122,7 +1122,7 @@ Manageable::status_t Broker::queryQueue( const std::string& name,
 }
 
 Manageable::status_t Broker::getTimestampConfig(bool& receive,
-                                                const Connection* context)
+                                                const ConnectionIdentity* context)
 {
     std::string name;   // none needed for broker
     std::string userId = context->getUserId();
@@ -1134,7 +1134,7 @@ Manageable::status_t Broker::getTimestampConfig(bool& receive,
 }
 
 Manageable::status_t Broker::setTimestampConfig(const bool receive,
-                                                const Connection* context)
+                                                const ConnectionIdentity* context)
 {
     std::string name;   // none needed for broker
     std::string userId = context->getUserId();
@@ -1185,7 +1185,7 @@ bool Broker::getLogHiresTimestamp()
 
 Manageable::status_t Broker::queueRedirect(const std::string& srcQueue,
                                            const std::string& tgtQueue,
-                                           const Connection* context)
+                                           const ConnectionIdentity* context)
 {
     Queue::shared_ptr srcQ(queues.find(srcQueue));
     if (!srcQ) {
@@ -1376,7 +1376,7 @@ int32_t Broker::queueMoveMessages(
      const std::string& destQueue,
      uint32_t  qty,
      const Variant::Map& filter,
-     const Connection* context)
+     const ConnectionIdentity* context)
 {
     Queue::shared_ptr src_queue = queues.find(srcQueue);
     if (!src_queue)

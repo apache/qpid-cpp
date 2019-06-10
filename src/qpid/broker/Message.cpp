@@ -185,9 +185,18 @@ uint8_t Message::getPriority() const
 
 bool Message::getIsManagementMessage() const { return sharedState->getIsManagementMessage(); }
 
-const Connection* Message::getPublisher() const { return sharedState->getPublisher(); }
+const ConnectionIdentity* Message::getPublisherIdentity() const { return sharedState->getPublisherIdentity(); }
 bool Message::isLocalTo(const OwnershipToken* token) const {
-    return token && sharedState->getPublisher() && token->isLocal(sharedState->getPublisher());
+    return token && sharedState->getPublisherToken() && token->isLocal(sharedState->getPublisherToken());
+}
+
+management::ObjectId Message::__getPublisherMgmtObject() const
+{
+    //token is a potentially dangling pointer to the publihser connection that can only be safely
+    //used as the value to an OwnershipToken::isLocal() call. The following is only used for a
+    // QMF v1 attach request
+    const OwnershipToken* token = sharedState->getPublisherToken();
+    return token ? ((const Connection*) token)->getObjectId() : management::ObjectId();
 }
 
 
@@ -334,16 +343,34 @@ sys::AbsTime Message::getExpiration() const
     return sharedState->getExpiration();
 }
 
-Message::SharedStateImpl::SharedStateImpl() : publisher(0), expiration(qpid::sys::FAR_FUTURE), isManagementMessage(false) {}
-
-const Connection* Message::SharedStateImpl::getPublisher() const
+Message::ConnectionIdentityState::ConnectionIdentityState()
 {
-    return publisher;
+}
+const std::string& Message::ConnectionIdentityState::getUserId() const
+{
+    return userId;
+}
+const std::string& Message::ConnectionIdentityState::getMgmtId() const
+{
+    return mgmtId;
+}
+
+Message::SharedStateImpl::SharedStateImpl() : publisherToken(0), expiration(qpid::sys::FAR_FUTURE), isManagementMessage(false) {}
+
+const ConnectionIdentity* Message::SharedStateImpl::getPublisherIdentity() const
+{
+    return &publisherIdentity;
+}
+const OwnershipToken* Message::SharedStateImpl::getPublisherToken() const
+{
+    return publisherToken;
 }
 
 void Message::SharedStateImpl::setPublisher(const Connection* p)
 {
-    publisher = p;
+    publisherToken = p;
+    publisherIdentity.userId = p->getUserId();
+    publisherIdentity.mgmtId = p->getMgmtId();
 }
 
 sys::AbsTime Message::SharedStateImpl::getExpiration() const
@@ -382,5 +409,6 @@ void Message::SharedStateImpl::setIsManagementMessage(bool b)
 {
     isManagementMessage = b;
 }
+
 
 }} // namespace qpid::broker

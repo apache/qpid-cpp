@@ -23,6 +23,7 @@
  */
 
 #include "qpid/RefCounted.h"
+#include "qpid/broker/Connection.h"
 #include "qpid/broker/PersistableMessage.h"
 //TODO: move the following out of framing or replace it
 #include "qpid/framing/SequenceNumber.h"
@@ -48,8 +49,6 @@ class Manageable;
 }
 
 namespace broker {
-class OwnershipToken;
-class Connection;
 
 enum MessageState
 {
@@ -88,7 +87,8 @@ public:
     {
       public:
         virtual ~SharedState() {}
-        virtual const Connection* getPublisher() const = 0;
+        virtual const ConnectionIdentity* getPublisherIdentity() const = 0;
+        virtual const OwnershipToken* getPublisherToken() const = 0;
         virtual void setPublisher(const Connection* p) = 0;
 
         virtual void setExpiration(sys::AbsTime e) = 0;
@@ -100,15 +100,26 @@ public:
         virtual void setIsManagementMessage(bool b) = 0;
     };
 
+    struct ConnectionIdentityState : ConnectionIdentity {
+        std::string userId;
+        std::string mgmtId;
+        QPID_BROKER_EXTERN ConnectionIdentityState();
+        virtual ~ConnectionIdentityState() {}
+        QPID_BROKER_EXTERN const std::string& getUserId() const;
+        QPID_BROKER_EXTERN const std::string& getMgmtId() const;
+    };
+
     class SharedStateImpl : public SharedState
     {
-        const Connection* publisher;
+        const OwnershipToken* publisherToken;
+        ConnectionIdentityState publisherIdentity;
         qpid::sys::AbsTime expiration;
         bool isManagementMessage;
       public:
         QPID_BROKER_EXTERN SharedStateImpl();
         virtual ~SharedStateImpl() {}
-        QPID_BROKER_EXTERN const Connection* getPublisher() const;
+        QPID_BROKER_EXTERN const ConnectionIdentity* getPublisherIdentity() const;
+        QPID_BROKER_EXTERN const OwnershipToken* getPublisherToken() const;
         QPID_BROKER_EXTERN void setPublisher(const Connection* p);
         QPID_BROKER_EXTERN void setExpiration(sys::AbsTime e);
         QPID_BROKER_EXTERN sys::AbsTime getExpiration() const;
@@ -116,6 +127,7 @@ public:
         QPID_BROKER_EXTERN void computeExpiration();
         QPID_BROKER_EXTERN bool getIsManagementMessage() const;
         QPID_BROKER_EXTERN void setIsManagementMessage(bool b);
+
     };
 
     QPID_BROKER_EXTERN Message(boost::intrusive_ptr<SharedState>, boost::intrusive_ptr<PersistableMessage>);
@@ -129,8 +141,12 @@ public:
     int getDeliveryCount() const { return deliveryCount; }
     void resetDeliveryCount() { deliveryCount = -1; alreadyAcquired = false; }
 
-    const Connection* getPublisher() const;
+    const ConnectionIdentity* getPublisherIdentity() const;
     bool isLocalTo(const OwnershipToken*) const;
+
+    //the following is only neede for a QMF v1 attach and should only be incoked
+    //when the publishing connection is guaranteed to be active
+    management::ObjectId __getPublisherMgmtObject() const;
 
     QPID_BROKER_EXTERN std::string getRoutingKey() const;
     QPID_BROKER_EXTERN bool isPersistent() const;

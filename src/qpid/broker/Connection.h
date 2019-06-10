@@ -35,19 +35,25 @@ class Variant;
 
 namespace broker {
 
+class ConnectionIdentity {
+public:
+    virtual ~ConnectionIdentity() {}
+    virtual const std::string& getUserId() const = 0;
+    virtual const std::string& getMgmtId() const = 0;
+};
+
 /**
  * Protocol independent connection abstraction.
  */
-class Connection : public OwnershipToken {
+class Connection : public OwnershipToken, public ConnectionIdentity {
 public:
     virtual ~Connection() {}
     virtual const management::ObjectId getObjectId() const = 0;
-    virtual const std::string& getUserId() const = 0;
-    virtual const std::string& getMgmtId() const = 0;
     virtual const std::map<std::string, types::Variant>& getClientProperties() const = 0;
     virtual bool isLink() const = 0;
     virtual void abort() = 0;
 };
+
 }} // namespace qpid::broker
 
 #endif  /*!QPID_BROKER_CONNECTION_H*/

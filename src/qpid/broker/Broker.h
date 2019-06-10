@@ -107,21 +107,21 @@ class Broker : public sys::Runnable, public Plugin::Target,
     void setLogHiresTimestamp(bool enabled);
     bool getLogHiresTimestamp();
     void createObject(const std::string& type, const std::string& name,
-                      const qpid::types::Variant::Map& properties, bool strict, const Connection* context);
+                      const qpid::types::Variant::Map& properties, bool strict, const ConnectionIdentity* context);
     void deleteObject(const std::string& type, const std::string& name,
-                      const qpid::types::Variant::Map& options, const Connection* context);
+                      const qpid::types::Variant::Map& options, const ConnectionIdentity* context);
     void checkDeleteQueue(boost::shared_ptr<Queue> queue, bool ifUnused, bool ifEmpty);
     Manageable::status_t queryObject(const std::string& type, const std::string& name,
-                                     qpid::types::Variant::Map& results, const Connection* context);
+                                     qpid::types::Variant::Map& results, const ConnectionIdentity* context);
     Manageable::status_t queryQueue( const std::string& name,
                                      const std::string& userId,
                                      const std::string& connectionId,
                                      qpid::types::Variant::Map& results);
     Manageable::status_t getTimestampConfig(bool& receive,
-                                            const Connection* context);
+                                            const ConnectionIdentity* context);
     Manageable::status_t setTimestampConfig(const bool receive,
-                                            const Connection* context);
-    Manageable::status_t queueRedirect(const std::string& srcQueue, const std::string& tgtQueue, const Connection* context);
+                                            const ConnectionIdentity* context);
+    Manageable::status_t queueRedirect(const std::string& srcQueue, const std::string& tgtQueue, const ConnectionIdentity* context);
     void queueRedirectDestroy(boost::shared_ptr<Queue> srcQ, boost::shared_ptr<Queue> tgtQ, bool moveMsgs);
 
     // This must be the first member of Broker. It logs a start-up message
@@ -253,7 +253,7 @@ class Broker : public sys::Runnable, public Plugin::Target,
         const std::string& destQueue,
         uint32_t  qty,
         const qpid::types::Variant::Map& filter,
-        const Connection* context);
+        const ConnectionIdentity* context);
 
     QPID_BROKER_EXTERN const TransportInfo& getTransportInfo(
         const std::string& name = TCP_TRANSPORT) const;

@@ -380,9 +380,9 @@ private:
     std::auto_ptr<EventQueue> sendQueue;
 };
 
-void setManagementExecutionContext(const broker::Connection&);
+void setManagementExecutionContext(const broker::ConnectionIdentity&);
 void resetManagementExecutionContext();
-const broker::Connection* getCurrentPublisher();
+const broker::ConnectionIdentity* getCurrentPublisher();
 }}
 
 #endif  /*!_ManagementAgent_*/

@@ -89,17 +89,13 @@ const string keyifyNameStr(const string& name)
 
 struct ScopedManagementContext
 {
-    const Connection* context;
+    const ConnectionIdentity* context;
 
-    ScopedManagementContext(const Connection* p) : context(p)
+    ScopedManagementContext(const ConnectionIdentity* p) : context(p)
     {
         if (p) setManagementExecutionContext(*p);
     }
 
-    management::ObjectId getObjectId() const
-    {
-        return context ? context->getObjectId() : management::ObjectId();
-    }
     std::string getUserId() const
     {
         return context ? context->getUserId() : std::string();
@@ -2329,7 +2325,7 @@ void ManagementAgent::dispatchAgentCommand(Message& msg, bool viaLocal)
     uint32_t bufferLen = inBuffer.getPosition();
     inBuffer.reset();
 
-    ScopedManagementContext context(msg.getPublisher());
+    ScopedManagementContext context(msg.getPublisherIdentity());
     const framing::FieldTable *headers = p ? &p->getApplicationHeaders() : 0;
     if (headers && p->getAppId() == "qmf2")
     {
@@ -2367,7 +2363,7 @@ void ManagementAgent::dispatchAgentCommand(Message& msg, bool viaLocal)
         else if (opcode == 'q') handleClassInd       (inBuffer, rtk, sequence);
         else if (opcode == 'S') handleSchemaRequest  (inBuffer, rte, rtk, sequence);
         else if (opcode == 's') handleSchemaResponse (inBuffer, rtk, sequence);
-        else if (opcode == 'A') handleAttachRequest  (inBuffer, rtk, sequence, context.getObjectId());
+        else if (opcode == 'A') handleAttachRequest  (inBuffer, rtk, sequence, msg.__getPublisherMgmtObject());
         else if (opcode == 'G') handleGetQuery       (inBuffer, rtk, sequence, context.getMgmtId());
         else if (opcode == 'M') handleMethodRequest  (inBuffer, rtk, sequence, context.getMgmtId());
     }
@@ -2810,10 +2806,10 @@ ManagementAgent::EventQueue::Batch::const_iterator ManagementAgent::sendEvents(
 }
 
 namespace {
-QPID_TSS const Connection* currentPublisher = 0;
+QPID_TSS const ConnectionIdentity* currentPublisher = 0;
 }
 
-void setManagementExecutionContext(const Connection& p)
+void setManagementExecutionContext(const ConnectionIdentity& p)
 {
     currentPublisher = &p;
 }
@@ -2823,7 +2819,7 @@ void resetManagementExecutionContext()
     currentPublisher = 0;
 }
 
-const Connection* getCurrentPublisher()
+const ConnectionIdentity* getCurrentPublisher()
 {
     return currentPublisher;
 }
