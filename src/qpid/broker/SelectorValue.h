@@ -55,7 +55,7 @@ public:
         T_INEXACT
     } type;
 
-    // Default copy contructor
+    // Default copy constructor
     // Default assignment operator
     // Default destructor
     Value() :

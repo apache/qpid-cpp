@@ -1037,16 +1037,18 @@ Expression* unaryArithExpression(Tokeniser& tokeniser)
 Expression* parseExactNumeric(const Token& token, bool negate)
 {
     int base = 0;
-    string s("");
+    string s;
     std::remove_copy(token.val.begin(), token.val.end(), std::back_inserter(s), '_');
-    if (s[1]=='b' || s[1]=='B') {
-        base = 2;
-        s = s.substr(2);
-    } else if (s[1]=='x' || s[1]=='X') {
-        base = 16;
-        s = s.substr(2);
-    } if (s[0]=='0') {
-        base = 8;
+    if (s[0]=='0' && s.size()>1) {
+        if (s[1]=='b' || s[1]=='B') {
+            base = 2;
+            s = s.substr(2);
+        } else if (s[1]=='x' || s[1]=='X') {
+            base = 16;
+            s = s.substr(2);
+        } else {
+            base = 8;
+        }
     }
     errno = 0;
     uint64_t value = strtoull(s.c_str(), 0, base);
