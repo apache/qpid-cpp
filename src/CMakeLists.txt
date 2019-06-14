@@ -492,7 +492,7 @@ if (BUILD_XML)
                qpid/xml/XmlExchange.cpp
                qpid/xml/XmlExchange.h
                qpid/xml/XmlExchangePlugin.cpp)
-  target_link_libraries (xml xerces-c xqilla qpidbroker qpidcommon)
+  target_link_libraries (xml PRIVATE xerces-c xqilla qpidbroker qpidcommon)
   set_target_properties (xml PROPERTIES
                          PREFIX "")
   install (TARGETS xml
@@ -575,6 +575,7 @@ if (BUILD_HA)
 
     add_library (ha MODULE ${ha_SOURCES})
     target_link_libraries (ha
+                           PRIVATE
                            qpidtypes qpidcommon qpidbroker qpidmessaging
                            ${Boost_PROGRAM_OPTIONS_LIBRARY})
     set_target_properties (ha PROPERTIES
@@ -847,7 +848,9 @@ add_msvc_version (qpidcommon library dll)
 
 add_library (qpidcommon SHARED ${qpidcommon_SOURCES})
 
-target_link_libraries (qpidcommon qpidtypes
+target_link_libraries (qpidcommon
+                       PRIVATE
+                       qpidtypes
                        ${qpidcommon_platform_LIBS}
                        ${Boost_PROGRAM_OPTIONS_LIBRARY}
                        "${sasl_LIB}"
@@ -876,7 +879,7 @@ set_source_files_properties(
 
 add_msvc_version (qpidtypes library dll)
 add_library(qpidtypes SHARED ${qpidtypes_SOURCES})
-target_link_libraries(qpidtypes "${uuid_LIB}")
+target_link_libraries(qpidtypes PRIVATE "${uuid_LIB}")
 set_target_properties (qpidtypes PROPERTIES
                        LINK_FLAGS "${HIDE_SYMBOL_FLAGS} ${LINK_VERSION_SCRIPT_FLAG}"
                        VERSION ${qpidtypes_version}
@@ -933,7 +936,7 @@ add_msvc_version (qpidclient library dll)
 
 add_library (qpidclient SHARED ${qpidclient_SOURCES})
 
-target_link_libraries (qpidclient qpidcommon qpidtypes
+target_link_libraries (qpidclient PRIVATE qpidcommon qpidtypes
                        ${ssl_LIBS})
 
 set_target_properties (qpidclient PROPERTIES
@@ -1001,7 +1004,7 @@ set (qpidmessaging_SOURCES
 add_msvc_version (qpidmessaging library dll)
 
 add_library (qpidmessaging SHARED ${qpidmessaging_SOURCES})
-target_link_libraries (qpidmessaging qpidtypes qpidclient qpidcommon ${Proton_Core_LIBRARIES})
+target_link_libraries (qpidmessaging PRIVATE qpidtypes qpidclient qpidcommon ${Proton_Core_LIBRARIES})
 set_target_properties (qpidmessaging PROPERTIES
                        LINK_FLAGS "${HIDE_SYMBOL_FLAGS} ${LINK_VERSION_SCRIPT_FLAG}"
                        COMPILE_FLAGS "${HIDE_SYMBOL_FLAGS}"
@@ -1022,7 +1025,7 @@ if (MSVC)
     if (EXISTS ${qpidxarm_SOURCES})
         add_msvc_version (qpidxarm library dll)
         add_library (qpidxarm SHARED ${qpidxarm_SOURCES})
-        target_link_libraries (qpidxarm qpidclient qpidcommon)
+        target_link_libraries (qpidxarm PRIVATE qpidclient qpidcommon)
         install (TARGETS qpidxarm
                  RUNTIME DESTINATION ${QPID_INSTALL_BINDIR} COMPONENT ${QPID_COMPONENT_CLIENT}
                  LIBRARY DESTINATION ${QPID_INSTALL_LIBDIR} COMPONENT ${QPID_COMPONENT_CLIENT}
@@ -1134,7 +1137,9 @@ set (qpidbroker_SOURCES
 add_msvc_version (qpidbroker library dll)
 add_library (qpidbroker SHARED ${qpidbroker_SOURCES})
 
-target_link_libraries (qpidbroker qpidcommon qpidtypes
+target_link_libraries (qpidbroker
+                       PRIVATE
+                       qpidcommon qpidtypes
                        "${sasl_LIB}"
                        ${ssl_server_LIBS})
 
@@ -1251,7 +1256,7 @@ endif (NOT WIN32)
 
     add_msvc_version (qmf2 library dll)
     add_library (qmf2 SHARED ${qmf2_SOURCES})
-    target_link_libraries (qmf2 qpidmessaging qpidtypes qpidclient qpidcommon)
+    target_link_libraries (qmf2 PRIVATE qpidmessaging qpidtypes qpidclient qpidcommon)
     set_target_properties (qmf2 PROPERTIES
                            VERSION ${qmf2_version}
                            SOVERSION ${qmf2_version_major})

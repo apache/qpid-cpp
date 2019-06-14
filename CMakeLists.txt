@@ -20,7 +20,7 @@
 project(qpid-cpp)
 
 if (NOT MSVC)
-  cmake_minimum_required(VERSION 2.8.7 FATAL_ERROR)
+  cmake_minimum_required(VERSION 2.8.12 FATAL_ERROR)
 else (NOT MSVC)
   # windows PDB file installation needs v3.1
   cmake_minimum_required(VERSION 3.1.3 FATAL_ERROR)
@@ -33,7 +33,7 @@ else (CMAKE_CONFIGURATION_TYPES)
   # There is a single build configuration
   # If the build type is not set then set the default
   if (NOT CMAKE_BUILD_TYPE)
-  set (CMAKE_BUILD_TYPE RelWithDebInfo CACHE string
+  set (CMAKE_BUILD_TYPE RelWithDebInfo CACHE STRING
        "Build type: Debug, Release, RelWithDebInfo or MinSizeRel (default RelWithDebInfo)" FORCE)
   endif ()
 
@@ -130,14 +130,6 @@ add_custom_target(uninstall
 # Define windows versions and library helpers
 include (src/msvc.cmake)
 
-# Do not keep on linking against transitive library dependencies
-# TODO Need to rework CMake files to use INTERFACE_LINK_LIBRARIES target property
-# When that is done we can remove the next 4 lines completely
-set (CMAKE_LINK_INTERFACE_LIBRARIES "")
-if (DEFINED CMAKE_VERSION AND NOT CMAKE_VERSION VERSION_LESS "2.8.12")
-  cmake_policy(SET CMP0022 OLD)
-endif (DEFINED CMAKE_VERSION AND NOT CMAKE_VERSION VERSION_LESS "2.8.12")
-
 if (CMAKE_CXX_COMPILER_ID STREQUAL GNU)
   # Warnings: Enable as many as possible, keep the code clean. Please
   # do not disable warnings or remove -Werror without discussing on
@@ -162,6 +154,7 @@ if (CMAKE_CXX_COMPILER_ID STREQUAL GNU)
   if (CMAKE_SYSTEM_NAME STREQUAL SunOS)
     set (CATCH_UNDEFINED "")
   endif (CMAKE_SYSTEM_NAME STREQUAL SunOS)
+
   set (NOSTRICT_ALIASING "-fno-strict-aliasing")
   set (COMPILER_FLAGS "-fvisibility-inlines-hidden")
   # gcc 4.1.2 on RHEL 5 needs -Wno-attributes to avoid an error that's fixed
