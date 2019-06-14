@@ -50,8 +50,6 @@ public:
     QPID_COMMON_INLINE_EXTERN void setProtocol(uint8_t protocol) { protocol_ = protocol; }
     QPID_COMMON_EXTERN const std::string toString() const;
 
-    QPID_COMMON_EXTERN ProtocolVersion& operator=(ProtocolVersion p);
-
     QPID_COMMON_EXTERN bool operator==(ProtocolVersion p) const;
     QPID_COMMON_INLINE_EXTERN bool operator!=(ProtocolVersion p) const { return ! (*this == p); }
     QPID_COMMON_EXTERN static const uint8_t AMQP;

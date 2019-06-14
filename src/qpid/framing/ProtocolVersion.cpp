@@ -34,13 +34,6 @@ const std::string ProtocolVersion::toString() const
     return ss.str();
 }
 
-ProtocolVersion& ProtocolVersion::operator=(ProtocolVersion p)
-{
-    major_ = p.major_;
-    minor_ = p.minor_;
-    return *this;
-}
-
 bool ProtocolVersion::operator==(ProtocolVersion p) const
 {
     return major_ == p.major_ && minor_ == p.minor_;

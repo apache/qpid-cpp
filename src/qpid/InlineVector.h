@@ -61,6 +61,11 @@ class InlineVector : public std::vector<T, InlineAllocator<Alloc, Max> >
         this->reserve(std::max(x.size(), Max));
         *this = x;
     }
+
+    InlineVector& operator=(const InlineVector& x) {
+        this->Base::operator=(x);
+        return *this;
+    }
 };
 
 } // namespace qpid

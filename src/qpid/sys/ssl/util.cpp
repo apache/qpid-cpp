@@ -59,16 +59,7 @@ SslOptions::SslOptions() : qpid::Options("SSL Settings"),
         ("ssl-cert-name", optValue(certName, "NAME"), "Name of the certificate to use");
 }
 
-SslOptions& SslOptions::operator=(const SslOptions& o) 
-{
-    certDbPath = o.certDbPath;
-    certName = o.certName;
-    certPasswordFile = o.certPasswordFile;
-    exportPolicy = o.exportPolicy;
-    return *this;
-}
-
-char* promptForPassword(PK11SlotInfo*, PRBool retry, void*) 
+char* promptForPassword(PK11SlotInfo*, PRBool retry, void*)
 {
     if (retry) return 0;
     //TODO: something else?

@@ -39,7 +39,6 @@ struct SslOptions : qpid::Options
     bool exportPolicy;
 
     SslOptions();
-    SslOptions& operator=(const SslOptions&);
 };
 
 void initNSS(const SslOptions& options, bool server = false);
