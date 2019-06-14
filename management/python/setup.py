@@ -20,7 +20,7 @@
 
 import platform
 
-from distutils.core import setup
+from setuptools import setup
 
 pypi_long_description = """
 # Python libraries for the Apache Qpid C++ broker
