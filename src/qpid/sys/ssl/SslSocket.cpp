@@ -44,7 +44,7 @@
 #include <nss.h>
 #include <pk11pub.h>
 #include <ssl.h>
-#include <key.h>
+#include <keyhi.h>
 #include <sslerr.h>
 
 namespace qpid {
