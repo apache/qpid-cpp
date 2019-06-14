@@ -710,6 +710,7 @@ Manageable::status_t Broker::ManagementMethod (uint32_t methodId,
     {
         QPID_LOG (info, "Broker received shutdown command");
         shutdown();
+        break;
     }
     default:
         QPID_LOG (debug, "Broker ManagementMethod not implemented: id=" << methodId << "]");

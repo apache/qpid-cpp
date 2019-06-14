@@ -907,6 +907,7 @@ Expression* comparisonExpression(Tokeniser& tokeniser)
             case T_NOT:
                 if ( tokeniser.nextToken().type == T_NULL)
                     return new UnaryBooleanExpression(&isNonNullOp, e1.release());
+            // Fallthru
             default:
                 error = "expected NULL or NOT NULL after IS";
                 return 0;

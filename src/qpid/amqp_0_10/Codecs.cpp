@@ -103,22 +103,22 @@ Variant toVariant(boost::shared_ptr<FieldValue> in)
     //based on AMQP 0-10 typecode, pick most appropriate variant type
     switch (in->getType()) {
         //Fixed Width types:
-      case 0x00: out.setEncoding(amqp0_10_binary);
+      case 0x00: out.setEncoding(amqp0_10_binary); // Fallthru
       case 0x01: out = in->getIntegerValue<int8_t>(); break;
       case 0x02: out = in->getIntegerValue<uint8_t>(); break;
       case 0x04: break; //TODO: iso-8859-15 char
       case 0x08: out = static_cast<bool>(in->getIntegerValue<uint8_t>()); break;
-      case 0x10: out.setEncoding(amqp0_10_binary);
+      case 0x10: out.setEncoding(amqp0_10_binary); // Fallthru
       case 0x11: out = in->getIntegerValue<int16_t, 2>(); break;
       case 0x12: out = in->getIntegerValue<uint16_t, 2>(); break;
-      case 0x20: out.setEncoding(amqp0_10_binary);
+      case 0x20: out.setEncoding(amqp0_10_binary); // Fallthru
       case 0x21: out = in->getIntegerValue<int32_t, 4>(); break;
       case 0x22: out = in->getIntegerValue<uint32_t, 4>(); break;
       case 0x23: out = in->get<float>(); break;
       case 0x27: break; //TODO: utf-32 char
-      case 0x30: out.setEncoding(amqp0_10_binary);
+      case 0x30: out.setEncoding(amqp0_10_binary); // Fallthru
       case 0x31: out = in->getIntegerValue<int64_t, 8>(); break;
-      case 0x38: out.setEncoding(amqp0_10_datetime); //treat datetime as uint64_t, but set encoding
+      case 0x38: out.setEncoding(amqp0_10_datetime); // Fallthru - treat datetime as uint64_t, but set encoding
       case 0x32: out = in->getIntegerValue<uint64_t, 8>(); break;
       case 0x33: out = in->get<double>(); break;
 

@@ -517,6 +517,7 @@ CyrusSaslServer::Status CyrusSaslServer::start(const std::string& mechanism, con
         return SaslServer::CHALLENGE;
       case SASL_NOMECH:
         QPID_LOG(info, "Unsupported mechanism: " << mechanism);
+        // Fallthru
       default:
         return SaslServer::FAIL;
     }

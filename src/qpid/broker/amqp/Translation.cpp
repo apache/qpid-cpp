@@ -219,6 +219,7 @@ boost::intrusive_ptr<const qpid::broker::amqp_0_10::MessageTransfer> Translation
               case qpid::amqp::MessageId::BYTES:
                 if (mid.value.bytes.size == 0) break;
                 if (setMessageId(*props, mid.value.bytes)) break;
+                // Fallthru
               case qpid::amqp::MessageId::ULONG:
                 QPID_LOG(info, "Skipping message id in translation from 1.0 to 0-10 as it is not a UUID");
                 break;
