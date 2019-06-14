@@ -773,12 +773,11 @@ wmgr::get_events(timespec* const timeout,
             oss << "  iocb->u.c.resfd=" << aiocbp->u.c.resfd << std::endl;
             if (pcbp) {
                 oss << "  Page Control Block: (iocb->data):" << std::endl;
-                oss << "    pcb.index=" << pcbp->_index << std::endl;
-                oss << "    pcb.state=" << pcbp->_state << " (" << pmgr::page_state_str(pcbp->_state) << ")" << std::endl;
-                oss << "    pcb.frid=0x" << std::hex << pcbp->_frid << std::dec << std::endl;
+                oss << "    pcb index=" << pcbp-_page_cb_arr << std::endl;
+                oss << "    pcb.state=" << pcbp->_state << " (" << pcbp->state_str() << ")" << std::endl;
                 oss << "    pcb.wdblks=0x" << std::hex << pcbp->_wdblks << std::dec << std::endl;
                 oss << "    pcb.pdtokl.size=" << pcbp->_pdtokl->size() << std::endl;
-                oss << "    pcb.pbuff=" << pcbp->_pbuff << std::endl;
+                oss << "    pcb pbuff=" << &_page_ptr_arr[pcbp-_page_cb_arr] << std::endl;
                 oss << "    JournalFile (pcb.jfp):" << std::endl;
                 oss << pcbp->_jfp->status_str(6) << std::endl;
             } else {

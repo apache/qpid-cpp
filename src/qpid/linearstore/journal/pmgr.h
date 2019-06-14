@@ -62,13 +62,10 @@ public:
     */
     struct page_cb
     {
-        uint16_t _index;            ///< Index of this page
-        page_state _state;          ///< Status of page
-        uint64_t _frid;             ///< First rid in page (used for fhdr init)
-        uint32_t _wdblks;           ///< Total number of dblks in page so far
         std::deque<data_tok*>* _pdtokl; ///< Page message tokens list
         JournalFile* _jfp;          ///< Journal file for incrementing compl counts
-        void* _pbuff;               ///< Page buffer
+        uint32_t _wdblks;           ///< Total number of dblks in page so far
+        page_state _state;          ///< Status of page
 
         const char* state_str() const; ///< Return state as string for this pcb
     };
@@ -102,7 +99,6 @@ public:
 
     virtual int32_t get_events(timespec* const timeout, bool flush) = 0;
     inline uint32_t get_aio_evt_rem() const { return _aio_evt_rem; }
-    static const char* page_state_str(page_state ps);
     inline uint32_t cache_pgsize_sblks() const { return _cache_pgsize_sblks; }
     inline uint16_t cache_num_pages() const { return _cache_num_pages; }
 

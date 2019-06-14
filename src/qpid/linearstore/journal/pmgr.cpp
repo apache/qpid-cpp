@@ -25,7 +25,6 @@ namespace qpid {
 namespace linearstore {
 namespace journal {
 
-// TODO: almost identical to pmgr::page_state_str() below - resolve
 const char*
 pmgr::page_cb::state_str() const
 {
@@ -112,11 +111,8 @@ pmgr::initialize(aio_callback* const cbp, const uint32_t cache_pgsize_sblks, con
     for (uint16_t i=0; i<_cache_num_pages; i++)
     {
         _page_ptr_arr[i] = (void*)((char*)_page_base_ptr + _cache_pgsize_sblks * _sblkSizeBytes * i);
-        _page_cb_arr[i]._index = i;
         _page_cb_arr[i]._state = UNUSED;
-        _page_cb_arr[i]._pbuff = _page_ptr_arr[i];
         _page_cb_arr[i]._pdtokl = new std::deque<data_tok*>;
-        _page_cb_arr[i]._pdtokl->clear();
         _aio_cb_arr[i].data = (void*)&_page_cb_arr[i];
     }
 
@@ -161,22 +157,6 @@ pmgr::clean()
 
     std::free(_aio_event_arr);
     _aio_event_arr = 0;
-}
-
-// TODO: almost identical to pmgr::page_cb::state_str() above - resolve
-const char*
-pmgr::page_state_str(page_state ps)
-{
-    switch (ps)
-    {
-        case UNUSED:
-            return "UNUSED";
-        case IN_USE:
-            return "IN_USE";
-        case AIO_PENDING:
-            return "AIO_PENDING";
-    }
-    return "<page_state unknown>";
 }
 
 }}}
