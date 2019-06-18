@@ -27,4 +27,12 @@ set (Qpid_VERSION       @VERSION@)
 set (Qpid_INCLUDE_DIRS  @includedir@)
 set (Qpid_LIBRARIES     optimized @libdir@/@QPIDMSGLIB@ @libdir@/@QPIDTYPESLIB@ debug @libdir@/@QPIDMSGLIBDEBUG@ @libdir@/@QPIDTYPESLIBDEBUG@)
 
+# Can't make this compatible with CMake 2.8.12 as Qpid::qpid really is an interface target
+# (because it has multiple libraries). So only allow for later versions of CMake
+if (NOT TARGET Qpid::qpid AND CMAKE_VERSION VERSION_GREATER "3.0")
+  add_library(Qpid::qpid INTERFACE IMPORTED)
+  target_link_libraries(Qpid::qpid INTERFACE ${Qpid_LIBRARIES})
+  target_include_directories(Qpid::qpid INTERFACE ${Qpid_INCLUDE_DIRS})
+endif()
+
 set (Qpid_FOUND True)
