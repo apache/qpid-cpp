@@ -372,6 +372,10 @@ void Link::closed(int, std::string text)
             setStateLH(STATE_WAITING);
             mgmtObject->set_lastError (text);
         }
+
+        if (failover && failoverChannel > 0) {
+            returnChannel(failoverChannel);
+        }
     }
     if (isClosing) destroy();
 }
