@@ -127,7 +127,9 @@ void Message::addTraceId(const std::string& id)
 
 void Message::clearTrace()
 {
-    addAnnotation(X_QPID_TRACE, std::string());
+    if (!getPropertyAsString(X_QPID_TRACE).empty()) {
+        addAnnotation(X_QPID_TRACE, std::string());
+    }
 }
 
 uint64_t Message::getTimestamp() const
