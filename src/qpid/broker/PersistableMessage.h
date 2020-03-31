@@ -86,6 +86,7 @@ class PersistableMessage : public Persistable
     virtual void decodeHeader(framing::Buffer& buffer) = 0;
     virtual void decodeContent(framing::Buffer& buffer) = 0;
     virtual uint32_t encodedHeaderSize() const = 0;
+    virtual bool isMergeRequired() const = 0;
     virtual boost::intrusive_ptr<PersistableMessage> merge(const std::map<std::string, qpid::types::Variant>& annotations) const = 0;
 };
 

@@ -465,6 +465,10 @@ std::string MessageTransfer::getUserId() const
 }
 MessageTransfer::MessageTransfer(const qpid::framing::FrameSet& f) : frames(f), requiredCredit(0) {}
 
+bool MessageTransfer::isMergeRequired() const {
+	return isPersistent();
+}
+
 boost::intrusive_ptr<PersistableMessage> MessageTransfer::merge(const std::map<std::string, qpid::types::Variant>& annotations) const
 {
     boost::intrusive_ptr<MessageTransfer> clone(new MessageTransfer(this->frames));

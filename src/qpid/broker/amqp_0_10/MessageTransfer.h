@@ -114,6 +114,7 @@ class MessageTransfer : public qpid::broker::Message::SharedStateImpl, public qp
      * but other meta data e.g.routing key and exchange)
      */
     uint32_t encodedHeaderSize() const;
+    bool isMergeRequired() const;
     boost::intrusive_ptr<PersistableMessage> merge(const std::map<std::string, qpid::types::Variant>& annotations) const;
 
     QPID_BROKER_EXTERN bool isQMFv2() const;

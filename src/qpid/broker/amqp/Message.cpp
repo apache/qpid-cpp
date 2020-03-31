@@ -514,6 +514,10 @@ void Message::decodeHeader(framing::Buffer& buffer)
 }
 void Message::decodeContent(framing::Buffer& /*buffer*/) {}
 
+bool Message::isMergeRequired() const {
+	return true;
+}
+
 boost::intrusive_ptr<PersistableMessage> Message::merge(const std::map<std::string, qpid::types::Variant>& added) const
 {
     //message- or delivery- annotations? would have to determine that from the name, for now assume always message-annotations

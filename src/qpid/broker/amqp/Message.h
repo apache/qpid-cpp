@@ -86,6 +86,7 @@ class Message : public qpid::broker::Message::SharedStateImpl, private qpid::amq
     void decodeHeader(framing::Buffer& buffer);
     void decodeContent(framing::Buffer& buffer);
     uint32_t encodedHeaderSize() const;
+    bool isMergeRequired() const;
     boost::intrusive_ptr<PersistableMessage> merge(const std::map<std::string, qpid::types::Variant>& annotations) const;
 
     static const Message& get(const qpid::broker::Message&);

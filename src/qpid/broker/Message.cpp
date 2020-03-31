@@ -172,7 +172,7 @@ void Message::addAnnotation(const std::string& key, const qpid::types::Variant& 
 
 void Message::annotationsChanged()
 {
-    if (persistentContext) {
+    if (persistentContext && persistentContext->isMergeRequired()) {
         uint64_t id = persistentContext->getPersistenceId();
         persistentContext = persistentContext->merge(getAnnotations());
         persistentContext->setIngressCompletion(sharedState);
