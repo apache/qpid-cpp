@@ -116,9 +116,11 @@ void MapEncoder::handleString(const CharSequence& key, const CharSequence& value
 
 void MapEncoder::writeMetaData(size_t size, size_t count, const Descriptor* d)
 {
-    if (count > 255 || size > 255) {
+
+    if (count > 255 || (size+1) > 255) {
         writeMap32MetaData((uint32_t) size, (uint32_t) count, d);
     } else {
+        /* can use more compact format */
         writeMap8MetaData((uint8_t) size, (uint8_t) count, d);
     }
 }

@@ -139,7 +139,7 @@ size_t MapSizeCalculator::getTotalSizeRequired(const Descriptor* d) const
     size_t result(size);
     if (d) result += d->getSize();
     result += 1/*typecode*/;
-    if (count * 2 > 255 || size > 255) {
+    if (count * 2 > 255 || (size+1) > 255) {
         result += 4/*size*/ + 4/*count*/;
     } else {
         result += 1/*size*/ + 1/*count*/;
