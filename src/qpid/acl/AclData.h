@@ -31,7 +31,7 @@
 namespace qpid {
 namespace acl {
 
-/** A rule for tracking black/white host connection settings.
+/** A rule for tracking deny/allow host connection settings.
  * When a connection is attempted, the remote host is verified
  * against lists of these rules. When the remote host is in
  * the range specified by this aclHost then the AclResult is
@@ -238,10 +238,10 @@ public:
     bool enforcingQueueQuotas() const { return queueQuotaRuleSettings->size() > 0; }
     bool getQueueQuotaForUser(const std::string&, uint16_t*) const;
 
-    // Global connection Black/White list rules
+    // Global connection Deny/Allow list rules
     void setConnGlobalRules (boost::shared_ptr<bwHostRuleSet>);
 
-    // Per-user connection Black/White list rules map
+    // Per-user connection Deny/Allow list rules map
     void setConnUserRules (boost::shared_ptr<bwHostUserRuleMap>);
 
     /** getConnectMaxSpec
@@ -311,10 +311,10 @@ private:
     // Per-user queue quota
     boost::shared_ptr<quotaRuleSet> queueQuotaRuleSettings;
 
-    // Global host connection black/white rule set
+    // Global host connection deny/allow rule set
     boost::shared_ptr<bwHostRuleSet> connBWHostsGlobalRules;
 
-    // Per-user host connection black/white rule set map
+    // Per-user host connection deny/allow rule set map
     boost::shared_ptr<bwHostUserRuleMap> connBWHostsUserRules;
 };
 

@@ -693,7 +693,7 @@ AclResult AclData::isAllowedConnection(const std::string& userName,
         }
     }
 
-    // Run user black/white list check
+    // Run user deny/allow list check
     if (!decisionMade) {
         bwHostUserRuleMapItr itrRule = connBWHostsUserRules->find(userName);
         if (itrRule != connBWHostsUserRules->end()) {

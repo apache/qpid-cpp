@@ -374,10 +374,10 @@ com.sun.security.jgss.initiate {
 
 <programlisting>
     group admin ted@QPID martin@QPID
-    group blacklist usera@qpid userb@qpid
+    group blockedlist usera@qpid userb@qpid
     quota connections 10 admin
     quota connections  5 all
-    quota connections  0 blacklist
+    quota connections  0 blockedlist
     quota queues      50 admin
     quota queues       5 all
     quota queues       1 test@qpid
@@ -1705,7 +1705,7 @@ property =  "name" | "durable" | "routingkey" | "autodelete" |
                   <para>
                     The next illustration shows the Debug-level log. Debug log level includes information about
                     constructing the rule tables, expanding groups and keywords, connection and queue quotas, and
-                    connection black and white lists.
+                    connection blocked and approved lists.
                   </para>
 <programlisting>
   notice ACL: Read file "/home/chug/acl/svn-acl.acl"

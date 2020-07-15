@@ -226,7 +226,7 @@ bool ConnectionCounter::approveConnection(
     (void) countConnectionLH(connectProgressMap, connection.getMgmtId(),
                              C_OPENED, false, false);
 
-    // Run global black/white list check
+    // Run global deny/allow list check
     sys::SocketAddress sa(hostName, "");
     bool okByHostList(true);
     std::string hostLimitText;
