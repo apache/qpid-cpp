@@ -58,8 +58,8 @@ struct Options : OptionParser
         : OptionParser("Usage: spout [OPTIONS] ADDRESS", "Send messages to the specified address"),
           url("127.0.0.1"),
           timeout(0),
-          count(1),
           durable(false),
+          count(1),
           print(false)
     {
         add("broker,b", url, "url of broker to connect to");
