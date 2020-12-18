@@ -51,14 +51,14 @@ if (PKG_CONFIG_FOUND)
     endif ()
 endif()
 
-# Allow ccmake or command-line to set checked out but not installed Proton location
-# Defaule location is ${HOME}/qpid-proton
+# Allow cmake or command-line to set checked out but not installed Proton location
+# Default location is ${HOME}/qpid-proton
 set(Proton_CHECKOUT_DIR "$ENV{HOME}/qpid-proton" CACHE PATH "Proton checkout directory")
 set(Proton_BUILD_DIR_NAME "build" CACHE STRING "Proton build directory name within Proton_CHECKOUT_DIR")
-if (EXISTS ${Proton_CHECKOUT_DIR}/${Proton_BUILD_DIR_NAME}/proton-c/libqpid-proton-core.so)
-    include("${Proton_CHECKOUT_DIR}/${Proton_BUILD_DIR_NAME}/proton-c/ProtonConfig.cmake")
-    set (Proton_INCLUDE_DIRS "${Proton_CHECKOUT_DIR}/proton-c/include" "${Proton_CHECKOUT_DIR}/${Proton_BUILD_DIR_NAME}/proton-c/include")
-    set (Proton_Core_LIBRARIES "${Proton_CHECKOUT_DIR}/${Proton_BUILD_DIR_NAME}/proton-c/libqpid-proton-core.so")
+if (EXISTS ${Proton_CHECKOUT_DIR}/${Proton_BUILD_DIR_NAME}/c/libqpid-proton-core.so)
+    include("${Proton_CHECKOUT_DIR}/${Proton_BUILD_DIR_NAME}/c/ProtonConfig.cmake")
+    set (Proton_INCLUDE_DIRS "${Proton_CHECKOUT_DIR}/c/include" "${Proton_CHECKOUT_DIR}/${Proton_BUILD_DIR_NAME}/c/include")
+    set (Proton_Core_LIBRARIES "${Proton_CHECKOUT_DIR}/${Proton_BUILD_DIR_NAME}/c/libqpid-proton-core.so")
     find_package_message(Proton "Found uninstalled Proton: ${Proton_Core_LIBRARIES} (found version \"${Proton_VERSION}\")" "$ProtonX_DIR ${Proton_Core_LIBRARIES} $Proton_VERSION")
     return()
 endif ()
