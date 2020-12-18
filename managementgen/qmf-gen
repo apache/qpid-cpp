@@ -18,6 +18,8 @@
 # under the License.
 # 
 
+from __future__ import print_function
+
 import sys
 import os
 from qmfgen.schema   import SchemaPackage, SchemaClass
@@ -61,7 +63,7 @@ v2_style    = opts.v2_style
 gen         = Generator(outdir, templatedir)
 
 if len(args) == 0:
-  print "no input files"
+  print("no input files")
   parser.exit()
 
 vargs = {}
