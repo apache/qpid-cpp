@@ -18,8 +18,12 @@
 #
 
 from xml.dom.minidom import parse, parseString, Node
-from cStringIO       import StringIO
-#import md5
+
+try:
+    from cStringIO import StringIO
+except ImportError:
+    from io import StringIO
+
 try:
     import hashlib
     _md5Obj = hashlib.md5
@@ -38,15 +42,16 @@ class Hash:
     self.md5Sum.update(hash.getDigest())
 
   def getDigest(self):
-    return self.md5Sum.digest()
+    # type: () -> bytes
+    return bytes(self.md5Sum.digest())
 
   def _compute(self, node):
     attrs = node.attributes
-    self.md5Sum.update(node.nodeName)
+    self.md5Sum.update(node.nodeName.encode())
 
     for idx in range(attrs.length):
-      self.md5Sum.update(attrs.item(idx).nodeName)
-      self.md5Sum.update(attrs.item(idx).nodeValue)
+      self.md5Sum.update(attrs.item(idx).nodeName.encode())
+      self.md5Sum.update(attrs.item(idx).nodeValue.encode())
 
     for child in node.childNodes:
       if child.nodeType == Node.ELEMENT_NODE:
@@ -1064,10 +1069,12 @@ class SchemaEvent:
 
   def genSchemaMD5(self, stream, variables):
     sum = self.hash.getDigest()
-    for idx in range (len (sum)):
+    for idx, val in enumerate(sum):
       if idx != 0:
-        stream.write (",")
-      stream.write (hex (ord (sum[idx])))
+        stream.write(",")
+      if isinstance(val, str):
+        val = ord(val)  # Python 2
+      stream.write(hex(val))
 
 
 class SchemaClass:
@@ -1443,13 +1450,13 @@ class SchemaClass:
     if count == 0:
       stream.write("0")
     else:
-      stream.write (str(((count - 1) / 8) + 1))
+      stream.write (str(((count - 1) // 8) + 1))
 
   def genPresenceMaskConstants (self, stream, variables):
     count = 0
     for prop in self.properties:
       if prop.isOptional == 1:
-        stream.write("    static const uint8_t presenceByte_%s = %d;\n" % (prop.name, count / 8))
+        stream.write("    static const uint8_t presenceByte_%s = %d;\n" % (prop.name, count // 8))
         stream.write("    static const uint8_t presenceMask_%s = %d;\n" % (prop.name, 1 << (count % 8)))
         count += 1
 
@@ -1527,12 +1534,14 @@ class SchemaClass:
                       " = _parent->GetManagementObject()->getObjectId();")
         return
 
-  def genSchemaMD5 (self, stream, variables):
+  def genSchemaMD5(self, stream, variables):
     sum = self.hash.getDigest()
-    for idx in range (len (sum)):
+    for idx, val in enumerate(sum):
       if idx != 0:
-        stream.write (",")
-      stream.write (hex (ord (sum[idx])))
+        stream.write(",")
+      if isinstance(val, str):
+        val = ord(val)  # Python 2
+      stream.write(hex(val))
 
   def genAssign (self, stream, variables):
     for inst in self.statistics:

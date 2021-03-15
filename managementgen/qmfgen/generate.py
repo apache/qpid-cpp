@@ -17,14 +17,21 @@
 # under the License.
 #
 
+from __future__ import print_function
+
 from xml.dom.minidom import parse, parseString, Node
-from cStringIO       import StringIO
 from stat            import *
 from errno           import *
 import os
 import os.path
 import filecmp
 import re
+
+try:
+    from cStringIO import StringIO
+except ImportError:
+    from io import StringIO
+
 
 class Template:
   """
@@ -267,8 +274,8 @@ class Generator:
     exists = True
     try:
       mode = os.stat (path)[ST_MODE]
-    except OSError, (err,text):
-      if err == ENOENT or err == ESRCH:
+    except OSError as e:
+      if e.errno == ENOENT or e.errno == ESRCH:
         exists = False
       else:
         raise
@@ -354,7 +361,7 @@ class Generator:
     os.rename (tempFile, target)
 
     if self.verbose:
-      print "Generated:", target
+      print("Generated:", target)
 
   def targetPackageFile (self, schema, templateFile):
     dot = templateFile.find(".")
