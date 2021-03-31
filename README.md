@@ -21,7 +21,7 @@ under the License.
 
 # Qpid C++
 
-[![Linux build status](https://builds.apache.org/buildStatus/icon?job=Qpid-cpp-trunk-test)](https://builds.apache.org/blue/organizations/jenkins/Qpid-cpp-trunk-test/activity) [![Windows build status](https://ci.appveyor.com/api/projects/status/wma611lkq1fcyo18?svg=true)](https://ci.appveyor.com/project/ApacheSoftwareFoundation/qpid-cpp/branch/master)
+[![Linux build status](https://builds.apache.org/buildStatus/icon?job=Qpid/Qpid-CPP-Test)](https://builds.apache.org/blue/organizations/jenkins/Qpid%2FQpid-CPP-Test/activity) [![Windows build status](https://ci.appveyor.com/api/projects/status/wma611lkq1fcyo18?svg=true)](https://ci.appveyor.com/project/ApacheSoftwareFoundation/qpid-cpp/branch/main)
 
 ## Introduction
 

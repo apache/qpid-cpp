@@ -165,7 +165,7 @@ Qpid test suite.
 
 3. Building a Repository Working Copy
 =====================================
-Developers interested in building master, e.g to test ahead of release, can
+Developers interested in building the main branch, e.g to test ahead of release, can
 get the source code from the git repository using:
 
  # git clone https://gitbox.apache.org/repos/asf/qpid-cpp.git
