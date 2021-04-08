@@ -31,7 +31,7 @@ INCLUDE (FindPythonLibs REQUIRED)
 ## -------------
 
 EXECUTE_PROCESS(COMMAND ${PYTHON_EXECUTABLE}
-  -c "from distutils.sysconfig import get_python_lib; print get_python_lib(True, prefix='${CMAKE_INSTALL_PREFIX}')"
+  -c "from distutils.sysconfig import get_python_lib; print(get_python_lib(True, prefix='${CMAKE_INSTALL_PREFIX}'))"
   OUTPUT_VARIABLE PYTHON_SITEARCH_PACKAGES
   OUTPUT_STRIP_TRAILING_WHITESPACE)
 
