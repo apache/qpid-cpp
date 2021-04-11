@@ -1,14 +1,12 @@
 os:
 - linux
-sudo: false
+dist: bionic
 language:
-- c
 - cpp
 cache: ccache
 addons:
   apt:
     packages:
-    - cmake
     - libboost-dev
     - libboost-program-options-dev
     - libboost-system-dev
@@ -19,19 +17,35 @@ addons:
     - libsasl2-dev
     - sasl2-bin
     - swig
-    - python-dev
     - valgrind
     - ruby
-before_install:
-- export PATH=/home/travis/.local/bin:$PATH
-- export PYTHONPATH=/home/travis/.local/lib/python2.7/site-packages:$PYTHONPATH
-install:
-- pip install --user --upgrade pip
-- pip install --user qpid-python
-before_script:
-- mkdir Build
-- cd Build
-- cmake .. -DCMAKE_INSTALL_PREFIX=$PWD/install
-script:
-- make -j3 && make install && ctest -V
+
+jobs:
+  include:
+    - name: "Build and test under python2"
+      before_install:
+      - export PATH=/home/travis/.local/bin:$PATH
+      - export PYTHONPATH=/home/travis/.local/lib/python2.7/site-packages:$PYTHONPATH
+      install:
+      - pip install --user --upgrade pip
+      - pip install --user qpid-python
+      before_script:
+      - mkdir Build
+      - cd Build
+      - pyenv versions
+      - cmake .. -DCMAKE_INSTALL_PREFIX=$PWD/install -DPYTHON_EXECUTABLE="$(which python2)"
+      script:
+      - make -j$(nproc) && make install && ctest -V
+    - name: "Build and test under python3"
+      dist: focal
+      before_install:
+      - export PATH=/home/travis/.local/bin:$PATH
+      - export PYTHONPATH=/home/travis/.local/lib/python3.8/site-packages:$PYTHONPATH
+      before_script:
+      - mkdir Build
+      - cd Build
+      - pyenv versions
+      - PYENV_VERSION="3.8.3" cmake .. -DCMAKE_INSTALL_PREFIX=$PWD/install -DPYTHON_EXECUTABLE="$(which python3)"
+      script:
+      - make -j$(nproc) && make install && ctest -V
 
