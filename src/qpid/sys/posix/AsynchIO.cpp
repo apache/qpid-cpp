@@ -27,6 +27,7 @@
 #include "qpid/sys/Probes.h"
 #include "qpid/sys/DispatchHandle.h"
 #include "qpid/sys/Time.h"
+#include "qpid/sys/ssl/SslSocket.h"
 #include "qpid/log/Statement.h"
 
 // TODO The basic algorithm here is not really POSIX specific and with a
@@ -461,6 +462,12 @@ void AsynchIO::readable(DispatchHandle& h) {
                 // Stop reading if we've overrun our timeslot
                 if ( duration > threadMaxIoTimeNs) {
                     QPID_PROBE4(asynchio_read_finished_maxtime, &h, duration, total, readCalls);
+                    // epoll cannot see into an SslSocket's buffered input and may hang.
+                    const qpid::sys::ssl::SslSocket *s = dynamic_cast<const qpid::sys::ssl::SslSocket *>(&socket);
+                    if (s) {
+                        // Schedule a future readble callback.  QPID-8527
+                        call(boost::bind(&AsynchIO::readable, this, _1));
+                    }
                     break;
                 }
 
