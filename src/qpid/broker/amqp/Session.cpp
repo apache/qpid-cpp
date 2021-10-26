@@ -753,7 +753,11 @@ bool Session::dispatch()
             completed.swap(copy);
         }
         for (std::deque<pn_delivery_t*>::iterator i = copy.begin(); i != copy.end(); ++i) {
-            accepted(*i, true);
+            if (pn_delivery_link(*i)) {
+                accepted(*i, true);
+            } else {
+                QPID_LOG(warning, "Delivery to 'accept' has null link " << *i);
+            }
         }
     }
     for (IncomingLinks::iterator i = incoming.begin(); i != incoming.end();) {

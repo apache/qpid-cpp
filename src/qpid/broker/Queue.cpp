@@ -214,6 +214,15 @@ Queue::Queue(const string& _name, const QueueSettings& _settings,
         split(traceExclude, settings.traceExcludes, ", ");
     }
     qpid::amqp_0_10::translate(settings.asMap(), encodableSettings);
+
+    if ( settings.isBrowseOnly ) {
+        QPID_LOG ( info, "Queue " << name << " is browse-only." );
+    }
+    if (settings.filter.size()) {
+        selector.reset(new Selector(settings.filter));
+        QPID_LOG (info, "Queue " << name << " using filter: " << settings.filter);
+    }
+
     if (parent != 0 && broker != 0) {
         ManagementAgent* agent = broker->getManagementAgent();
         if (agent != 0) {
@@ -227,13 +236,6 @@ Queue::Queue(const string& _name, const QueueSettings& _settings,
         }
     }
 
-    if ( settings.isBrowseOnly ) {
-        QPID_LOG ( info, "Queue " << name << " is browse-only." );
-    }
-    if (settings.filter.size()) {
-        selector.reset(new Selector(settings.filter));
-        QPID_LOG (info, "Queue " << name << " using filter: " << settings.filter);
-    }
 }
 
 Queue::~Queue()
