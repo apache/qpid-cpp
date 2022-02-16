@@ -126,7 +126,7 @@ Connection::Connection(qpid::sys::OutputControl& o, const std::string& i, Broker
 
     if (pn_transport_bind(transport, connection)) {
         //error
-        QPID_LOG(error, "Failed to bind transport to connection: " << getError());
+        QPID_LOG(error, "Error binding transport to connection: " << getError());
     }
     out.activateOutput();
     bool enableTrace(false);
