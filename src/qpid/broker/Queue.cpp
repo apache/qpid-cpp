@@ -1661,7 +1661,11 @@ bool Queue::checkDepth(const QueueDepth& increment, const Message&)
             if (brokerMgmtObject)
                 brokerMgmtObject->inc_discardsOverflow();
         }
-        throw ResourceLimitExceededException(QPID_MSG("Maximum depth exceeded on " << name << ": current=[" << current << "], max=[" << settings.maxDepth << "]"));
+        throw ResourceLimitExceededException(QPID_MSG("Maximum depth exceeded on " << name <<
+                    ": current=[" << current <<
+                    "], max=[" << settings.maxDepth <<
+                    "], increment=[" << increment <<
+                    "]"));
     } else {
         current += increment;
         return true;

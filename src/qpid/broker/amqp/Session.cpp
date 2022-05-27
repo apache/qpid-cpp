@@ -948,28 +948,27 @@ void IncomingToQueue::handle(qpid::broker::Message& message, qpid::broker::TxBuf
         msg << " Queue " << queue->getName() << " has been deleted";
         throw Exception(qpid::amqp::error_conditions::RESOURCE_DELETED, msg.str());
     }
+
     try {
         queue->deliver(message, transaction);
-    } catch (const qpid::SessionException& e) {
-        throw Exception(qpid::amqp::error_conditions::PRECONDITION_FAILED, e.what());
     }
+    catch (const qpid::Exception& e) {
+        QPID_LOG(warning, "Cannot deliver to  queue " <<  queue->getName() << ": " << e.what());
+        throw;
+    }
+
 }
 
 void IncomingToExchange::handle(qpid::broker::Message& message, qpid::broker::TxBuffer* transaction)
 {
-    if (exchange->isDestroyed())
+    if (exchange->isDestroyed()) {
         throw qpid::framing::ResourceDeletedException(QPID_MSG("Exchange " << exchange->getName() << " has been deleted."));
-    try {
-        authorise.route(exchange, message);
-        DeliverableMessage deliverable(message, transaction);
-        exchange->route(deliverable);
-        if (!deliverable.delivered) {
-            if (exchange->getAlternate()) {
-                exchange->getAlternate()->route(deliverable);
-            }
-        }
-    } catch (const qpid::SessionException& e) {
-        throw Exception(qpid::amqp::error_conditions::PRECONDITION_FAILED, e.what());
+    }
+    authorise.route(exchange, message);
+    DeliverableMessage deliverable(message, transaction);
+    exchange->route(deliverable);
+    if (!deliverable.delivered && exchange->getAlternate()) {
+        exchange->getAlternate()->route(deliverable);
     }
 }
 
@@ -993,21 +992,16 @@ void AnonymousRelay::handle(qpid::broker::Message& message, qpid::broker::TxBuff
         }
     }
 
-    try {
-        if (queue) {
-            authorise.incoming(queue);
-            queue->deliver(message, transaction);
-        } else if (exchange) {
-            authorise.route(exchange, message);
-            DeliverableMessage deliverable(message, transaction);
-            exchange->route(deliverable);
-        } else {
-            QPID_LOG(info, "AnonymousRelay dropping message for " << dest);
-        }
-    } catch (const qpid::SessionException& e) {
-        throw Exception(qpid::amqp::error_conditions::PRECONDITION_FAILED, e.what());
+    if (queue) {
+        authorise.incoming(queue);
+        queue->deliver(message, transaction);
+    } else if (exchange) {
+        authorise.route(exchange, message);
+        DeliverableMessage deliverable(message, transaction);
+        exchange->route(deliverable);
+    } else {
+        QPID_LOG(info, "AnonymousRelay dropping message for " << dest);
     }
-
 }
 
 void IncomingToCoordinator::deliver(boost::intrusive_ptr<qpid::broker::amqp::Message> message, pn_delivery_t* delivery)

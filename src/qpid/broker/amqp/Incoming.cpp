@@ -154,9 +154,17 @@ void DecodingIncoming::deliver(boost::intrusive_ptr<qpid::broker::amqp::Message>
     }	
     userid.verify(message.getUserId());
     received->begin();
-    handle(message, session.getTransaction(delivery));
-    Transfer t(delivery, sessionPtr);
-    sessionPtr->pending_accept(delivery);
-    received->end(t);
+
+    try {
+        handle(message, session.getTransaction(delivery));
+        Transfer t(delivery, sessionPtr);
+        sessionPtr->pending_accept(delivery);
+        received->end(t);
+    } catch (const qpid::framing::ResourceLimitExceededException& e) {
+        pn_delivery_update(delivery, PN_RELEASED);
+        pn_delivery_settle(delivery);
+    } catch (const qpid::SessionException& e) {
+        throw Exception(qpid::amqp::error_conditions::PRECONDITION_FAILED, e.what());
+    }
 }
 }}} // namespace qpid::broker::amqp
