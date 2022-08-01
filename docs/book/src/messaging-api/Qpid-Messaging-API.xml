@@ -219,7 +219,7 @@ under the License.
 	  <callout id="callout-python-acknowledge" arearefs="hello-python-acknowledge">
 	    <para>Acknowledges receipt of all fetched messages on
 	    the session. This informs the broker that the messages were
-	    transfered and processed by the client successfully.</para>
+	    transferred and processed by the client successfully.</para>
 	  </callout>
 	  <callout id="callout-python-close" arearefs="hello-python-close">
 	    <para>Closes the connection, all sessions managed by the connection, and all senders and receivers managed by each session.</para>
@@ -311,7 +311,7 @@ under the License.
 	  <callout id="callout-csharp-acknowledge" arearefs="hello-csharp-acknowledge">
 	    <para>Acknowledges receipt of all fetched messages on the
 	    session. This informs the broker that the messages were
-	    transfered and processed by the client successfully.</para>
+	    transferred and processed by the client successfully.</para>
 	  </callout>
 	  <callout id="callout-csharp-close" arearefs="hello-csharp-close">
 	    <para>Closes the connection, all sessions managed by the connection, and all senders and receivers managed by each session.</para>
@@ -2483,9 +2483,9 @@ spout - -content "$(cat rdu.xml | sed -e 's/70/45/')" xml/weather
       </para>
       <para>
         When sending to a queue, the queue's name is set as the
-        routing key and the message is transfered to the default (or
+        routing key and the message is transferred to the default (or
         nameless) exchange. When sending to an exchange, the message
-        is transfered to that exchange and the routing key is set to
+        is transferred to that exchange and the routing key is set to
         the message subject if one is specified. A default subject may
         be specified in the target address. The subject may also be
         set on each message individually to override the default if

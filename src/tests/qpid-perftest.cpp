@@ -197,12 +197,12 @@ struct Opts : public TestOptions {
         transfers=(totalPubs*count) + (totalSubs*subQuota);
         if (tx) {
             if (txPub) {
-                cerr << "WARNING: Using overriden tx value for publishers: " << txPub << std::endl;
+                cerr << "WARNING: Using overridden tx value for publishers: " << txPub << std::endl;
             } else {
                 txPub = tx;
             }
             if (txSub) {
-                cerr << "WARNING: Using overriden tx value for subscribers: " << txSub << std::endl;
+                cerr << "WARNING: Using overridden tx value for subscribers: " << txSub << std::endl;
             } else {
                 txSub = tx;
             }

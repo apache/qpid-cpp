@@ -124,7 +124,7 @@ int main(int argc, char** argv)
         SubscriptionManager subs(session);
         Message msgIn = subs.get("MyQueue");
         if (msgIn.getData() == msgOut.getData())
-            if (opts.verbose) std::cout << "Received the exepected message." << std::endl;
+            if (opts.verbose) std::cout << "Received the expected message." << std::endl;
 
         //close the session & connection
 	session.close();

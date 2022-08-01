@@ -70,7 +70,7 @@ op.add_option("--flow-control", default=0, type="int", help="Do end to end flow 
 op.add_option("--sequence", type="str", default="yes", help="Add a sequence number messages property (required for duplicate/lost message detection)")
 op.add_option("--timestamp", type="str", default="yes", help="Add a time stamp messages property (required for latency measurement)")
 op.add_option("--group-key", type="str", help="Generate groups of messages using message header 'KEY' to hold the group identifier")
-op.add_option("--group-prefix", default="GROUP-", type="str", help="Generate group identifers with 'STRING' prefix (if group-key specified)")
+op.add_option("--group-prefix", default="GROUP-", type="str", help="Generate group identifiers with 'STRING' prefix (if group-key specified)")
 op.add_option("--group-size", default=10, type="int", help="Number of messages per a group (if group-key specified)")
 op.add_option("--group-randomize-size", default=False, action="store_true", help="Randomize the number of messages per group to [1...group-size] (if group-key specified)")
 op.add_option("--group-interleave", default=1, type="int", help="Simultaineously interleave messages from N different groups (if group-key specified)")

@@ -105,7 +105,7 @@ class Resize(object):
     
     def _create_new_files(self):
         """Create new journal files"""
-        # Assemble records to be transfered
+        # Assemble records to be transferred
         master_record_list = {}
         txn_record_list = self._jrnl_reader.txn_obj_list()
         if self._opts.vflag and self._jrnl_reader.emap().size() > 0:
