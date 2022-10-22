@@ -231,7 +231,7 @@ struct Controller : public Client
             StringSet::iterator next = i + 1;
             if (next == queues.end()) next = queues.begin();
 
-            if (!opts.quiet) std::cout << "Transfering from " << *i << " to " << *next << std::endl;
+            if (!opts.quiet) std::cout << "Transferring from " << *i << " to " << *next << std::endl;
             agents.push_back(new Transfer(*i, *next));
             agents.back().thread = Thread(agents.back());
         }

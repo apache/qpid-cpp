@@ -56,13 +56,13 @@ struct Transfer : MessageListener
     std::string source;
     std::string destination;
     uint expected;
-    uint transfered;
+    uint transferred;
     SubscriptionSettings controlSettings;
     Subscription controlSubscription;
     SubscriptionSettings sourceSettings;
     Subscription sourceSubscription;
 
-    Transfer(const std::string control_) : control(control_), expected(0), transfered(0) {}
+    Transfer(const std::string control_) : control(control_), expected(0), transferred(0) {}
 
     void subscribeToSource(SubscriptionManager manager)
     {
@@ -93,11 +93,11 @@ struct Transfer : MessageListener
 
     void receivedFromSource(Message& message)
     {
-        QPID_LOG(debug, "transfering  " << (transfered+1) << " of " << expected);
+        QPID_LOG(debug, "transfering  " << (transferred+1) << " of " << expected);
         message.getDeliveryProperties().setRoutingKey(destination);
         async(sourceSubscription.getSession()).messageTransfer(arg::content=message);
-        if (++transfered == expected) {
-            QPID_LOG(info, "completed job: " << transfered << " messages shifted from " <<
+        if (++transferred == expected) {
+            QPID_LOG(info, "completed job: " << transferred << " messages shifted from " <<
                      source << " to " << destination);
             sourceSubscription.accept(sourceSubscription.getUnaccepted());
             sourceSubscription.getSession().txCommit();
@@ -113,7 +113,7 @@ struct Transfer : MessageListener
             source = message.getHeaders().getAsString("src");
             destination = message.getHeaders().getAsString("dest");
             expected = message.getHeaders().getAsInt("count");
-            transfered = 0;
+            transferred = 0;
             QPID_LOG(info, "received transfer request: " << expected << " messages to be shifted from " <<
                      source << " to " << destination);
             subscribeToSource(controlSubscription.getSubscriptionManager());

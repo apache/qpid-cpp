@@ -153,7 +153,7 @@ struct Options : public qpid::Options
             ("sequence", qpid::optValue(sequence, "yes|no"), "Add a sequence number messages property (required for duplicate/lost message detection)")
             ("timestamp", qpid::optValue(timestamp, "yes|no"), "Add a time stamp messages property (required for latency measurement)")
             ("group-key", qpid::optValue(groupKey, "KEY"), "Generate groups of messages using message header 'KEY' to hold the group identifier")
-            ("group-prefix", qpid::optValue(groupPrefix, "STRING"), "Generate group identifers with 'STRING' prefix (if group-key specified)")
+            ("group-prefix", qpid::optValue(groupPrefix, "STRING"), "Generate group identifiers with 'STRING' prefix (if group-key specified)")
             ("group-size", qpid::optValue(groupSize, "N"), "Number of messages per a group (if group-key specified)")
             ("group-randomize-size", qpid::optValue(groupRandSize), "Randomize the number of messages per group to [1...group-size] (if group-key specified)")
             ("group-interleave", qpid::optValue(groupInterleave, "N"), "Simultaineously interleave messages from N different groups (if group-key specified)")

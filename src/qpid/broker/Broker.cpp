@@ -203,7 +203,7 @@ BrokerOptions::BrokerOptions(const std::string& name) :
         ("dtx-max-timeout", optValue(dtxMaxTimeout, "SECONDS"), "Maximum allowed timeout for DTX transaction. A value of zero disables maximum timeout limit checks and allows arbitrarily large timeout settings.")
         ("max-negotiate-time", optValue(maxNegotiateTime, "MILLISECONDS"), "Maximum time a connection can take to send the initial protocol negotiation")
         ("federation-tag", optValue(fedTag, "NAME"), "Override the federation tag")
-        ("session-max-unacked", optValue(sessionMaxUnacked, "DELIVERIES"), "Maximum number of un-acknowledged outoing messages per sesssion")
+        ("session-max-unacked", optValue(sessionMaxUnacked, "DELIVERIES"), "Maximum number of un-acknowledged outoing messages per session")
         ;
 }
 
@@ -1238,7 +1238,7 @@ Manageable::status_t Broker::queueRedirect(const std::string& srcQueue,
             std::map<acl::Property, std::string> params;
             params.insert(make_pair(acl::PROP_QUEUENAME, tgtQ->getName()));
             if (!acl->authorise((context)?context->getUserId():"", acl::ACT_REDIRECT, acl::OBJ_QUEUE, srcQ->getName(), &params))
-                throw framing::UnauthorizedAccessException(QPID_MSG("ACL denied redirect request from " << ((context)?context->getUserId():"(uknown)")));
+                throw framing::UnauthorizedAccessException(QPID_MSG("ACL denied redirect request from " << ((context)?context->getUserId():"(unknown)")));
         }
 
         // Start the backup overflow partnership
@@ -1276,7 +1276,7 @@ Manageable::status_t Broker::queueRedirect(const std::string& srcQueue,
             std::map<acl::Property, std::string> params;
             params.insert(make_pair(acl::PROP_QUEUENAME, tgtQ->getName()));
             if (!acl->authorise((context)?context->getUserId():"", acl::ACT_REDIRECT, acl::OBJ_QUEUE, srcQ->getName(), &params))
-                throw framing::UnauthorizedAccessException(QPID_MSG("ACL denied redirect request from " << ((context)?context->getUserId():"(uknown)")));
+                throw framing::UnauthorizedAccessException(QPID_MSG("ACL denied redirect request from " << ((context)?context->getUserId():"(unknown)")));
         }
 
         queueRedirectDestroy(srcQ, tgtQ, true);
@@ -1390,7 +1390,7 @@ int32_t Broker::queueMoveMessages(
         std::map<acl::Property, std::string> params;
         params.insert(make_pair(acl::PROP_QUEUENAME, dest_queue->getName()));
         if (!acl->authorise((context)?context->getUserId():"", acl::ACT_MOVE, acl::OBJ_QUEUE, src_queue->getName(), &params))
-            throw framing::UnauthorizedAccessException(QPID_MSG("ACL denied move request from " << ((context)?context->getUserId():"(uknown)")));
+            throw framing::UnauthorizedAccessException(QPID_MSG("ACL denied move request from " << ((context)?context->getUserId():"(unknown)")));
     }
 
     return (int32_t) src_queue->move(dest_queue, qty, &filter);

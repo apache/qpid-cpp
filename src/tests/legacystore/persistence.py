@@ -106,7 +106,7 @@ class PersistenceTest(TestBase010):
         session.message_transfer(destination="amq.topic",
                                  message=self.createMessage(routing_key="abc", correlation_id="Msg0003", body="AB_Message2"))
 
-#        #check LVQ exists and has exepected messages:
+#        #check LVQ exists and has expected messages:
 #        session.queue_declare(queue="lvq-test", durable=True, passive=True)
 #        session.message_subscribe(destination="lvq", queue="lvq-test")
 #        lvq = session.incoming("lvq")
