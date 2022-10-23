@@ -44,7 +44,8 @@ jobs:
       - name: Install Windows dependencies
         if: runner.os == 'Windows'
         run: |
-          choco install -y swig --version=4.0.1
+# Swig is also prepared for us on Windws GHA images
+#          choco install -y swig --version=4.0.1
 # Boost is preinstalled on Windows GHA images, don't bother installing
 #          choco install -y boost-msvc-14.1
 #          vcpkg install boost-program-options boost-system boost-test boost-date-time boost-thread boost-chrono
