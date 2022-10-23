@@ -73,7 +73,7 @@ jobs:
       - uses: actions/cache@v3
         if: runner.os == 'Windows'
         with:
-          path: "%LOCALAPPDATA%\Mozilla\sccache"
+          path: "%LOCALAPPDATA%/Mozilla/sccache"
           key: ${{ runner.os }}-sccache-${{ matrix.os }}-${{ github.sha }}
           restore-keys: |
             ${{ runner.os }}-sccache-${{ matrix.os }}-
