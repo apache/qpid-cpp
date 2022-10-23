@@ -1005,7 +1005,7 @@ set (qpidmessaging_SOURCES
 add_msvc_version (qpidmessaging library dll)
 
 add_library (qpidmessaging SHARED ${qpidmessaging_SOURCES})
-target_link_libraries (qpidmessaging PRIVATE qpidtypes qpidclient qpidcommon ${Proton_Core_LIBRARIES})
+target_link_libraries (qpidmessaging PRIVATE qpidtypes qpidclient qpidcommon ${Proton_Core_LIBRARIES} ${Boost_THREAD_LIBRARY})
 set_target_properties (qpidmessaging PROPERTIES
                        LINK_FLAGS "${HIDE_SYMBOL_FLAGS} ${LINK_VERSION_SCRIPT_FLAG}"
                        COMPILE_FLAGS "${HIDE_SYMBOL_FLAGS}"
