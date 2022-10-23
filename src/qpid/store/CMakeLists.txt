@@ -80,7 +80,7 @@ if (BUILD_MSSQL)
                ms-sql/State.cpp
                ms-sql/TplRecordset.cpp
                ms-sql/VariantHelper.cpp)
-  target_link_libraries (mssql_store qpidbroker qpidcommon)
+  target_link_libraries (mssql_store qpidbroker qpidcommon ${Boost_THREAD_LIBRARY})
   install (TARGETS mssql_store # RUNTIME
            DESTINATION ${QPIDD_MODULE_DIR}
            COMPONENT ${QPID_COMPONENT_BROKER})
