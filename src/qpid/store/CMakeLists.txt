@@ -109,7 +109,7 @@ if (BUILD_MSCLFS)
                ms-sql/State.cpp
                ms-sql/VariantHelper.cpp)
   include_directories(ms-sql)
-  target_link_libraries (msclfs_store qpidbroker qpidcommon clfsw32.lib)
+  target_link_libraries (msclfs_store qpidbroker qpidcommon clfsw32.lib ${Boost_THREAD_LIBRARY})
   install (TARGETS msclfs_store # RUNTIME
            DESTINATION ${QPIDD_MODULE_DIR}
            COMPONENT ${QPID_COMPONENT_BROKER})
