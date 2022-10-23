@@ -82,9 +82,12 @@ jobs:
       - name: Install Windows dependencies
         if: runner.os == 'Windows'
         run: |
+          Set-ExecutionPolicy RemoteSigned -Scope CurrentUser # Optional: Needed to run a remote script the first time
+          irm get.scoop.sh | iex
           scoop install sccache
           vcpkg install boost-program-options boost-system boost-test boost-date-time boost-thread boost-chrono boost-format
           vcpkg integrate install
+        shell: pwsh
 
       - name: cmake configure
         run: |
