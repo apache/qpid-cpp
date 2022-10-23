@@ -32,10 +32,11 @@ jobs:
           python-version: 2.7
           architecture: x64
 
+      # it's weird that it needs qpid-python for tests; one would guess this is built in this repo, but it is not
       - name: Install python dependencies
         run: |
           python -m pip install --upgrade pip
-          python -m pip install setuptools wheel tox flake8
+          python -m pip install setuptools qpid-python
 
       - name: Install Linux dependencies
         if: runner.os == 'Linux'
@@ -103,11 +104,11 @@ jobs:
         run: cmake --build "${{env.BuildDir}}" --config ${BuildType} --parallel 6 -t install
         shell: bash
 
-#      - id: ctest
-#        name: ctest
-#        working-directory: ${{env.BuildDir}}
-#        run: PYTHONPATH=${InstallPrefix}/lib/python2.7/site-packages ctest -C ${BuildType} -V -T Test --no-compress-output ${{matrix.ctest_extra}}
-#        shell: bash
+      - id: ctest
+        name: ctest
+        working-directory: ${{env.BuildDir}}
+        run: PYTHONPATH=${InstallPrefix}/lib/python2.7/site-packages ctest -C ${BuildType} -V -T Test --no-compress-output ${{matrix.ctest_extra}}
+        shell: bash
 
       - name: Upload Test results
         if: always() && (steps.ctest.outcome == 'failure' || steps.ctest.outcome == 'success')
