@@ -12,7 +12,7 @@ jobs:
         buildType: [ RelWithDebInfo ]
         include:
           - os: windows-latest
-            cmake_extra: '-A x64 -DCMAKE_TOOLCHAIN_FILE=C:/vcpkg/scripts/buildsystems/vcpkg.cmake'
+            cmake_extra: '-DBUILD_BINDING_DOTNET=OFF -A x64 -DCMAKE_TOOLCHAIN_FILE=C:/vcpkg/scripts/buildsystems/vcpkg.cmake'
             cmake_generator: '-G "Visual Studio 16 2019"'
     env:
       BuildType: ${{matrix.buildType}}
