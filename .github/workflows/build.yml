@@ -93,7 +93,7 @@ jobs:
       - name: cmake configure
         run: |
           cmake -S "${{github.workspace}}" -B "${{env.BuildDir}}" \
-            -DCMAKE_C_COMPILER_LAUNCHER=sccache \ -DCMAKE_CXX_COMPILER_LAUNCHER=sccache \
+            -DCMAKE_C_COMPILER_LAUNCHER=sccache -DCMAKE_CXX_COMPILER_LAUNCHER=sccache \
             "-DCMAKE_BUILD_TYPE=${BuildType}" \
             "-DCMAKE_INSTALL_PREFIX=${InstallPrefix}" \
             ${{matrix.cmake_extra}}
