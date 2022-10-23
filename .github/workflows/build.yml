@@ -55,13 +55,13 @@ jobs:
         shell: bash
 
       - name: cmake build/install
-        run: cmake --build "${{env.BuildDir}}" --config ${BuildType} --parallel 3 -t install
+        run: cmake --build "${{env.BuildDir}}" --config ${BuildType} --parallel 6 -t install
         shell: bash
 
       - id: ctest
         name: ctest
         working-directory: ${{env.BuildDir}}
-        run: ctest -C ${BuildType} -V -T Test --no-compress-output ${{matrix.ctest_extra}}
+        run: PYTHONPATH=${HOME}/.local/lib/python2.7/site-packages ctest -C ${BuildType} -V -T Test --no-compress-output ${{matrix.ctest_extra}}
         shell: bash
 
       - name: Upload Test results
