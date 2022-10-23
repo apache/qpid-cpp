@@ -20,6 +20,7 @@ jobs:
       InstallPrefix: ${{github.workspace}}/INSTALL
       PKG_CONFIG_PATH: ${{matrix.pkg_config_path}}
       VCPKG_DEFAULT_TRIPLET: x64-windows
+      VCPKG_BINARY_SOURCES: 'clear;nuget,GitHub,readwrite'
 
     steps:
 
@@ -41,15 +42,28 @@ jobs:
         run: |
           sudo apt install -y cmake libboost-dev libboost-program-options-dev libboost-system-dev libboost-test-dev uuid-dev libnss3-dev libnss3-tools libsasl2-dev sasl2-bin swig python-dev valgrind ruby
 
+      - uses: actions/cache@v3
+        if: runner.os == 'Windows'
+        with:
+          path: C:\vcpkg\downloads
+          key: ${{ runner.os }}-vcpkg-download-${{ env.OS_VER }}-${{ github.sha }}
+          restore-keys: |
+            ${{ runner.os }}-vcpkg-download-${{ env.OS_VER }}-
+            ${{ runner.os }}-vcpkg-download-
+      - uses: actions/cache@v3
+        if: runner.os == 'Windows'
+        with:
+          path: C:\vcpkg\installed
+          key: ${{ runner.os }}-vcpkg-installed-${{ matrix.os }}-${{ github.sha }}
+          restore-keys: |
+            ${{ runner.os }}-vcpkg-installed-${{ matrix.os }}-
+            ${{ runner.os }}-vcpkg-installed-
+
       - name: Install Windows dependencies
         if: runner.os == 'Windows'
         run: |
-          choco install -y boost-msvc-14.1
-# Swig is also prepared for us on Windws GHA images
-#          choco install -y swig --version=4.0.1
-# Boost is preinstalled on Windows GHA images, don't bother installing
-#          vcpkg install boost-program-options boost-system boost-test boost-date-time boost-thread boost-chrono
-#          vcpkg integrate install
+          vcpkg install boost-program-options boost-system boost-test boost-date-time boost-thread boost-chrono
+          vcpkg integrate install
 
       - name: cmake configure
         run: cmake -S "${{github.workspace}}" -B "${{env.BuildDir}}" "-DCMAKE_BUILD_TYPE=${BuildType}" "-DCMAKE_INSTALL_PREFIX=${InstallPrefix}" ${{matrix.cmake_extra}}
