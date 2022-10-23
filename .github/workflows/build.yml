@@ -45,7 +45,7 @@ jobs:
         if: runner.os == 'Windows'
         run: |
           choco install -y swig --version=4.0.1
-          vcpkg install boost
+          vcpkg install boost-program-options boost-system boost-test
           vcpkg integrate install
 
       - name: cmake configure
