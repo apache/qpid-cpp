@@ -170,7 +170,7 @@ set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${ABI_DEF} ${COMPILER_FLAGS} ${WARNING_
 # Boost.system is sometimes needed; it's handled separately, below.
 # There may be different minimum versions of boost for Windows and Unix
 if (CMAKE_SYSTEM_NAME STREQUAL Windows)
-  set (Boost_components program_options date_time thread format)
+  set (Boost_components program_options date_time thread)
   set (Boost_minversion 1.44)
 else (CMAKE_SYSTEM_NAME STREQUAL Windows)
   set (Boost_components program_options)
