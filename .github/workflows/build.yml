@@ -49,7 +49,7 @@ jobs:
           vcpkg integrate install
 
       - name: cmake configure
-        run: cmake -S "${{github.workspace}}" -B "-DCMAKE_BUILD_TYPE=${BuildType}" "-DCMAKE_INSTALL_PREFIX=${InstallPrefix}" ${{matrix.cmake_extra}}
+        run: cmake -S "${{github.workspace}}" -B "${{env.BuildDir}}" "-DCMAKE_BUILD_TYPE=${BuildType}" "-DCMAKE_INSTALL_PREFIX=${InstallPrefix}" ${{matrix.cmake_extra}}
         shell: bash
 
       - name: cmake build/install
