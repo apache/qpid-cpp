@@ -937,7 +937,8 @@ add_msvc_version (qpidclient library dll)
 add_library (qpidclient SHARED ${qpidclient_SOURCES})
 
 target_link_libraries (qpidclient PRIVATE qpidcommon qpidtypes
-                       ${ssl_LIBS})
+                       ${ssl_LIBS}
+                       ${Boost_THREAD_LIBRARY})
 
 set_target_properties (qpidclient PROPERTIES
                        VERSION ${qpidclient_version}
