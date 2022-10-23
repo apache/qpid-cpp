@@ -43,7 +43,8 @@ jobs:
           sudo apt install -y cmake libboost-dev libboost-program-options-dev libboost-system-dev libboost-test-dev uuid-dev libnss3-dev libnss3-tools libsasl2-dev sasl2-bin swig python-dev valgrind ruby
           wget https://github.com/mozilla/sccache/releases/download/v0.3.0/sccache-dist-v0.3.0-x86_64-unknown-linux-musl.tar.gz
           sudo tar -xf sccache-dist-v0.3.0-x86_64-unknown-linux-musl.tar.gz sccache-dist-v0.3.0-x86_64-unknown-linux-musl/sccache-dist -C /usr/local/bin
-          sudo ln -s /usr/local/bin/sccache-dist /usr/local/bin/sccache
+          sudo ln -s /usr/local/bin/sccache-dist /usr/bin/sccache
+          sudo chmod +x /usr/bin/sccache
 
       - uses: actions/cache@v3
         if: runner.os == 'Windows'
