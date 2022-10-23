@@ -1141,7 +1141,8 @@ target_link_libraries (qpidbroker
                        PRIVATE
                        qpidcommon qpidtypes
                        "${sasl_LIB}"
-                       ${ssl_server_LIBS})
+                       ${ssl_server_LIBS}
+                       ${Boost_THREAD_LIBRARY})
 
 set_target_properties (qpidbroker PROPERTIES
                        VERSION ${qpidbroker_version}
