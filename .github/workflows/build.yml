@@ -76,7 +76,7 @@ jobs:
       - id: ctest
         name: ctest
         working-directory: ${{env.BuildDir}}
-        run: PYTHONPATH=${HOME}/.local/lib/python2.7/site-packages ctest -C ${BuildType} -V -T Test --no-compress-output ${{matrix.ctest_extra}}
+        run: PYTHONPATH=${InstallPrefix}/lib/python2.7/site-packages ctest -C ${BuildType} -V -T Test --no-compress-output ${{matrix.ctest_extra}}
         shell: bash
 
       - name: Upload Test results
