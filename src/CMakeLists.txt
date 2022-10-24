@@ -262,14 +262,14 @@ if (MSVC)
         string (REPLACE .lib .dll
                 _boost_chrono_release ${Boost_CHRONO_LIBRARY_RELEASE})
       endif (NOT Boost_VERSION LESS 104700)
-      install (PROGRAMS
-               ${_boost_date_time_debug} ${_boost_date_time_release}
-               ${_boost_program_options_debug} ${_boost_program_options_release}
-               ${_boost_thread_debug} ${_boost_thread_release}
-               ${_boost_chrono_debug} ${_boost_chrono_release}
-               ${_boost_system_debug} ${_boost_system_release}
-               DESTINATION ${QPID_INSTALL_BINDIR}
-               COMPONENT ${QPID_COMPONENT_COMMON})
+#      install (PROGRAMS
+#               ${_boost_date_time_debug} ${_boost_date_time_release}
+#               ${_boost_program_options_debug} ${_boost_program_options_release}
+#               ${_boost_thread_debug} ${_boost_thread_release}
+#               ${_boost_chrono_debug} ${_boost_chrono_release}
+#               ${_boost_system_debug} ${_boost_system_release}
+#               DESTINATION ${QPID_INSTALL_BINDIR}
+#               COMPONENT ${QPID_COMPONENT_COMMON})
    endif (QPID_LINK_BOOST_DYNAMIC)
 
 #   set(Boost_DATE_TIME_LIBRARY "")
