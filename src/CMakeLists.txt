@@ -1259,7 +1259,7 @@ endif (NOT WIN32)
 
     add_msvc_version (qmf2 library dll)
     add_library (qmf2 SHARED ${qmf2_SOURCES})
-    target_link_libraries (qmf2 PRIVATE qpidmessaging qpidtypes qpidclient qpidcommon)
+    target_link_libraries (qmf2 PRIVATE qpidmessaging qpidtypes qpidclient qpidcommon ${Boost_THREAD_LIBRARY})
     set_target_properties (qmf2 PROPERTIES
                            VERSION ${qmf2_version}
                            SOVERSION ${qmf2_version_major})
