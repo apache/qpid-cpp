@@ -8,7 +8,8 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ ubuntu-latest, windows-latest ]
+        # get swig 3 on linux
+        os: [ ubuntu-18.04, windows-latest ]
         buildType: [ RelWithDebInfo ]
         include:
           - os: windows-latest
