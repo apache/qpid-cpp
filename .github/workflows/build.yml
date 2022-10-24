@@ -9,7 +9,7 @@ jobs:
       fail-fast: false
       matrix:
         # get swig 3 on linux
-        os: [ ubuntu-18.04, windows-latest ]
+        os: [ ubuntu-latest, windows-latest ]
         buildType: [ RelWithDebInfo ]
         include:
           - os: windows-latest
@@ -42,7 +42,7 @@ jobs:
       - name: Install Linux dependencies
         if: runner.os == 'Linux'
         run: |
-          sudo apt install -y cmake libboost-dev libboost-program-options-dev libboost-system-dev libboost-test-dev uuid-dev libnss3-dev libnss3-tools libsasl2-dev sasl2-bin swig python-dev valgrind ruby
+          sudo apt install -y cmake libboost-dev libboost-program-options-dev libboost-system-dev libboost-test-dev uuid-dev libnss3-dev libnss3-tools libsasl2-dev sasl2-bin swig3.0 python-dev valgrind ruby
           wget -q https://github.com/mozilla/sccache/releases/download/v0.3.0/sccache-v0.3.0-x86_64-unknown-linux-musl.tar.gz
           tar -xf sccache-v0.3.0-x86_64-unknown-linux-musl.tar.gz sccache-v0.3.0-x86_64-unknown-linux-musl/sccache
           sudo mv sccache-v0.3.0-x86_64-unknown-linux-musl/sccache /usr/bin/sccache
