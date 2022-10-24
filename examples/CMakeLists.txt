@@ -28,8 +28,8 @@ include_directories(${CMAKE_SOURCE_DIR}/include)
 # So set up to find the headers, find the libs at link time, but dynamically
 # link them all and clear the CMake Boost library names to avoid adding them to
 # the project files.
-include_directories( ${Boost_INCLUDE_DIR} )
-link_directories( ${Boost_LIBRARY_DIRS} )
+#include_directories( ${Boost_INCLUDE_DIR} )
+#link_directories( ${Boost_LIBRARY_DIRS} )
 
 # Visual Studio needs some Windows-specific simplifications.
 if (MSVC)
