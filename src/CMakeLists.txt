@@ -577,7 +577,8 @@ if (BUILD_HA)
     target_link_libraries (ha
                            PRIVATE
                            qpidtypes qpidcommon qpidbroker qpidmessaging
-                           ${Boost_PROGRAM_OPTIONS_LIBRARY})
+                           ${Boost_PROGRAM_OPTIONS_LIBRARY}
+                           ${Boost_THREAD_LIBRARY})
     set_target_properties (ha PROPERTIES
                            PREFIX "")
     install (TARGETS ha
