@@ -101,8 +101,12 @@ jobs:
             ${{matrix.cmake_extra}}
         shell: bash
 
+      # https://stackoverflow.com/a/46187862/1047788
+      # https://github.com/jiridanek/qpid-cpp/actions/runs/3314156604/jobs/5473066487#step:12:1472
       - name: cmake build/install
-        run: cmake --build "${{env.BuildDir}}" --config ${BuildType} --parallel 6 -t install
+        run: |
+          cmake --build "${{env.BuildDir}}" --config ${BuildType} --parallel 6
+          cmake --install "${{env.BuildDir}}" --config ${BuildType}
         shell: bash
 
       - id: ctest
