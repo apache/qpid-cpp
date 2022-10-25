@@ -22,6 +22,7 @@ jobs:
       PKG_CONFIG_PATH: ${{matrix.pkg_config_path}}
       VCPKG_DEFAULT_TRIPLET: x64-windows
       VCPKG_BINARY_SOURCES: 'clear;nuget,GitHub,readwrite'
+      SCCACHE_DIR: ${{github.workspace}}/SCCACHE
 
     steps:
 
@@ -66,17 +67,8 @@ jobs:
             ${{ runner.os }}-vcpkg-installed-
 
       - uses: actions/cache@v3
-        if: runner.os == 'Linux'
         with:
-          path: ~/.cache/sccache
-          key: ${{ runner.os }}-sccache-${{ matrix.os }}-${{ github.sha }}
-          restore-keys: |
-            ${{ runner.os }}-sccache-${{ matrix.os }}-
-            ${{ runner.os }}-sccache-
-      - uses: actions/cache@v3
-        if: runner.os == 'Windows'
-        with:
-          path: "${{ env.LOCALAPPDATA }}/Mozilla/sccache"
+          path: "${{ env.SCCACHE_DIR }}"
           key: ${{ runner.os }}-sccache-${{ matrix.os }}-${{ github.sha }}
           restore-keys: |
             ${{ runner.os }}-sccache-${{ matrix.os }}-
