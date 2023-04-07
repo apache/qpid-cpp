@@ -106,7 +106,7 @@ jobs:
           vcpkg integrate install
 
           # https://docs.github.com/en/actions/using-workflows/workflow-commands-for-github-actions#add-a-system-path-add-path
-          echo "${HOME}/scoop/shims" | Out-File -FilePath ${env:GITHUB_PATH} -Encoding utf8 -Append
+          Add-Content ${env:GITHUB_PATH} "${HOME}/scoop/shims"
         shell: pwsh
 
       # https://devblogs.microsoft.com/scripting/powertip-line-continuation-in-powershell/
