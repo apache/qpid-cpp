@@ -110,7 +110,7 @@ jobs:
       # https://devblogs.microsoft.com/scripting/powertip-line-continuation-in-powershell/
       - name: cmake configure
         run: |
-          set cache (gcm sccache).Path
+          set cache (gcm ~\scoop\shims\sccache).Path
           cmake -S "${{github.workspace}}" -B "${{env.BuildDir}}" -G Ninja `
             -DCMAKE_C_COMPILER="cl.exe" -DCMAKE_CXX_COMPILER="cl.exe" `
             -DCMAKE_C_COMPILER_LAUNCHER="${cache}" -DCMAKE_CXX_COMPILER_LAUNCHER="${cache}" `
