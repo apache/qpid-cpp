@@ -122,8 +122,8 @@ jobs:
       # https://github.com/jiridanek/qpid-cpp/actions/runs/3314156604/jobs/5473066487#step:12:1472
       - name: cmake build/install
         run: |
-          cmake --build "${{env.BuildDir}}" --config ${BuildType}
-          cmake --install "${{env.BuildDir}}" --config ${BuildType}
+          cmake --build "${{env.BuildDir}}" --config ${{env.BuildType}}
+          cmake --install "${{env.BuildDir}}" --config ${{env.BuildType}}
         shell: pwsh
 
 #      - id: ctest
