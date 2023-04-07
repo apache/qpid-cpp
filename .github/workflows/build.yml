@@ -110,9 +110,10 @@ jobs:
       # https://devblogs.microsoft.com/scripting/powertip-line-continuation-in-powershell/
       - name: cmake configure
         run: |
+          set cache (gcm sccache).Path
           cmake -S "${{github.workspace}}" -B "${{env.BuildDir}}" -G Ninja `
             -DCMAKE_C_COMPILER="cl.exe" -DCMAKE_CXX_COMPILER="cl.exe" `
-            -DCMAKE_C_COMPILER_LAUNCHER="sccache" -DCMAKE_CXX_COMPILER_LAUNCHER="sccache" `
+            -DCMAKE_C_COMPILER_LAUNCHER="${cache}" -DCMAKE_CXX_COMPILER_LAUNCHER="${cache}" `
             "-DCMAKE_BUILD_TYPE=${{env.BuildType}}" `
             "-DCMAKE_INSTALL_PREFIX=${{env.InstallPrefix}}" `
             ${{matrix.cmake_extra}}
