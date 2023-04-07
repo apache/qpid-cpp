@@ -8,10 +8,12 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        # get swig 3 on linux
         os: [ ubuntu-20.04, windows-latest ]
         buildType: [ RelWithDebInfo ]
         include:
+          - os: ubuntu-20.04
+            # QPID-8606: we don't support swig 4.0, it produces runtime errors when used
+            cmake_extra: '-DSWIG_EXECUTABLE=/usr/bin/swig3.0'
           - os: windows-latest
             cmake_extra: '-DQPID_LINK_BOOST_DYNAMIC=OFF -DBUILD_BINDING_DOTNET=OFF -DCMAKE_TOOLCHAIN_FILE=C:/vcpkg/scripts/buildsystems/vcpkg.cmake'
     env:
@@ -51,9 +53,6 @@ jobs:
           # ubuntu packages (https://packages.ubuntu.com/source/focal/qpid-proton) don't carry ProtonConfig.cmake
           # the `testing` ppa is less likely to be out-of-date
           sudo add-apt-repository ppa:qpid/testing && sudo apt-get update
-
-          # QPID-8606: we don't support swig 4.0, it produces runtime errors when used 
-          sudo apt-get -yq remove swig4.0
 
           sudo apt-get -yq --no-install-suggests --no-install-recommends install \
             cmake ninja-build \
