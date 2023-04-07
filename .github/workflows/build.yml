@@ -62,7 +62,7 @@ jobs:
         if: runner.os == 'Windows'
         with:
           path: ~\scoop
-          key: ${{ runner.os }}-scoop-${{ env.OS_VER }}-${{ github.sha }}
+          key: ${{ runner.os }}-scoop-${{ env.OS_VER }}-${{ hashFiles('.github/workflows/build.yml') }}
           restore-keys: |
             ${{ runner.os }}-scoop-${{ env.OS_VER }}-
             ${{ runner.os }}-scoop-
@@ -72,7 +72,7 @@ jobs:
         if: runner.os == 'Windows'
         with:
           path: C:\vcpkg\downloads
-          key: ${{ runner.os }}-vcpkg-download-${{ env.OS_VER }}-${{ github.sha }}
+          key: ${{ runner.os }}-vcpkg-download-${{ env.OS_VER }}-${{ hashFiles('.github/workflows/build.yml') }}
           restore-keys: |
             ${{ runner.os }}-vcpkg-download-${{ env.OS_VER }}-
             ${{ runner.os }}-vcpkg-download-
@@ -81,7 +81,7 @@ jobs:
         if: runner.os == 'Windows'
         with:
           path: C:\vcpkg\installed
-          key: ${{ runner.os }}-vcpkg-installed-${{ matrix.os }}-${{ github.sha }}
+          key: ${{ runner.os }}-vcpkg-installed-${{ matrix.os }}-${{ hashFiles('.github/workflows/build.yml') }}
           restore-keys: |
             ${{ runner.os }}-vcpkg-installed-${{ matrix.os }}-
             ${{ runner.os }}-vcpkg-installed-
