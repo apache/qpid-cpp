@@ -49,7 +49,8 @@ jobs:
           sudo mv sccache-v0.3.0-x86_64-unknown-linux-musl/sccache /usr/bin/sccache
           sudo chmod +x /usr/bin/sccache
 
-      - uses: actions/cache@v3
+      - name: Cache vcpkg downloads (on Windows)
+        uses: actions/cache@v3
         if: runner.os == 'Windows'
         with:
           path: C:\vcpkg\downloads
@@ -57,7 +58,8 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-vcpkg-download-${{ env.OS_VER }}-
             ${{ runner.os }}-vcpkg-download-
-      - uses: actions/cache@v3
+      - name: Cache vcpkg installed (on Windows)
+        uses: actions/cache@v3
         if: runner.os == 'Windows'
         with:
           path: C:\vcpkg\installed
@@ -66,7 +68,8 @@ jobs:
             ${{ runner.os }}-vcpkg-installed-${{ matrix.os }}-
             ${{ runner.os }}-vcpkg-installed-
 
-      - uses: actions/cache@v3
+      - name: Cache sccache
+        uses: actions/cache@v3
         with:
           path: "${{ env.SCCACHE_DIR }}"
           key: ${{ runner.os }}-sccache-${{ matrix.os }}-${{ github.sha }}
