@@ -100,7 +100,7 @@ jobs:
         run: |
           Set-ExecutionPolicy RemoteSigned -Scope CurrentUser # Optional: Needed to run a remote script the first time
           iex "& {$(irm get.scoop.sh)} -RunAsAdmin"
-          scoop install ninja sccache
+          scoop install aws ninja sccache
 
           vcpkg install boost-program-options boost-system boost-test boost-date-time boost-thread boost-chrono boost-format boost-ptr-container boost-assign boost-parameter boost-foreach boost-utility
           vcpkg integrate install
