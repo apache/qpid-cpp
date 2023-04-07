@@ -288,6 +288,8 @@ include_directories( ${CMAKE_CURRENT_SOURCE_DIR}/../include )
 include_directories( ${CMAKE_CURRENT_BINARY_DIR} )
 include_directories( ${CMAKE_CURRENT_BINARY_DIR}/../include )
 
+link_directories( ${Boost_LIBRARY_DIRS} )
+
 CHECK_SYMBOL_EXISTS(uuid_generate "uuid/uuid.h" UUID_GENERATE_IN_LIBC)
 if (UUID_GENERATE_IN_LIBC)
   set(uuid_SRC "")
@@ -575,8 +577,7 @@ if (BUILD_HA)
     target_link_libraries (ha
                            PRIVATE
                            qpidtypes qpidcommon qpidbroker qpidmessaging
-                           ${Boost_PROGRAM_OPTIONS_LIBRARY}
-                           ${Boost_THREAD_LIBRARY})
+                           ${Boost_PROGRAM_OPTIONS_LIBRARY})
     set_target_properties (ha PROPERTIES
                            PREFIX "")
     install (TARGETS ha
@@ -936,8 +937,7 @@ add_msvc_version (qpidclient library dll)
 add_library (qpidclient SHARED ${qpidclient_SOURCES})
 
 target_link_libraries (qpidclient PRIVATE qpidcommon qpidtypes
-                       ${ssl_LIBS}
-                       ${Boost_THREAD_LIBRARY})
+                       ${ssl_LIBS})
 
 set_target_properties (qpidclient PROPERTIES
                        VERSION ${qpidclient_version}
@@ -1004,7 +1004,7 @@ set (qpidmessaging_SOURCES
 add_msvc_version (qpidmessaging library dll)
 
 add_library (qpidmessaging SHARED ${qpidmessaging_SOURCES})
-target_link_libraries (qpidmessaging PRIVATE qpidtypes qpidclient qpidcommon ${Proton_Core_LIBRARIES} ${Boost_THREAD_LIBRARY})
+target_link_libraries (qpidmessaging PRIVATE qpidtypes qpidclient qpidcommon ${Proton_Core_LIBRARIES})
 set_target_properties (qpidmessaging PROPERTIES
                        LINK_FLAGS "${HIDE_SYMBOL_FLAGS} ${LINK_VERSION_SCRIPT_FLAG}"
                        COMPILE_FLAGS "${HIDE_SYMBOL_FLAGS}"
@@ -1141,8 +1141,7 @@ target_link_libraries (qpidbroker
                        PRIVATE
                        qpidcommon qpidtypes
                        "${sasl_LIB}"
-                       ${ssl_server_LIBS}
-                       ${Boost_THREAD_LIBRARY})
+                       ${ssl_server_LIBS})
 
 set_target_properties (qpidbroker PROPERTIES
                        VERSION ${qpidbroker_version}
@@ -1257,7 +1256,7 @@ endif (NOT WIN32)
 
     add_msvc_version (qmf2 library dll)
     add_library (qmf2 SHARED ${qmf2_SOURCES})
-    target_link_libraries (qmf2 PRIVATE qpidmessaging qpidtypes qpidclient qpidcommon ${Boost_THREAD_LIBRARY})
+    target_link_libraries (qmf2 PRIVATE qpidmessaging qpidtypes qpidclient qpidcommon)
     set_target_properties (qmf2 PROPERTIES
                            VERSION ${qmf2_version}
                            SOVERSION ${qmf2_version_major})
