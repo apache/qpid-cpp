@@ -54,13 +54,19 @@ jobs:
           # the `testing` ppa is less likely to be out-of-date
           sudo add-apt-repository ppa:qpid/testing && sudo apt-get update
 
+          # https://github.com/swig/swig/issues/1689
+          # swig3.0 in focal does not work well with ruby2.7
+          sudo apt-add-repository ppa:brightbox/ruby-ng && sudo apt-get update
+
           sudo apt-get -yq --no-install-suggests --no-install-recommends install \
             cmake ninja-build \
             libboost-dev libboost-program-options-dev libboost-system-dev libboost-test-dev \
             libxqilla-dev libxerces-c-dev \
             libibverbs-dev librdmacm-dev \
             libqpid-proton11-dev libqpid-proton-core10 libqpid-proton-proactor1 \
-            uuid-dev libnss3-dev libnss3-tools libsasl2-dev sasl2-bin swig3.0 python-dev valgrind ruby
+            swig3.0 python-dev ruby2.6-dev \
+            uuid-dev libnss3-dev libnss3-tools libsasl2-dev sasl2-bin \
+            valgrind 
 
           sccache_version=v0.4.1
           wget -q https://github.com/mozilla/sccache/releases/download/${sccache_version}/sccache-${sccache_version}-x86_64-unknown-linux-musl.tar.gz
