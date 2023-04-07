@@ -43,11 +43,21 @@ jobs:
       - name: Install Linux dependencies
         if: runner.os == 'Linux'
         run: |
-          sudo apt-get -yq --no-install-suggests --no-install-recommends install cmake libboost-dev libboost-program-options-dev libboost-system-dev libboost-test-dev uuid-dev libnss3-dev libnss3-tools libsasl2-dev sasl2-bin swig3.0 python-dev valgrind ruby
+          sudo apt-get -yq --no-install-suggests --no-install-recommends install cmake ninja libboost-dev libboost-program-options-dev libboost-system-dev libboost-test-dev uuid-dev libnss3-dev libnss3-tools libsasl2-dev sasl2-bin swig3.0 python-dev valgrind ruby
           wget -q https://github.com/mozilla/sccache/releases/download/v0.3.0/sccache-v0.3.0-x86_64-unknown-linux-musl.tar.gz
           tar -xf sccache-v0.3.0-x86_64-unknown-linux-musl.tar.gz sccache-v0.3.0-x86_64-unknown-linux-musl/sccache
           sudo mv sccache-v0.3.0-x86_64-unknown-linux-musl/sccache /usr/bin/sccache
           sudo chmod +x /usr/bin/sccache
+
+      - name: Cache scoop directory (on Windows)
+        uses: actions/cache@v3
+        if: runner.os == 'Windows'
+        with:
+          path: $HOME\scoop
+          key: ${{ runner.os }}-scoop-${{ env.OS_VER }}-${{ github.sha }}
+          restore-keys: |
+            ${{ runner.os }}-scoop-${{ env.OS_VER }}-
+            ${{ runner.os }}-scoop-
 
       - name: Cache vcpkg downloads (on Windows)
         uses: actions/cache@v3
@@ -82,14 +92,14 @@ jobs:
         run: |
           Set-ExecutionPolicy RemoteSigned -Scope CurrentUser # Optional: Needed to run a remote script the first time
           iex "& {$(irm get.scoop.sh)} -RunAsAdmin"
-          scoop install sccache
+          scoop install ninja sccache
           vcpkg install boost-program-options boost-system boost-test boost-date-time boost-thread boost-chrono boost-format boost-ptr-container boost-assign boost-parameter boost-foreach boost-utility
           vcpkg integrate install
         shell: pwsh
 
       - name: cmake configure
         run: |
-          cmake -S "${{github.workspace}}" -B "${{env.BuildDir}}" \
+          cmake -S "${{github.workspace}}" -B "${{env.BuildDir}}" -G Ninja \
             -DCMAKE_C_COMPILER_LAUNCHER=sccache -DCMAKE_CXX_COMPILER_LAUNCHER=sccache \
             "-DCMAKE_BUILD_TYPE=${BuildType}" \
             "-DCMAKE_INSTALL_PREFIX=${InstallPrefix}" \
@@ -100,7 +110,7 @@ jobs:
       # https://github.com/jiridanek/qpid-cpp/actions/runs/3314156604/jobs/5473066487#step:12:1472
       - name: cmake build/install
         run: |
-          cmake --build "${{env.BuildDir}}" --config ${BuildType} --parallel 6
+          cmake --build "${{env.BuildDir}}" --config ${BuildType}
           cmake --install "${{env.BuildDir}}" --config ${BuildType}
         shell: bash
 
