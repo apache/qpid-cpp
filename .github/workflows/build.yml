@@ -126,6 +126,11 @@ jobs:
 
           # https://docs.github.com/en/actions/using-workflows/workflow-commands-for-github-actions#add-a-system-path-add-path
           Add-Content ${env:GITHUB_PATH} "${HOME}/scoop/shims"
+          
+          ls C:/vcpkg/installed/x64-windows/
+          ls C:/vcpkg/installed/x64-windows/debug/
+          ls C:/vcpkg/installed/x64-windows/debug/lib/
+          ls C:/vcpkg/installed/x64-windows/debug/lib/boost_date_time-vc140-mt-gd.dll
         shell: pwsh
 
       # Windows build should ideally use something like '-G "Visual Studio 16 2019" -A x64',
