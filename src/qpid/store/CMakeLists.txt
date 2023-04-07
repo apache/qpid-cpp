@@ -21,8 +21,6 @@ project(qpidc_store)
 
 #set (CMAKE_VERBOSE_MAKEFILE ON)  # for debugging
 
-#include_directories( ${Boost_INCLUDE_DIR} )
-
 include_directories( ${CMAKE_CURRENT_SOURCE_DIR} )
 include_directories( ${CMAKE_HOME_DIRECTORY}/include )
 

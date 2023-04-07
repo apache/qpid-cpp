@@ -262,22 +262,22 @@ if (MSVC)
         string (REPLACE .lib .dll
                 _boost_chrono_release ${Boost_CHRONO_LIBRARY_RELEASE})
       endif (NOT Boost_VERSION LESS 104700)
-#      install (PROGRAMS
-#               ${_boost_date_time_debug} ${_boost_date_time_release}
-#               ${_boost_program_options_debug} ${_boost_program_options_release}
-#               ${_boost_thread_debug} ${_boost_thread_release}
-#               ${_boost_chrono_debug} ${_boost_chrono_release}
-#               ${_boost_system_debug} ${_boost_system_release}
-#               DESTINATION ${QPID_INSTALL_BINDIR}
-#               COMPONENT ${QPID_COMPONENT_COMMON})
+      install (PROGRAMS
+               ${_boost_date_time_debug} ${_boost_date_time_release}
+               ${_boost_program_options_debug} ${_boost_program_options_release}
+               ${_boost_thread_debug} ${_boost_thread_release}
+               ${_boost_chrono_debug} ${_boost_chrono_release}
+               ${_boost_system_debug} ${_boost_system_release}
+               DESTINATION ${QPID_INSTALL_BINDIR}
+               COMPONENT ${QPID_COMPONENT_COMMON})
    endif (QPID_LINK_BOOST_DYNAMIC)
 
-#   set(Boost_DATE_TIME_LIBRARY "")
-#   set(Boost_THREAD_LIBRARY "")
-#   set(Boost_PROGRAM_OPTIONS_LIBRARY "")
-#   set(Boost_UNIT_TEST_FRAMEWORK_LIBRARY "")
-#   set(Boost_SYSTEM_LIBRARY "")
-#   set(Boost_CHRONO_LIBRARY "")
+   set(Boost_DATE_TIME_LIBRARY "")
+   set(Boost_THREAD_LIBRARY "")
+   set(Boost_PROGRAM_OPTIONS_LIBRARY "")
+   set(Boost_UNIT_TEST_FRAMEWORK_LIBRARY "")
+   set(Boost_SYSTEM_LIBRARY "")
+   set(Boost_CHRONO_LIBRARY "")
    include_directories( ${CMAKE_CURRENT_SOURCE_DIR}/windows/resources )
 endif (MSVC)
 
@@ -287,8 +287,6 @@ include_directories( ${CMAKE_CURRENT_SOURCE_DIR} )
 include_directories( ${CMAKE_CURRENT_SOURCE_DIR}/../include )
 include_directories( ${CMAKE_CURRENT_BINARY_DIR} )
 include_directories( ${CMAKE_CURRENT_BINARY_DIR}/../include )
-
-#link_directories( ${Boost_LIBRARY_DIRS} )
 
 CHECK_SYMBOL_EXISTS(uuid_generate "uuid/uuid.h" UUID_GENERATE_IN_LIBC)
 if (UUID_GENERATE_IN_LIBC)
