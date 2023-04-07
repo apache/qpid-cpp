@@ -111,11 +111,11 @@ jobs:
         run: |
           cmake -S "${{github.workspace}}" -B "${{env.BuildDir}}" -G Ninja \
             -DCMAKE_C_COMPILER="cl.exe" -DCMAKE_CXX_COMPILER="cl.exe" \
-            -DCMAKE_C_COMPILER_LAUNCHER=sccache -DCMAKE_CXX_COMPILER_LAUNCHER=sccache \
+            -DCMAKE_C_COMPILER_LAUNCHER=sccache.exe -DCMAKE_CXX_COMPILER_LAUNCHER=sccache.exe \
             "-DCMAKE_BUILD_TYPE=${BuildType}" \
             "-DCMAKE_INSTALL_PREFIX=${InstallPrefix}" \
             ${{matrix.cmake_extra}}
-        shell: bash
+        shell: pwsh
 
       # https://stackoverflow.com/a/46187862/1047788
       # https://github.com/jiridanek/qpid-cpp/actions/runs/3314156604/jobs/5473066487#step:12:1472
@@ -123,7 +123,7 @@ jobs:
         run: |
           cmake --build "${{env.BuildDir}}" --config ${BuildType}
           cmake --install "${{env.BuildDir}}" --config ${BuildType}
-        shell: bash
+        shell: pwsh
 
 #      - id: ctest
 #        name: ctest
