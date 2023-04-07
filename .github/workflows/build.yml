@@ -106,40 +106,40 @@ jobs:
           vcpkg install boost-program-options boost-system boost-test boost-date-time boost-thread boost-chrono boost-format boost-ptr-container boost-assign boost-parameter boost-foreach boost-utility
           vcpkg integrate install
         shell: pwsh
-#
-#      # https://devblogs.microsoft.com/scripting/powertip-line-continuation-in-powershell/
-#      - name: cmake configure
-#        run: |
-#          cmake -S "${{github.workspace}}" -B "${{env.BuildDir}}" -G Ninja `
-#            -DCMAKE_C_COMPILER="cl.exe" -DCMAKE_CXX_COMPILER="cl.exe" `
-#            -DCMAKE_C_COMPILER_LAUNCHER="sccache" -DCMAKE_CXX_COMPILER_LAUNCHER="sccache" `
-#            "-DCMAKE_BUILD_TYPE=${{env.BuildType}}" `
-#            "-DCMAKE_INSTALL_PREFIX=${{env.InstallPrefix}}" `
-#            ${{matrix.cmake_extra}}
-#        shell: pwsh
-#
-#      # https://stackoverflow.com/a/46187862/1047788
-#      # https://github.com/jiridanek/qpid-cpp/actions/runs/3314156604/jobs/5473066487#step:12:1472
-#      - name: cmake build/install
-#        run: |
-#          cmake --build "${{env.BuildDir}}" --config ${{env.BuildType}}
-#          cmake --install "${{env.BuildDir}}" --config ${{env.BuildType}}
-#        shell: pwsh
-#
-##      - id: ctest
-##        name: ctest
-##        working-directory: ${{env.BuildDir}}
-##        run: PYTHONPATH=${InstallPrefix}/lib/python2.7/site-packages ctest -C ${BuildType} -V -T Test --no-compress-output ${{matrix.ctest_extra}}
-##        shell: bash
-##
-##      - name: Upload Test results
-##        if: always() && (steps.ctest.outcome == 'failure' || steps.ctest.outcome == 'success')
-##        uses: actions/upload-artifact@v2
-##        with:
-##          name: Test_Results_${{matrix.os}}_${{matrix.buildType}}
-##          path: ${{env.BuildDir}}/Testing/**/*.xml
-#
-#      - name: Environment
-#        if: always()
-#        run: env -0 | sort -z | tr '\0' '\n'
+
+      # https://devblogs.microsoft.com/scripting/powertip-line-continuation-in-powershell/
+      - name: cmake configure
+        run: |
+          cmake -S "${{github.workspace}}" -B "${{env.BuildDir}}" -G Ninja `
+            -DCMAKE_C_COMPILER="cl.exe" -DCMAKE_CXX_COMPILER="cl.exe" `
+            -DCMAKE_C_COMPILER_LAUNCHER="sccache" -DCMAKE_CXX_COMPILER_LAUNCHER="sccache" `
+            "-DCMAKE_BUILD_TYPE=${{env.BuildType}}" `
+            "-DCMAKE_INSTALL_PREFIX=${{env.InstallPrefix}}" `
+            ${{matrix.cmake_extra}}
+        shell: pwsh
+
+      # https://stackoverflow.com/a/46187862/1047788
+      # https://github.com/jiridanek/qpid-cpp/actions/runs/3314156604/jobs/5473066487#step:12:1472
+      - name: cmake build/install
+        run: |
+          cmake --build "${{env.BuildDir}}" --config ${{env.BuildType}}
+          cmake --install "${{env.BuildDir}}" --config ${{env.BuildType}}
+        shell: pwsh
+
+#      - id: ctest
+#        name: ctest
+#        working-directory: ${{env.BuildDir}}
+#        run: PYTHONPATH=${InstallPrefix}/lib/python2.7/site-packages ctest -C ${BuildType} -V -T Test --no-compress-output ${{matrix.ctest_extra}}
 #        shell: bash
+#
+#      - name: Upload Test results
+#        if: always() && (steps.ctest.outcome == 'failure' || steps.ctest.outcome == 'success')
+#        uses: actions/upload-artifact@v2
+#        with:
+#          name: Test_Results_${{matrix.os}}_${{matrix.buildType}}
+#          path: ${{env.BuildDir}}/Testing/**/*.xml
+
+      - name: Environment
+        if: always()
+        run: env -0 | sort -z | tr '\0' '\n'
+        shell: bash
