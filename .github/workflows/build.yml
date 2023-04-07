@@ -61,7 +61,7 @@ jobs:
         uses: actions/cache@v3
         if: runner.os == 'Windows'
         with:
-          path: $HOME\scoop
+          path: ~\scoop
           key: ${{ runner.os }}-scoop-${{ env.OS_VER }}-${{ github.sha }}
           restore-keys: |
             ${{ runner.os }}-scoop-${{ env.OS_VER }}-
