@@ -12,9 +12,11 @@ jobs:
         os: [ ubuntu-20.04, windows-latest ]
         buildType: [ RelWithDebInfo ]
         include:
+          - os: ubuntu-20.04
+            cmake_generator: '-G "Ninja"'
           - os: windows-latest
-            cmake_extra: '-DBUILD_BINDING_DOTNET=OFF -A x64 -DCMAKE_TOOLCHAIN_FILE=C:/vcpkg/scripts/buildsystems/vcpkg.cmake'
-            cmake_generator: '-G "Visual Studio 16 2019"'
+            cmake_extra: '-DBUILD_BINDING_DOTNET=OFF -DCMAKE_TOOLCHAIN_FILE=C:/vcpkg/scripts/buildsystems/vcpkg.cmake'
+            cmake_generator: '-G "Visual Studio 16 2019" -A x64'
     env:
       BuildType: ${{matrix.buildType}}
       BuildDir: ${{github.workspace}}/BLD
@@ -33,6 +35,12 @@ jobs:
         with:
           python-version: 2.7
           architecture: x64
+
+      - name: Setup Developer Command Prompt (on Windows)
+        uses: ilammy/msvc-dev-cmd@v1
+        if: runner.os == 'Windows'
+        with:
+          arch: x64
 
       # it's weird that it needs qpid-python for tests; one would guess this is built in this repo, but it is not
       - name: Install python dependencies
