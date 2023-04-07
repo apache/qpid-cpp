@@ -130,6 +130,7 @@ jobs:
           ls C:/vcpkg/installed/x64-windows/
           ls C:/vcpkg/installed/x64-windows/debug/
           ls C:/vcpkg/installed/x64-windows/debug/lib/
+          ls C:/vcpkg/installed/x64-windows/debug/bin/
           ls C:/vcpkg/installed/x64-windows/debug/lib/boost_date_time-vc140-mt-gd.dll
         shell: pwsh
 
