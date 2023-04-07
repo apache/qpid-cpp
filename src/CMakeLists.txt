@@ -166,50 +166,6 @@ endif (ENABLE_GLIBCXX_OLD_ABI)
 
 set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${ABI_DEF} ${COMPILER_FLAGS} ${WARNING_FLAGS}")
 
-# Expand a bit from the basic Find_Boost; be specific about what's needed.
-# Boost.system is sometimes needed; it's handled separately, below.
-# There may be different minimum versions of boost for Windows and Unix
-if (CMAKE_SYSTEM_NAME STREQUAL Windows)
-  set (Boost_components program_options date_time thread)
-  set (Boost_minversion 1.44)
-else (CMAKE_SYSTEM_NAME STREQUAL Windows)
-  set (Boost_components program_options)
-  set (Boost_minversion 1.33)
-endif (CMAKE_SYSTEM_NAME STREQUAL Windows)
-
-# Visual Studio 2010 requires boost 1.45 or better.
-# The choice here is to fail demanding the user to update CMake to version N
-# where Boost 1.45 is supported, or we can just accept some versions using
-# the Additional_versions variable.
-if (NOT DEFINED Boost_ADDITIONAL_VERSIONS)
-  set (Boost_ADDITIONAL_VERSIONS
-        "1.45" "1.45.0" "1.46" "1.46.0" "1.47" "1.47.0"
-        "1.48" "1.48.0" "1.49" "1.49.0" "1.50" "1.50.0"
-        "1.51" "1.51.0" "1.52" "1.52.0" "1.53" "1.53.0"
-        "1.54" "1.54.0" "1.55" "1.55.0" "1.56" "1.56.0"
-        "1.57" "1.57.0" "1.58" "1.58.0")
-endif (NOT DEFINED Boost_ADDITIONAL_VERSIONS)
-
-# Discover Boost version
-find_package(Boost ${Boost_minversion} QUIET REQUIRED)
-
-# Boost.system was introduced at Boost 1.35; it's needed secondarily by other
-# Boost libs Qpid needs, so be sure it's there.
-if (Boost_VERSION GREATER 103499)
-  list(APPEND Boost_components system)
-endif (Boost_VERSION GREATER 103499)
-
-# Boost.chrono was introduced at Boost 1.47; it's needed secondarily by other
-# Boost libs Qpid needs on Windows, so be sure it's there on Windows.
-if (Boost_VERSION GREATER 104699 AND CMAKE_SYSTEM_NAME STREQUAL Windows)
-  list(APPEND Boost_components chrono)
-endif (Boost_VERSION GREATER 104699 AND CMAKE_SYSTEM_NAME STREQUAL Windows)
-
-find_package(Boost ${Boost_minversion} REQUIRED COMPONENTS ${Boost_components})
-if(NOT Boost_FOUND)
-  message(FATAL_ERROR "Required Boost C++ libraries not found.  Please install or try setting BOOST_ROOT")
-endif(NOT Boost_FOUND)
-
 if (BUILD_TESTING)
   set (BUILD_TESTING_UNITTESTS ON)
   find_package(Boost ${Boost_minversion} QUIET COMPONENTS unit_test_framework)
@@ -219,65 +175,7 @@ if (BUILD_TESTING)
   endif(NOT Boost_UNIT_TEST_FRAMEWORK_LIBRARY)
 endif (BUILD_TESTING)
 
-# The Windows install also wants the Boost DLLs, libs and headers that the
-# release is built with. The DLLs enable everything to run, and the headers
-# and libs ensure that users building Qpid C++ client programs can compile
-# (the C++ API still exposes Boost headers, but hopefully this will be fixed
-# in the future).
-#
-# On Windows you can pick whether the static or dynamic versions of the libs
-# are used; allow this choice to the user. Since we also install the Boost
-# DLLs that are needed for the Windows package, none are needed for the
-# static link case; else drop them into the install. Do this all first, since
-# Boost on Windows can use automatic linking to pick up the correct
-# Boost libs based on compile-time touching of the headers. Since we don't
-# really need to add them to the link lines, set the names to blanks.
-option(QPID_LINK_BOOST_DYNAMIC "Link with dynamic Boost libs (OFF to link static)" ON)
-mark_as_advanced(QPID_LINK_BOOST_DYNAMIC)
-
 if (MSVC)
-   if (QPID_LINK_BOOST_DYNAMIC)
-      add_definitions( /D BOOST_ALL_DYN_LINK)
-      string (REPLACE .lib .dll
-              _boost_date_time_debug ${Boost_DATE_TIME_LIBRARY_DEBUG})
-      string (REPLACE .lib .dll
-              _boost_date_time_release ${Boost_DATE_TIME_LIBRARY_RELEASE})
-      string (REPLACE .lib .dll
-              _boost_program_options_debug ${Boost_PROGRAM_OPTIONS_LIBRARY_DEBUG})
-      string (REPLACE .lib .dll
-              _boost_program_options_release ${Boost_PROGRAM_OPTIONS_LIBRARY_RELEASE})
-      string (REPLACE .lib .dll
-              _boost_thread_debug ${Boost_THREAD_LIBRARY_DEBUG})
-      string (REPLACE .lib .dll
-              _boost_thread_release ${Boost_THREAD_LIBRARY_RELEASE})
-      if (NOT Boost_VERSION LESS 103500)
-        string (REPLACE .lib .dll
-                _boost_system_debug ${Boost_SYSTEM_LIBRARY_DEBUG})
-        string (REPLACE .lib .dll
-                _boost_system_release ${Boost_SYSTEM_LIBRARY_RELEASE})
-      endif (NOT Boost_VERSION LESS 103500)
-      if (NOT Boost_VERSION LESS 104700)
-        string (REPLACE .lib .dll
-                _boost_chrono_debug ${Boost_CHRONO_LIBRARY_DEBUG})
-        string (REPLACE .lib .dll
-                _boost_chrono_release ${Boost_CHRONO_LIBRARY_RELEASE})
-      endif (NOT Boost_VERSION LESS 104700)
-#      install (PROGRAMS
-#               ${_boost_date_time_debug} ${_boost_date_time_release}
-#               ${_boost_program_options_debug} ${_boost_program_options_release}
-#               ${_boost_thread_debug} ${_boost_thread_release}
-#               ${_boost_chrono_debug} ${_boost_chrono_release}
-#               ${_boost_system_debug} ${_boost_system_release}
-#               DESTINATION ${QPID_INSTALL_BINDIR}
-#               COMPONENT ${QPID_COMPONENT_COMMON})
-   endif (QPID_LINK_BOOST_DYNAMIC)
-
-#   set(Boost_DATE_TIME_LIBRARY "")
-#   set(Boost_THREAD_LIBRARY "")
-#   set(Boost_PROGRAM_OPTIONS_LIBRARY "")
-#   set(Boost_UNIT_TEST_FRAMEWORK_LIBRARY "")
-#   set(Boost_SYSTEM_LIBRARY "")
-#   set(Boost_CHRONO_LIBRARY "")
    include_directories( ${CMAKE_CURRENT_SOURCE_DIR}/windows/resources )
 endif (MSVC)
 
