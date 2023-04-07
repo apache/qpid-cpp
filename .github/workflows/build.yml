@@ -101,10 +101,12 @@ jobs:
           Set-ExecutionPolicy RemoteSigned -Scope CurrentUser # Optional: Needed to run a remote script the first time
           iex "& {$(irm get.scoop.sh)} -RunAsAdmin"
           scoop install ninja sccache
-          ~\scoop\apps\sccache\current\sccache.exe --help
-          sccache.exe --help
+
           vcpkg install boost-program-options boost-system boost-test boost-date-time boost-thread boost-chrono boost-format boost-ptr-container boost-assign boost-parameter boost-foreach boost-utility
           vcpkg integrate install
+
+          # https://docs.github.com/en/actions/using-workflows/workflow-commands-for-github-actions#add-a-system-path-add-path
+          echo $PATH >> $GITHUB_PATH
         shell: pwsh
 
       # https://devblogs.microsoft.com/scripting/powertip-line-continuation-in-powershell/
@@ -113,7 +115,7 @@ jobs:
           set cache (gcm ~\scoop\shims\sccache).Path
           cmake -S "${{github.workspace}}" -B "${{env.BuildDir}}" -G Ninja `
             -DCMAKE_C_COMPILER="cl.exe" -DCMAKE_CXX_COMPILER="cl.exe" `
-            -DCMAKE_C_COMPILER_LAUNCHER="${cache}" -DCMAKE_CXX_COMPILER_LAUNCHER="${cache}" `
+            -DCMAKE_C_COMPILER_LAUNCHER="sccache" -DCMAKE_CXX_COMPILER_LAUNCHER="sccache" `
             "-DCMAKE_BUILD_TYPE=${{env.BuildType}}" `
             "-DCMAKE_INSTALL_PREFIX=${{env.InstallPrefix}}" `
             ${{matrix.cmake_extra}}
