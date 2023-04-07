@@ -63,7 +63,7 @@ jobs:
             libboost-dev libboost-program-options-dev libboost-system-dev libboost-test-dev \
             libxqilla-dev libxerces-c-dev \
             libibverbs-dev librdmacm-dev \
-            libdb-dev \
+            libdb++-dev \
             libqpid-proton11-dev libqpid-proton-core10 libqpid-proton-proactor1 \
             swig3.0 python-dev ruby2.6 ruby2.6-dev \
             uuid-dev libnss3-dev libnss3-tools libsasl2-dev sasl2-bin \
