@@ -48,12 +48,16 @@ jobs:
       - name: Install Linux dependencies
         if: runner.os == 'Linux'
         run: |
+          # ubuntu packages (https://packages.ubuntu.com/source/focal/qpid-proton) don't carry ProtonConfig.cmake
+          # the `testing` ppa is less likely to be out-of-date
+          sudo add-apt-repository ppa:qpid/testing && sudo apt-get update
+
           sudo apt-get -yq --no-install-suggests --no-install-recommends install \
             cmake ninja-build \
             libboost-dev libboost-program-options-dev libboost-system-dev libboost-test-dev \
             libxqilla-dev libxerces-c-dev \
             libibverbs-dev librdmacm-dev \
-            libqpid-proton11-dev libqpid-proton-cpp12-dev \
+            libqpid-proton11-dev \
             uuid-dev libnss3-dev libnss3-tools libsasl2-dev sasl2-bin swig3.0 python-dev valgrind ruby
           
           sccache_version=v0.4.1
