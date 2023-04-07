@@ -54,7 +54,7 @@ jobs:
           sudo mv sccache-v0.3.0-x86_64-unknown-linux-musl/sccache /usr/bin/sccache
           sudo chmod +x /usr/bin/sccache
 
-      - name: Cache scoop directory (on Windows)
+      - name: Cache scoop (on Windows)
         uses: actions/cache@v3
         if: runner.os == 'Windows'
         with:
@@ -64,7 +64,7 @@ jobs:
             ${{ runner.os }}-scoop-${{ env.OS_VER }}-
             ${{ runner.os }}-scoop-
 
-      - name: Cache vcpkg downloads (on Windows)
+      - name: Cache vcpkg/downloads (on Windows)
         uses: actions/cache@v3
         if: runner.os == 'Windows'
         with:
@@ -73,7 +73,7 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-vcpkg-download-${{ env.OS_VER }}-
             ${{ runner.os }}-vcpkg-download-
-      - name: Cache vcpkg installed (on Windows)
+      - name: Cache vcpkg/installed (on Windows)
         uses: actions/cache@v3
         if: runner.os == 'Windows'
         with:
@@ -83,7 +83,7 @@ jobs:
             ${{ runner.os }}-vcpkg-installed-${{ matrix.os }}-
             ${{ runner.os }}-vcpkg-installed-
 
-      - name: Cache sccache
+      - name: Cache SCCACHE_DIR
         uses: actions/cache@v3
         with:
           path: "${{ env.SCCACHE_DIR }}"
