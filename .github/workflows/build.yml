@@ -107,13 +107,14 @@ jobs:
           vcpkg integrate install
         shell: pwsh
 
+      # https://devblogs.microsoft.com/scripting/powertip-line-continuation-in-powershell/
       - name: cmake configure
         run: |
-          cmake -S "${{github.workspace}}" -B "${{env.BuildDir}}" -G Ninja \
-            -DCMAKE_C_COMPILER="cl.exe" -DCMAKE_CXX_COMPILER="cl.exe" \
-            -DCMAKE_C_COMPILER_LAUNCHER=sccache.exe -DCMAKE_CXX_COMPILER_LAUNCHER=sccache.exe \
-            "-DCMAKE_BUILD_TYPE=${BuildType}" \
-            "-DCMAKE_INSTALL_PREFIX=${InstallPrefix}" \
+          cmake -S "${{github.workspace}}" -B "${{env.BuildDir}}" -G Ninja `
+            -DCMAKE_C_COMPILER="cl.exe" -DCMAKE_CXX_COMPILER="cl.exe" `
+            -DCMAKE_C_COMPILER_LAUNCHER=sccache.exe -DCMAKE_CXX_COMPILER_LAUNCHER=sccache.exe `
+            "-DCMAKE_BUILD_TYPE=${BuildType}" `
+            "-DCMAKE_INSTALL_PREFIX=${InstallPrefix}" `
             ${{matrix.cmake_extra}}
         shell: pwsh
 
