@@ -13,7 +13,7 @@ jobs:
         buildType: [ RelWithDebInfo ]
         include:
           - os: windows-latest
-            cmake_extra: '-DBUILD_BINDING_DOTNET=OFF -DCMAKE_TOOLCHAIN_FILE=C:/vcpkg/scripts/buildsystems/vcpkg.cmake'
+            cmake_extra: '-DQPID_LINK_BOOST_DYNAMIC=OFF -DBUILD_BINDING_DOTNET=OFF -DCMAKE_TOOLCHAIN_FILE=C:/vcpkg/scripts/buildsystems/vcpkg.cmake'
     env:
       BuildType: ${{matrix.buildType}}
       BuildDir: ${{github.workspace}}/BLD
