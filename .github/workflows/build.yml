@@ -129,6 +129,7 @@ jobs:
           
           # work around assumptions in our build scripts about boost layout
           Copy-Item -Path C:/vcpkg/installed/x64-windows/debug/bin/* -Include *.dll -Destination C:/vcpkg/installed/x64-windows/debug/lib
+          Get-Item C:/vcpkg/installed/x64-windows/debug/lib/*.dll | Rename-Item -NewName { $_.Name -replace '-x64-1_81.dll','.dll' }
           
           ls C:/vcpkg/installed/x64-windows/debug/bin/
           ls C:/vcpkg/installed/x64-windows/debug/lib/
