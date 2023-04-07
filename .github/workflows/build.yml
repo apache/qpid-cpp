@@ -112,7 +112,6 @@ jobs:
       - name: cmake configure
         run: |
           cmake -S "${{github.workspace}}" -B "${{env.BuildDir}}" -G Ninja `
-            -DCMAKE_C_COMPILER="cl.exe" -DCMAKE_CXX_COMPILER="cl.exe" `
             -DCMAKE_C_COMPILER_LAUNCHER="sccache" -DCMAKE_CXX_COMPILER_LAUNCHER="sccache" `
             "-DCMAKE_BUILD_TYPE=${{env.BuildType}}" `
             "-DCMAKE_INSTALL_PREFIX=${{env.InstallPrefix}}" `
