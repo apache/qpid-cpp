@@ -13,7 +13,7 @@ jobs:
         include:
           - os: ubuntu-20.04
             # QPID-8606: we don't support swig 4.0, it produces runtime errors when used
-            cmake_extra: '-DSWIG_EXECUTABLE=/usr/bin/swig3.0'
+            cmake_extra: '-DSWIG_EXECUTABLE="/usr/bin/swig3.0"'
           - os: windows-latest
             cmake_extra: '-DBUILD_BINDING_DOTNET=OFF -DCMAKE_TOOLCHAIN_FILE=C:/vcpkg/scripts/buildsystems/vcpkg.cmake'
     env:
