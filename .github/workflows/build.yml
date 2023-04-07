@@ -128,7 +128,7 @@ jobs:
           Add-Content ${env:GITHUB_PATH} "${HOME}/scoop/shims"
           
           # work around assumptions in our build scripts about boost layout
-          Copy-Item -Path C:/vcpkg/installed/x64-windows/debug/bin/ -include "*.dll" -Destination C:/vcpkg/installed/x64-windows/debug/lib/
+          Copy-Item -Path C:/vcpkg/installed/x64-windows/debug/bin/ -Include "*.dll" -Destination C:/vcpkg/installed/x64-windows/debug/lib/
         shell: pwsh
 
       # Windows build should ideally use something like '-G "Visual Studio 16 2019" -A x64',
