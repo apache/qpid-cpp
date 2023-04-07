@@ -106,13 +106,12 @@ jobs:
           vcpkg integrate install
 
           # https://docs.github.com/en/actions/using-workflows/workflow-commands-for-github-actions#add-a-system-path-add-path
-          echo $PATH >> $GITHUB_PATH
+          echo "${HOME}/scoop/shims" | Out-File -FilePath ${env:GITHUB_PATH} -Encoding utf8 -Append
         shell: pwsh
 
       # https://devblogs.microsoft.com/scripting/powertip-line-continuation-in-powershell/
       - name: cmake configure
         run: |
-          set cache (gcm ~\scoop\shims\sccache).Path
           cmake -S "${{github.workspace}}" -B "${{env.BuildDir}}" -G Ninja `
             -DCMAKE_C_COMPILER="cl.exe" -DCMAKE_CXX_COMPILER="cl.exe" `
             -DCMAKE_C_COMPILER_LAUNCHER="sccache" -DCMAKE_CXX_COMPILER_LAUNCHER="sccache" `
