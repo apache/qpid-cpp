@@ -4,11 +4,6 @@
 # You may wish to alter this file to override the set of languages analyzed,
 # or to provide custom queries or build logic.
 #
-# ******** NOTE ********
-# We have attempted to detect the languages in your repository. Please check
-# the `language` matrix defined below to confirm you have the correct set of
-# supported CodeQL languages.
-#
 name: "CodeQL"
 
 on:
@@ -54,10 +49,22 @@ jobs:
         # Details on CodeQL's query packs refer to : https://docs.github.com/en/code-security/code-scanning/automatically-scanning-your-code-for-vulnerabilities-and-errors/configuring-code-scanning#using-queries-in-ql-packs
         # queries: security-extended,security-and-quality
 
+    - name: Install dependencies (C++)
+      if: matrix.language == 'cpp'
+      run: |
+        sudo apt-get -yq --no-install-suggests --no-install-recommends install \
+          libboost-dev libboost-program-options-dev libboost-system-dev libboost-test-dev \
+          libxqilla-dev libxerces-c-dev \
+          libibverbs-dev librdmacm-dev \
+          libdb++-dev libaio-dev \
+          libqpid-proton11-dev libqpid-proton-core10 libqpid-proton-proactor1 \
+          python-dev ruby-dev \
+          uuid-dev libnss3-dev libnss3-tools libsasl2-dev sasl2-bin
 
     # Autobuild attempts to build any compiled languages  (C/C++, C#, Go, or Java).
     # If this step fails, then you should remove it and run the build manually (see below)
     - name: Autobuild
+      if: matrix.language == 'cpp'
       uses: github/codeql-action/autobuild@v2
 
     # ℹ️ Command-line programs to run using the OS shell.
