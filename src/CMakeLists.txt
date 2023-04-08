@@ -281,6 +281,8 @@ include_directories( ${CMAKE_CURRENT_SOURCE_DIR}/../include )
 include_directories( ${CMAKE_CURRENT_BINARY_DIR} )
 include_directories( ${CMAKE_CURRENT_BINARY_DIR}/../include )
 
+link_directories( ${Boost_LIBRARY_DIRS} )
+
 CHECK_SYMBOL_EXISTS(uuid_generate "uuid/uuid.h" UUID_GENERATE_IN_LIBC)
 if (UUID_GENERATE_IN_LIBC)
   set(uuid_SRC "")
