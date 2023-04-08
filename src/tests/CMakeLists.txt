@@ -161,7 +161,7 @@ if (BUILD_TESTING_UNITTESTS)
 
 # Like this to work with cmake 2.4 on Unix
 set(qpid_test_boost_libs
-    ${Boost_UNIT_TEST_FRAMEWORK_LIBRARY} ${Boost_SYSTEM_LIBRARY} ${Boost_THREAD_LIBRARY})
+    ${Boost_UNIT_TEST_FRAMEWORK_LIBRARY} ${Boost_SYSTEM_LIBRARY})
 
 set(all_unit_tests
     AccumulatedAckTest

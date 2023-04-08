@@ -21,6 +21,8 @@ project(qpidc_store)
 
 #set (CMAKE_VERBOSE_MAKEFILE ON)  # for debugging
 
+include_directories( ${Boost_INCLUDE_DIR} )
+
 include_directories( ${CMAKE_CURRENT_SOURCE_DIR} )
 include_directories( ${CMAKE_HOME_DIRECTORY}/include )
 
@@ -78,7 +80,7 @@ if (BUILD_MSSQL)
                ms-sql/State.cpp
                ms-sql/TplRecordset.cpp
                ms-sql/VariantHelper.cpp)
-  target_link_libraries (mssql_store qpidbroker qpidcommon ${Boost_THREAD_LIBRARY})
+  target_link_libraries (mssql_store qpidbroker qpidcommon)
   install (TARGETS mssql_store # RUNTIME
            DESTINATION ${QPIDD_MODULE_DIR}
            COMPONENT ${QPID_COMPONENT_BROKER})
@@ -107,7 +109,7 @@ if (BUILD_MSCLFS)
                ms-sql/State.cpp
                ms-sql/VariantHelper.cpp)
   include_directories(ms-sql)
-  target_link_libraries (msclfs_store qpidbroker qpidcommon clfsw32.lib ${Boost_THREAD_LIBRARY})
+  target_link_libraries (msclfs_store qpidbroker qpidcommon clfsw32.lib)
   install (TARGETS msclfs_store # RUNTIME
            DESTINATION ${QPIDD_MODULE_DIR}
            COMPONENT ${QPID_COMPONENT_BROKER})
