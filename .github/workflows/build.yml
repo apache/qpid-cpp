@@ -91,8 +91,9 @@ jobs:
           sudo chmod +x /usr/bin/sccache
         shell: bash
 
-      - name: Cache scoop (on Windows)
-        uses: actions/cache@v3
+      - name: Cache scoop (restore) (on Windows)
+        uses: actions/cache/restore@v3
+        id: restore-scoop-cache
         if: runner.os == 'Windows'
         with:
           path: ~\scoop
@@ -101,33 +102,18 @@ jobs:
             ${{ runner.os }}-scoop-${{ env.OS_VER }}-
             ${{ runner.os }}-scoop-
 
-      - name: Cache vcpkg/downloads (on Windows)
-        uses: actions/cache@v3
+      - name: Cache vcpkg/downloads and vcpkg/installed (restore) (on Windows)
+        uses: actions/cache/restore@v3
+        id: restore-vcpkg-cache
         if: runner.os == 'Windows'
         with:
-          path: C:\vcpkg\downloads
-          key: ${{ runner.os }}-vcpkg-download-${{ env.OS_VER }}-${{ hashFiles('.github/workflows/build.yml') }}
+          path: |
+            C:\vcpkg\downloads
+            C:\vcpkg\installed
+          key: ${{ runner.os }}-vcpkg-${{ env.OS_VER }}-${{ hashFiles('.github/workflows/build.yml') }}
           restore-keys: |
-            ${{ runner.os }}-vcpkg-download-${{ env.OS_VER }}-
-            ${{ runner.os }}-vcpkg-download-
-      - name: Cache vcpkg/installed (on Windows)
-        uses: actions/cache@v3
-        if: runner.os == 'Windows'
-        with:
-          path: C:\vcpkg\installed
-          key: ${{ runner.os }}-vcpkg-installed-${{ matrix.os }}-${{ hashFiles('.github/workflows/build.yml') }}
-          restore-keys: |
-            ${{ runner.os }}-vcpkg-installed-${{ matrix.os }}-
-            ${{ runner.os }}-vcpkg-installed-
-
-      - name: Cache SCCACHE_DIR
-        uses: actions/cache@v3
-        with:
-          path: "${{ env.SCCACHE_DIR }}"
-          key: ${{ runner.os }}-sccache-${{ matrix.os }}-${{ github.sha }}
-          restore-keys: |
-            ${{ runner.os }}-sccache-${{ matrix.os }}-
-            ${{ runner.os }}-sccache-
+            ${{ runner.os }}-vcpkg-${{ env.OS_VER }}-
+            ${{ runner.os }}-vcpkg-
 
       - name: Install Windows dependencies
         if: runner.os == 'Windows'
@@ -156,6 +142,32 @@ jobs:
           ls C:/vcpkg/installed/x64-windows/lib/
         shell: pwsh
 
+      - name: Cache scoop (save) (on Windows)
+        uses: actions/cache/save@v3
+        if: runner.os == 'Windows'
+        with:
+          path: ~\scoop
+          key: ${{ steps.restore-scoop-cache.outputs.cache-primary-key }}
+
+      - name: Cache vcpkg/downloads and vcpkg/installed (save) (on Windows)
+        uses: actions/cache/save@v3
+        if: runner.os == 'Windows'
+        with:
+          path: |
+            C:\vcpkg\downloads
+            C:\vcpkg\installed
+          key: ${{ steps.restore-vcpkg-cache.outputs.cache-primary-key }}
+
+      - name: Cache SCCACHE_DIR (restore)
+        uses: actions/cache/restore@v3
+        id: restore-sccache-cache
+        with:
+          path: "${{ env.SCCACHE_DIR }}"
+          key: ${{ runner.os }}-sccache-${{ matrix.os }}-${{ github.sha }}
+          restore-keys: |
+            ${{ runner.os }}-sccache-${{ matrix.os }}-
+            ${{ runner.os }}-sccache-
+
       # Windows build should ideally use something like '-G "Visual Studio 16 2019" -A x64',
       #  but -DCMAKE_C_COMPILER_LAUNCHER is only supported by make and ninja generators
       # https://devblogs.microsoft.com/scripting/powertip-line-continuation-in-powershell/
@@ -175,6 +187,12 @@ jobs:
           cmake --build "${{env.BuildDir}}" --config ${{env.BuildType}} -- -v
           cmake --install "${{env.BuildDir}}" --config ${{env.BuildType}}
         shell: pwsh
+
+      - name: Cache SCCACHE_DIR (save)
+        uses: actions/cache/save@v3
+        with:
+          path: "${{ env.SCCACHE_DIR }}"
+          key: ${{ steps.restore-sccache-cache.outputs.cache-primary-key }}
 
       - id: ctest
         name: ctest
