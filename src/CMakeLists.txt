@@ -230,8 +230,7 @@ endif (BUILD_TESTING)
 # DLLs that are needed for the Windows package, none are needed for the
 # static link case; else drop them into the install. Do this all first, since
 # Boost on Windows can use automatic linking to pick up the correct
-# Boost libs based on compile-time touching of the headers. Since we don't
-# really need to add them to the link lines, set the names to blanks.
+# Boost libs based on compile-time touching of the headers.
 option(QPID_LINK_BOOST_DYNAMIC "Link with dynamic Boost libs (OFF to link static)" ON)
 mark_as_advanced(QPID_LINK_BOOST_DYNAMIC)
 
@@ -272,12 +271,6 @@ if (MSVC)
                COMPONENT ${QPID_COMPONENT_COMMON})
    endif (QPID_LINK_BOOST_DYNAMIC)
 
-   set(Boost_DATE_TIME_LIBRARY "")
-   set(Boost_THREAD_LIBRARY "")
-   set(Boost_PROGRAM_OPTIONS_LIBRARY "")
-   set(Boost_UNIT_TEST_FRAMEWORK_LIBRARY "")
-   set(Boost_SYSTEM_LIBRARY "")
-   set(Boost_CHRONO_LIBRARY "")
    include_directories( ${CMAKE_CURRENT_SOURCE_DIR}/windows/resources )
 endif (MSVC)
 
