@@ -35,11 +35,26 @@ jobs:
           python-version: 2.7
           architecture: x64
 
-      - name: Setup Developer Command Prompt (on Windows)
-        uses: ilammy/msvc-dev-cmd@v1
+      # Cannot use https://github.com/ilammy/msvc-dev-cmd/blob/a742a854f54111d83b78e97091b5d85ccdaa3e89/index.js#L163
+      #  as (unapproved) 3rd party GitHub Actions are forbidden on Apache org projects
+
+      # https://github.com/microsoft/vswhere
+      # https://github.com/microsoft/vswhere/blob/c7a417bfb46cd6a1c3e31a91ba51193d7659b6f8/src/vswhere.lib/vswhere.lib.rc#L77
+      # https://github.com/microsoft/vswhere/wiki/Start-Developer-Command-Prompt#using-powershell
+      # https://renenyffenegger.ch/notes/Windows/dirs/Program-Files-x86/Microsoft-Visual-Studio/version/edition/Common7/Tools/VsDevCmd_bat
+      # https://renenyffenegger.ch/notes/Windows/dirs/Program-Files-x86/Microsoft-Visual-Studio/version/edition/VC/Auxiliary/Build/vcvarsall_bat
+      - name: Setup Developer Command Prompt environment (on Windows)
         if: runner.os == 'Windows'
-        with:
-          arch: x64
+        run: |
+          $installationPath = vswhere.exe -prerelease -latest -property installationPath
+          if ($installationPath -and (test-path "$installationPath\Common7\Tools\vsdevcmd.bat")) {
+            & "${env:COMSPEC}" /s /c "`"$installationPath\Common7\Tools\vsdevcmd.bat`" -no_logo -arch=x64 && set" | foreach-object {
+              $name, $value = $_ -split '=', 2
+              # https://docs.github.com/en/actions/using-workflows/workflow-commands-for-github-actions#setting-an-environment-variable
+              Add-Content ${env:GITHUB_ENV} "${name}=${value}"
+            }
+          }
+        shell: pwsh
 
       # it's weird that it needs qpid-python for tests; one would guess this is built in this repo, but it is not
       - name: Install python dependencies
