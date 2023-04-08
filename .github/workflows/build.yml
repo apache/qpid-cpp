@@ -127,19 +127,6 @@ jobs:
 
           # https://docs.github.com/en/actions/using-workflows/workflow-commands-for-github-actions#add-a-system-path-add-path
           Add-Content ${env:GITHUB_PATH} "${HOME}/scoop/shims"
-          
-          # work around assumptions in our build scripts about boost libs layout
-          Copy-Item -Path C:/vcpkg/installed/x64-windows/debug/bin/* -Include *.dll -Destination C:/vcpkg/installed/x64-windows/debug/lib
-          Get-Item C:/vcpkg/installed/x64-windows/debug/lib/*.dll | Rename-Item -NewName { $_.Name -replace '-vc14.-mt-gd-x64-1_81.dll','-vc140-mt-gd.dll' }
-          # display results of this hard work
-          ls C:/vcpkg/installed/x64-windows/debug/bin/
-          ls C:/vcpkg/installed/x64-windows/debug/lib/
-          # now do the same for release
-          Copy-Item -Path C:/vcpkg/installed/x64-windows/bin/* -Include *.dll -Destination C:/vcpkg/installed/x64-windows/lib
-          Get-Item C:/vcpkg/installed/x64-windows/lib/*.dll | Rename-Item -NewName { $_.Name -replace '-vc14.-mt-x64-1_81.dll','-vc140-mt.dll' }
-          # display results of this hard work
-          ls C:/vcpkg/installed/x64-windows/bin/
-          ls C:/vcpkg/installed/x64-windows/lib/
         shell: pwsh
 
       - name: Cache scoop (save) (on Windows)
@@ -157,6 +144,25 @@ jobs:
             C:\vcpkg\downloads
             C:\vcpkg\installed
           key: ${{ steps.restore-vcpkg-cache.outputs.cache-primary-key }}
+
+      # don't save this into the vcpkg cache
+      - name: Copy over Boost DLLs to where we expect them
+        if: runner.os == 'Windows'
+        run: |
+          # work around assumptions in our build scripts about boost libs layout
+          Copy-Item -Path C:/vcpkg/installed/x64-windows/debug/bin/* -Include *.dll -Destination C:/vcpkg/installed/x64-windows/debug/lib
+          Get-Item C:/vcpkg/installed/x64-windows/debug/lib/*.dll | Rename-Item -NewName { $_.Name -replace '-vc14.-mt-gd-x64-1_81.dll','-vc140-mt-gd.dll' }
+          # display results of this hard work
+          ls C:/vcpkg/installed/x64-windows/debug/bin/
+          ls C:/vcpkg/installed/x64-windows/debug/lib/
+
+          # now do the same for release
+          Copy-Item -Path C:/vcpkg/installed/x64-windows/bin/* -Include *.dll -Destination C:/vcpkg/installed/x64-windows/lib
+          Get-Item C:/vcpkg/installed/x64-windows/lib/*.dll | Rename-Item -NewName { $_.Name -replace '-vc14.-mt-x64-1_81.dll','-vc140-mt.dll' }
+          # display results of this hard work
+          ls C:/vcpkg/installed/x64-windows/bin/
+          ls C:/vcpkg/installed/x64-windows/lib/
+        shell: pwsh
 
       - name: Cache SCCACHE_DIR (restore)
         uses: actions/cache/restore@v3
