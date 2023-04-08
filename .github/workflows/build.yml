@@ -161,6 +161,12 @@ jobs:
           cmake --install "${{env.BuildDir}}" --config ${{env.BuildType}}
         shell: pwsh
 
+      - name: Add qpidd to path for tests
+        if: runner.os == 'Windows'
+        run: |
+          Add-Content ${env:GITHUB_PATH} "${{env.BuildDir}}/src"
+        shell: pwsh
+
       - id: ctest
         name: ctest
         working-directory: ${{env.BuildDir}}
