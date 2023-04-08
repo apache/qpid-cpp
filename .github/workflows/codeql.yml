@@ -57,8 +57,7 @@ jobs:
           libxqilla-dev libxerces-c-dev \
           libibverbs-dev librdmacm-dev \
           libdb++-dev libaio-dev \
-          libqpid-proton11-dev libqpid-proton-core10 libqpid-proton-proactor1 \
-          python-dev ruby-dev \
+          python2-dev ruby-dev \
           uuid-dev libnss3-dev libnss3-tools libsasl2-dev sasl2-bin
 
     # Autobuild attempts to build any compiled languages  (C/C++, C#, Go, or Java).
