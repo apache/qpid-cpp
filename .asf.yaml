@@ -16,6 +16,8 @@
 # specific language governing permissions and limitations
 # under the License.
 #
+
+# https://cwiki.apache.org/confluence/display/INFRA/Git+-+.asf.yaml+features#Git.asf.yamlfeatures-GitHubsettings
 github:
   description: "Mirror of Apache Qpid C++"
   homepage: https://qpid.apache.org/components/cpp-broker
@@ -29,3 +31,19 @@ github:
     - amqp10
     - amqps
     - cpp
+  features:
+    wiki: false
+    issues: false
+    projects: true
+  enabled_merge_buttons:
+    merge: false
+    squash: true
+    rebase: true
+  protected_branches:
+    main: {}
+  autolink_jira:
+    - INFRA
+    - QPID
+  dependabot_alerts: true
+  dependabot_updates: true
+  del_branch_on_merge: true
