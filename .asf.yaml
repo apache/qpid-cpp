@@ -36,9 +36,9 @@ github:
     issues: false
     projects: true
   enabled_merge_buttons:
-    merge:   false
-    squash:  true
-    rebase:  true
+    merge: false
+    squash: true
+    rebase: true
   protected_branches:
     main: {}
   autolink_jira:
