@@ -129,7 +129,7 @@ jobs:
           
           # work around assumptions in our build scripts about boost libs layout
           Copy-Item -Path C:/vcpkg/installed/x64-windows/debug/bin/* -Include *.dll -Destination C:/vcpkg/installed/x64-windows/debug/lib
-          Get-Item C:/vcpkg/installed/x64-windows/debug/lib/*.dll | Rename-Item -NewName { $_.Name -replace '-vc14*-gd-x64-1_81.dll','-vc140-mt-gd.dll' }
+          Get-Item C:/vcpkg/installed/x64-windows/debug/lib/*.dll | Rename-Item -NewName { $_.Name -replace '-vc14.-gd-x64-1_81.dll','-vc140-mt-gd.dll' }
           # display results of this hard work
           ls C:/vcpkg/installed/x64-windows/debug/bin/
           ls C:/vcpkg/installed/x64-windows/debug/lib/
