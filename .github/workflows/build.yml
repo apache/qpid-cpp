@@ -133,6 +133,12 @@ jobs:
           # display results of this hard work
           ls C:/vcpkg/installed/x64-windows/debug/bin/
           ls C:/vcpkg/installed/x64-windows/debug/lib/
+          # now do the same for release
+          Copy-Item -Path C:/vcpkg/installed/x64-windows/bin/* -Include *.dll -Destination C:/vcpkg/installed/x64-windows/lib
+          Get-Item C:/vcpkg/installed/x64-windows/lib/*.dll | Rename-Item -NewName { $_.Name -replace '-vc14.-mt-x64-1_81.dll','-vc140-mt.dll' }
+          # display results of this hard work
+          ls C:/vcpkg/installed/x64-windows/bin/
+          ls C:/vcpkg/installed/x64-windows/lib/
         shell: pwsh
 
       # Windows build should ideally use something like '-G "Visual Studio 16 2019" -A x64',
