@@ -71,7 +71,7 @@ jobs:
       uses: github/codeql-action/autobuild@v2
       # https://github.com/github/codeql/discussions/11260
       env:
-        MAKEFLAGS: -j6
+        MAKEFLAGS: -j2
 
     # ℹ️ Command-line programs to run using the OS shell.
     # 📚 See https://docs.github.com/en/actions/using-workflows/workflow-syntax-for-github-actions#jobsjob_idstepsrun
