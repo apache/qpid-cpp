@@ -276,7 +276,7 @@ QPID_EXCEPTION(UnauthorizedAccess, SessionError)
     AMQP_PORT = 5672
     AMQPS_PORT = 5671
 
-    UNLIMITED = Constant("UNLIMITED", 0xFFFFFFFFL)
+    UNLIMITED = Constant("UNLIMITED", 0xFFFFFFFF)
 
     REJECTED = Constant("REJECTED")
     RELEASED = Constant("RELEASED")
