@@ -48,11 +48,22 @@ install(CODE "execute_process(COMMAND ${PYTHON_EXECUTABLE} -m py_compile qpid_me
 install(CODE "execute_process(COMMAND ${PYTHON_EXECUTABLE} -O -m py_compile qpid_messaging.py
                               WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})")
 install(FILES ${CMAKE_CURRENT_BINARY_DIR}/qpid_messaging.py
-              ${CMAKE_CURRENT_BINARY_DIR}/qpid_messaging.pyc
-              ${CMAKE_CURRENT_BINARY_DIR}/qpid_messaging.pyo
         DESTINATION ${PYTHON_SITEARCH_PACKAGES}
         COMPONENT ${QPID_COMPONENT_CLIENT}
         )
+if (Python_VERSION_MAJOR STREQUAL "2")
+    install(FILES
+                ${CMAKE_CURRENT_BINARY_DIR}/qpid_messaging.pyc
+                ${CMAKE_CURRENT_BINARY_DIR}/qpid_messaging.pyo
+            DESTINATION ${PYTHON_SITEARCH_PACKAGES}
+            COMPONENT ${QPID_COMPONENT_CLIENT}
+            )
+elseif ()
+    install(DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/__pycache__
+            DESTINATION ${PYTHON_SITEARCH_PACKAGES}
+            COMPONENT ${QPID_COMPONENT_CLIENT}
+            )
+endif ()
 install(TARGETS ${SWIG_MODULE_qpid_messaging_REAL_NAME}
         DESTINATION ${PYTHON_SITEARCH_PACKAGES}
         COMPONENT ${QPID_COMPONENT_CLIENT}
