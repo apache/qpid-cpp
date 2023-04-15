@@ -19,6 +19,7 @@
 
 """ Console API for Qpid Management Framework """
 
+from __future__ import absolute_import
 from __future__ import print_function
 
 import os
@@ -38,9 +39,22 @@ from qpid.datatypes  import Message, RangedSet, UUID
 from qpid.util       import connect, ssl, URL
 from qpid.codec010   import StringCodec as Codec
 from threading       import Lock, Condition, Thread, Semaphore
-from Queue           import Queue, Empty
+try:
+    from Queue       import Queue, Empty
+except ImportError:
+    from queue       import Queue, Empty
 from time            import time, strftime, gmtime, sleep
-from cStringIO       import StringIO
+from io              import StringIO
+
+try:
+    long
+except NameError:
+    long = int
+
+try:
+  unicode
+except NameError:
+  unicode = str
 
 #import qpid.log
 #qpid.log.enable(name="qpid.io.cmd", level=qpid.log.DEBUG)
