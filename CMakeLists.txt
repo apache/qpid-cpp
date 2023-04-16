@@ -77,6 +77,9 @@ if (MSVC)
   add_compile_options(/wd4996)
 endif (MSVC)
 
+# QPID-8605: silence the global placeholders deprecation warning from boost
+add_compile_definitions(BOOST_BIND_GLOBAL_PLACEHOLDERS)
+
 # Overall packaging/install options.
 # This section also has all the setup for various packaging-specific options.
 set (CPACK_RESOURCE_FILE_LICENSE "${CMAKE_CURRENT_SOURCE_DIR}/LICENSE.txt")
