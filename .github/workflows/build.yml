@@ -31,12 +31,41 @@ jobs:
 
       - uses: actions/checkout@v3
 
-      - name: Setup python
-        id: python
+      # Python 2.7 was removed from actions/setup-python https://github.com/actions/setup-python/issues/672
+      - name: Set up Python ${{ matrix.python-version }}
+        if: matrix.python-version != '2.7'
         uses: actions/setup-python@v4
+        id: setup-python
         with:
           python-version: ${{ matrix.python-version }}
           architecture: x64
+
+      - name: Set up Python ${{ matrix.python-version }}
+        if: matrix.python-version == '2.7' && matrix.os == 'ubuntu-20.04'
+        run: |
+          sudo apt install -y python2
+          curl https://bootstrap.pypa.io/pip/2.7/get-pip.py --output get-pip.py
+          sudo python2 get-pip.py
+        id: apt-install-python
+
+      - name: Set up Python ${{ matrix.python-version }}
+        if: matrix.python-version == '2.7' && matrix.os == 'windows-latest'
+        run: |
+          choco install python2
+        id: choco-install-python
+        shell: pwsh
+
+      - name: Configure steps.python.outputs
+        run: |
+          if (Test-Path "${{ steps.setup-python.outputs.python-path }}") {
+            "python-path=${{ steps.setup-python.outputs.python-path }}" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
+          } elseif (Test-Path C:/Python27/python.exe) {
+            "python-path=C:/Python27/python.exe" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
+          } else {
+            "python-path=/usr/bin/python2.7" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
+          }
+        id: python
+        shell: pwsh
 
       # Cannot use https://github.com/ilammy/msvc-dev-cmd/blob/a742a854f54111d83b78e97091b5d85ccdaa3e89/index.js#L163
       #  as (unapproved) 3rd party GitHub Actions are forbidden on Apache org projects
