@@ -269,3 +269,42 @@ jobs:
         if: always()
         run: env -0 | sort -z | tr '\0' '\n'
         shell: bash
+
+  container:
+    name: Container image
+    runs-on: ubuntu-latest
+    steps:
+
+      - uses: actions/checkout@v3
+
+      - name: Build Containerfile
+        run: |
+          docker build -f ./Containerfile -t local/qpid-cpp:local .
+
+      - name: Run qpidd --help
+        run: |
+          docker run --rm local/qpid-cpp:local /usr/sbin/qpidd --help
+
+      - name: Start qpidd
+        run: |
+          docker run --name qpidd -d --rm -p 5672:5672 local/qpid-cpp:local /usr/sbin/qpidd
+
+      - name: Setup python 2.7
+        id: python
+        uses: actions/setup-python@v4
+        with:
+          python-version: 2.7
+          architecture: x64
+
+      - name: Fetch qpid-python from git
+        uses: actions/checkout@v3
+        with:
+          repository: apache/qpid-python
+          ref: main
+          path: qpid-python
+
+      - name: Run qpid-python tests against the container
+        run: |
+          ${{ steps.python.outputs.python-path }} -m pip install qpid-tools qpid-qmf --no-deps 
+          ${{ steps.python.outputs.python-path }} qpid-python-test -m qpid_tests
+        working-directory: qpid-python
