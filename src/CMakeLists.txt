@@ -855,6 +855,7 @@ set_target_properties (qpidcommon PROPERTIES
                        SOVERSION ${qpidcommon_version_major})
 
 install (TARGETS qpidcommon
+         EXPORT QpidTargets
          RUNTIME DESTINATION ${QPID_INSTALL_BINDIR} COMPONENT ${QPID_COMPONENT_COMMON}
          LIBRARY DESTINATION ${QPID_INSTALL_LIBDIR} COMPONENT ${QPID_COMPONENT_COMMON}
          ARCHIVE DESTINATION ${QPID_INSTALL_LIBDIR} COMPONENT ${QPID_COMPONENT_COMMON})
@@ -880,6 +881,7 @@ set_target_properties (qpidtypes PROPERTIES
                        SOVERSION ${qpidtypes_version_major})
 
 install(TARGETS qpidtypes
+        EXPORT  QpidTargets
         RUNTIME DESTINATION ${QPID_INSTALL_BINDIR} COMPONENT ${QPID_COMPONENT_COMMON}
         LIBRARY DESTINATION ${QPID_INSTALL_LIBDIR} COMPONENT ${QPID_COMPONENT_COMMON}
         ARCHIVE DESTINATION ${QPID_INSTALL_LIBDIR} COMPONENT ${QPID_COMPONENT_COMMON})
@@ -939,6 +941,7 @@ set_target_properties (qpidclient PROPERTIES
                        SOVERSION ${qpidclient_version_major})
 
 install (TARGETS qpidclient
+         EXPORT QpidTargets
          RUNTIME DESTINATION ${QPID_INSTALL_BINDIR} COMPONENT ${QPID_COMPONENT_CLIENT}
          LIBRARY DESTINATION ${QPID_INSTALL_LIBDIR} COMPONENT ${QPID_COMPONENT_CLIENT}
          ARCHIVE DESTINATION ${QPID_INSTALL_LIBDIR} COMPONENT ${QPID_COMPONENT_CLIENT})
@@ -1006,6 +1009,7 @@ set_target_properties (qpidmessaging PROPERTIES
                        VERSION ${qpidmessaging_version}
                        SOVERSION ${qpidmessaging_version_major})
 install (TARGETS qpidmessaging
+         EXPORT  QpidTargets
          RUNTIME DESTINATION ${QPID_INSTALL_BINDIR} COMPONENT ${QPID_COMPONENT_CLIENT}
          LIBRARY DESTINATION ${QPID_INSTALL_LIBDIR} COMPONENT ${QPID_COMPONENT_CLIENT}
          ARCHIVE DESTINATION ${QPID_INSTALL_LIBDIR} COMPONENT ${QPID_COMPONENT_CLIENT})
@@ -1311,11 +1315,25 @@ set(QPIDTYPESLIB ${CMAKE_SHARED_LIBRARY_PREFIX}qpidtypes${CMAKE_SHARED_LIBRARY_S
 set(QPIDTYPESLIBDEBUG ${CMAKE_SHARED_LIBRARY_PREFIX}qpidtypes${CMAKE_DEBUG_POSTFIX}${CMAKE_SHARED_LIBRARY_SUFFIX})
 endif ()
 
-configure_file(QpidConfig.cmake.in ${CMAKE_CURRENT_BINARY_DIR}/QpidConfig.cmake @ONLY)
-configure_file(QpidConfigVersion.cmake.in ${CMAKE_CURRENT_BINARY_DIR}/QpidConfigVersion.cmake @ONLY)
-install (FILES
-         ${CMAKE_CURRENT_BINARY_DIR}/QpidConfig.cmake
-         ${CMAKE_CURRENT_BINARY_DIR}/QpidConfigVersion.cmake
-         DESTINATION ${QPID_INSTALL_LIBDIR}/cmake/Qpid
-         COMPONENT ${QPID_COMPONENT_COMMON})
+install(EXPORT QpidTargets
+        FILE QpidTargets.cmake
+        NAMESPACE Qpid::
+        DESTINATION ${QPID_INSTALL_LIBDIR}/cmake/Qpid)
 
+include(CMakePackageConfigHelpers)
+include(WriteBasicConfigVersionFile)
+
+configure_package_config_file(
+        ${CMAKE_CURRENT_SOURCE_DIR}/QpidConfig.cmake.in
+        ${CMAKE_CURRENT_BINARY_DIR}/QpidConfig.cmake
+        PATH_VARS includedir
+        INSTALL_DESTINATION ${QPID_INSTALL_LIBDIR}/cmake/Qpid)
+write_basic_config_version_file(
+        ${CMAKE_CURRENT_BINARY_DIR}/QpidConfigVersion.cmake
+        VERSION ${VERSION}
+        COMPATIBILITY AnyNewerVersion)
+install (FILES
+        ${CMAKE_CURRENT_BINARY_DIR}/QpidConfig.cmake
+        ${CMAKE_CURRENT_BINARY_DIR}/QpidConfigVersion.cmake
+        DESTINATION ${QPID_INSTALL_LIBDIR}/cmake/Qpid
+        COMPONENT ${QPID_COMPONENT_COMMON})
